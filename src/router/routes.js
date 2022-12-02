@@ -9,6 +9,7 @@ import editProfile from "../components/editProfile.vue";
 import manageChurch from "../components/manageChurch.vue";
 import members from "../components/members.vue";
 import configChurch from "../components/configChurch.vue";
+import churchEvents from "../components/churchEvents.vue";
 
 const routes = [
     {
@@ -69,6 +70,13 @@ const routes = [
                 component: configChurch,
                 meta: {
                     title: "Configurar igreja - Worship Helper"
+                }
+            },
+            {
+                path: 'manage-church/:id_igreja/events',
+                component: churchEvents,
+                meta: {
+                    title: "Eventos - Worship Helper"
                 }
             },
             {

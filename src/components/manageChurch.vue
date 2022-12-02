@@ -21,15 +21,16 @@
                     </router-link>
                 </div>
                 <div class="church-action">
-                    <span class="material-icons">event</span>
-                    <span>Calendário de cultos</span>
+                    <router-link :to="'/home/manage-church/' + igreja.id_igreja + '/events'">
+                        <span class="material-icons">event</span>
+                        <span>Calendário de cultos</span>
+                    </router-link>
                 </div>
                 <div class="church-action" v-if="havePermission">
                     <router-link :to="'/home/manage-church/' + igreja.id_igreja + '/config'">
                         <span class="material-icons">settings</span>
                         <span>Configurações da igreja</span>
                     </router-link>
-                    
                 </div>
             </div>
             <div class="warnings">
@@ -185,11 +186,6 @@ export default {
 }
 </script>
 <style scoped>
-.church-profile {
-    display: flex;
-    align-items: center;
-}
-
 .church-action {
     background: var(--primary-primary-blue-medium);
     display: flex;

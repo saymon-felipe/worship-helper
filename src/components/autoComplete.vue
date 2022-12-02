@@ -7,6 +7,11 @@
                 <p>{{ member.descricao_usuario }}</p>
             </div>
         </div>
+        <div class="member" v-for="(tag, index) in tags" :key="index" v-on:click="selectTag(tag)">
+            <div class="member-informations">
+                <h5>{{ tag.nome_tag }}</h5>
+            </div>
+        </div>
     </div>
 </template>
 <script>
@@ -15,10 +20,11 @@ import api from '../config/api';
 
 export default {
     name: "autoComplete",
-    props: ['search'],
+    props: ['search', 'isTag', 'igreja'],
     data() {
         return {
-            members: []
+            members: [],
+            tags: []
         }
     },
     watch: {
@@ -28,6 +34,19 @@ export default {
         }
     },
     methods: {
+        searchTags: function () {
+            let self = this;
+
+            let data = {
+                id_igreja: self.igreja.id_igreja
+            }
+            
+            $(".auto-complete").show();
+            api.post('/igreja/retorna-tags', data)
+            .then(function (response) {
+                self.tags = response.data.lista_tags;
+            })
+        },
         filterSearch: function (string) {
             let self = this;
             
@@ -61,6 +80,11 @@ export default {
         },
         selectUser: function (user) {
             this.$emit('selectUser', user);
+        }
+    },
+    mounted: function () {
+        if (this.isTag) {
+            this.searchTags();
         }
     }
 }

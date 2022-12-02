@@ -220,9 +220,13 @@ export const globalMethods = {
         },
         select_user: function (event) {
             let self = this;
+            self.selected_tag = event;
+            $("#adm-id").attr("placeholder", "");
+        },
+        select_tag: function (event) {
+            let self = this;
             self.selected_member = event;
             self.searchParam = "";
-            $("#adm-id").attr("placeholder", "");
         },
         restoreInputLabel: function (element_id, text) {
             $(element_id).attr("placeholder", text);
@@ -247,6 +251,12 @@ export const globalMethods = {
                 .catch(function (error) {
                     console.log(error);
                 })
+        },
+        showModalFunction: function (showModal, modalTitle, modalButtonTitle, modalButton2Title) {
+            this.showModal = showModal;
+            this.modalTitle = modalTitle;
+            this.modalButtonTitle = modalButtonTitle;
+            this.modalButton2Title = modalButton2Title;
         }
     },
     data() {

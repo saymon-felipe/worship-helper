@@ -11,7 +11,7 @@ const production_environment = "https://worship-helper-api.herokuapp.com"; //Amb
 // 1 - Ambiente de produção
 // 
 // ==============================
-let test_or_prod = 1;
+let test_or_prod = 0;
 // ==============================
 //
 

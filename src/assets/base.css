@@ -542,3 +542,8 @@ label {
     color: var(--neutral-white);
     font-style: italic;
   }
+
+.church-profile {
+    display: flex;
+    align-items: center;
+}

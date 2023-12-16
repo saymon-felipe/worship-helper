@@ -2,7 +2,7 @@ import axios from 'axios'
 
 let url_api;
 
-const dev_environment = "http://192.168.1.2:3000"; //Ambiente de desenvolvimento.
+const dev_environment = "http://192.168.15:43:3000"; //Ambiente de desenvolvimento.
 const production_environment = "https://worship-helper-api.herokuapp.com"; //Ambiente de produção.
 // TROCA DO AMBIENTE DA API
 //
@@ -11,7 +11,7 @@ const production_environment = "https://worship-helper-api.herokuapp.com"; //Amb
 // 1 - Ambiente de produção
 // 
 // ==============================
-let test_or_prod = 0;
+let test_or_prod = 1;
 // ==============================
 //
 

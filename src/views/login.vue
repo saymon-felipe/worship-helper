@@ -21,7 +21,7 @@
         </form>
       </div>
       <div class="copyright">
-        <p class="font-size-5">Copyright © 2022 Worship helper</p>
+        <p class="font-size-5">Copyright © {{ year }} Worship helper</p>
       </div>
     </div>
   </authorizationTemplate>
@@ -46,22 +46,28 @@ export default {
       let responseElement = $(".response");
       let form = $("#" + event.target.id);
       let button = $("#access-account-button");
+
       button.attr("disabled", "disabled");
+
       let data = form.serializeArray().reduce(function (obj, item) { // Pega todos os dados do formulário e coloca em um objeto.
           obj[item.name] = item.value;
           return obj;
       }, {});
+
       api.post("/usuario/login", data)
       .then(function (response) {
-        let token = response.data.token;
+        let token = response.data.returnObj;
+
         self.setJwtInLocalStorage(token);
         self.response = response.data.message;
         self.resetResponseClass(responseElement);
         responseElement.css("opacity", 1).addClass("success");
         self.$router.push("/home");
-      })
-      .catch(function (error) {
-        let errorMessage = error.response.data.message;
+      }).catch(function (error) {
+        let errorMessage = error.response.data;
+
+        self.setResponse(errorMessage, "error");
+
         if (errorMessage != null || errorMessage != undefined) {
           self.response = errorMessage;
           self.resetResponseClass(responseElement);

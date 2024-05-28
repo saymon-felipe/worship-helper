@@ -81,17 +81,12 @@ export default {
         },
         deleteTag: function (id_tag) {
             let self = this;
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
             let data = {
                 id_tag: id_tag,
                 id_igreja: self.$route.params.id_igreja
             }
 
-            api.post("/igreja/deletar-tag", data, {
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.post("/igreja/deletar-tag", data)
                 .then(function (response) {
                     self.removeTagFromDom(id_tag);
                     self.returnChurchTags();
@@ -102,17 +97,12 @@ export default {
         },
         deleteFunction: function (id_function) {
             let self = this;
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
             let data = {
                 id_function: id_function,
                 id_igreja: self.$route.params.id_igreja
             }
 
-            api.post("/igreja/deletar-funcao", data, {
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.post("/igreja/deletar-funcao", data)
                 .then(function (response) {
                     self.removeFunctionFromDom(id_tag);
                     self.returnChurchFunctions();
@@ -128,17 +118,12 @@ export default {
             }
 
             let self = this;
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
             let data = {
                 id_igreja: self.$route.params.id_igreja,
                 new_tag: value
             }
 
-            api.post("/igreja/criar-tag", data, {
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.post("/igreja/criar-tag", data)
                 .then(function () {
                     self.toggleAddTagInput('tag');
                     self.returnChurchTags();
@@ -154,17 +139,12 @@ export default {
             }
 
             let self = this;
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
             let data = {
                 id_igreja: self.$route.params.id_igreja,
                 new_function: value
             }
 
-            api.post("/igreja/criar-funcao", data, {
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.post("/igreja/criar-funcao", data)
                 .then(function () {
                     self.toggleAddTagInput('function');
                     self.returnChurchFunctions();
@@ -175,16 +155,11 @@ export default {
         },
         returnChurchTags: function () {
             let self = this;
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
             let data = {
                 id_igreja: self.$route.params.id_igreja
             }
 
-            api.post("/igreja/retorna-tags", data, {
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.post("/igreja/retorna-tags", data)
                 .then(function (response) {
                     self.tags = response.data.lista_tags;
                     self.response = "";
@@ -195,16 +170,11 @@ export default {
         },
         returnChurchFunctions: function () {
             let self = this;
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
             let data = {
                 id_igreja: self.$route.params.id_igreja
             }
 
-            api.post("/igreja/retorna-funcoes", data, {
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.post("/igreja/retorna-funcoes", data)
                 .then(function (response) {
                     self.functions = response.data.lista_funcoes;
                     self.response = "";

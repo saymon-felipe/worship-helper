@@ -45,15 +45,10 @@ export default {
     methods: {
         sendImage: function (formData) {
             let self = this;
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
 
             self.removePhoto();
-            console.log(formData)
-            api.patch("/usuario/update_image", formData, { 
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            
+            api.patch("/usuario/update_image", formData)
             .then(function () { 
                 location.reload();
                 self.response = "";
@@ -79,14 +74,10 @@ export default {
             }
         },
         removePhoto: function () {
-            let self = this, jwt = "Bearer " + self.getJwtFromLocalStorage();
+            let self = this;
             let data = "";
             
-            api.patch("/usuario/remove_image", data, {
-                headers: {
-                        Authorization: jwt
-                    }
-            })
+            api.patch("/usuario/remove_image", data)
             .then(function(){
                 location.reload();
             })
@@ -101,7 +92,6 @@ export default {
         updateBio: function (event) {
             let self = this;
             let value = event.target.value.trim();
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
 
             if (value.length <= 0 || value == this.descricao_usuario) {
                 return;
@@ -111,11 +101,7 @@ export default {
                 new_bio: value
             }
 
-            api.post("/usuario/update_bio", data, {
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.post("/usuario/update_bio", data)
             .then(function (response) {
                 self.fillUserDescription = value;
                 let responseElement = $(".response");

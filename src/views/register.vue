@@ -3,7 +3,7 @@
     <div class="register">
       <div class="register-container">
         <h2>Registro</h2>
-        <form action="register" @submit.prevent="register($event)" id="register-form">
+        <form action="register" @submit.prevent="register()" id="register-form">
           <div class="input-group">
             <label for="name">Nome</label>
             <input type="text" name="nome_usuario" id="name" required>
@@ -28,7 +28,7 @@
         </form>
       </div>
       <div class="copyright">
-        <p class="font-size-5">Copyright © 2022 Worship helper</p>
+        <p class="font-size-5">Copyright © {{ year }} Worship helper</p>
       </div>
     </div>
   </authorizationTemplate>
@@ -59,7 +59,7 @@ export default {
     register: function (event) {
       let self = this;
       let responseElement = $(".response");
-      let form = $("#" + event.target.id);
+      let form = $("#register-form");
       let button = $("#register-account-button");
 
       if (!self.checkIfPasswordsAreSame()) {
@@ -70,10 +70,12 @@ export default {
       }
       
       button.attr("disabled", "disabled");
+
       let data = form.serializeArray().reduce(function (obj, item) { // Pega todos os dados do formulário e coloca em um objeto.
           obj[item.name] = item.value;
           return obj;
       }, {});
+
       api.post("/usuario/cadastro", data)
       .then(function (response) {
         self.response = response.data.message;
@@ -82,7 +84,7 @@ export default {
         self.removeJwtFromLocalStorage();
         self.$router.push("/login");
       })
-      .catch(function () {
+      .catch(function (error) {
         self.response = "Erro no cadastro";
         self.resetResponseClass(responseElement);
         responseElement.css("opacity", 1).addClass("error");

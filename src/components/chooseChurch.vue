@@ -53,15 +53,10 @@ export default {
     methods: {
         getMyChurchs: function () {
             let self = this;
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
 
-            api.post("/usuario/minhas-igrejas", "", {
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.post("/usuario/minhas-igrejas")
                 .then(function (response) {
-                    self.lista_igrejas = response.data.lista_igrejas;
+                    self.lista_igrejas = response.data.returnObj;
                 })
                 .catch(function (error) {
                     console.log(error)
@@ -69,15 +64,10 @@ export default {
         },
         getChurchInvitesList: function (reload_churches = false) {
             let self = this;
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
 
-            api.get("/usuario/retorna-convites", {
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.get("/usuario/retorna-convites")
                 .then(function (response) {
-                    self.churchInviteList = response.data.object;
+                    self.churchInviteList = response.data.returnObj;
                     if (reload_churches) {
                         self.getMyChurchs();
                     }
@@ -88,16 +78,11 @@ export default {
         },
         acceptInvite: function (id_igreja) {
             let self = this;
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
             let data = {
                 id_igreja: id_igreja
             }
 
-            api.post("/usuario/aceita-convite", data, {
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.post("/usuario/aceita-convite", data)
                 .then(function () {
                     location.reload();
                 })
@@ -107,16 +92,11 @@ export default {
         },
         denyInvite: function (id_igreja) {
             let self = this;
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
             let data = {
                 id_igreja: id_igreja
             }
 
-            api.post("/usuario/rejeita-convite", data, {
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.post("/usuario/rejeita-convite", data)
                 .then(function () {
                     location.reload();
                 })

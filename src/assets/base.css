@@ -87,7 +87,7 @@
 .btn-small {
   width: fit-content !important;
   padding: 7px !important;
-  font-size: var(--font-size-button-3) !important;
+  font-size: var(--font-size-button-5) !important;
   display: flex;
   align-items: center;
   margin: 7px 0;
@@ -295,7 +295,7 @@ a {
   background: var(--neutral-gray-soft);
   cursor: pointer;
   transition: all 0.4s;
-  font-size: var(--font-size-1);
+  font-size: var(--font-size-4);
 }
 
   .btn:hover {

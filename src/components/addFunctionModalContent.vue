@@ -41,7 +41,6 @@ export default {
     methods: {
         checkCurrentFunction: function () {
             setTimeout(() => {
-                console.log(this.member)
                 for (let i = 0; i < this.functions.length; i++) {
                     this.member.funcoes_usuario.filter(funcao => {
                         if (funcao.id_funcao == this.functions[i].id_funcao) {
@@ -54,7 +53,6 @@ export default {
         },
         replaceOccupation: function(id_usuario) {
             let self = this;
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
             let checkedInputs = [];
             let inputs = $(".input-checkbox-container input");
             let data = {};
@@ -69,11 +67,7 @@ export default {
 
             this.$emit("success", true);
 
-            api.post("/usuario/altera-funcoes", data, {
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.post("/usuario/altera-funcoes", data)
                 .then(function (response) {
                     console.log(response)
                 })
@@ -83,16 +77,11 @@ export default {
         },
         returnOccupations: function () {
             let self = this;
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
             let data = {
                 id_igreja: this.igreja.id_igreja
             }
 
-            api.post("/igreja/retorna-funcoes", data, {
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.post("/igreja/retorna-funcoes", data)
                 .then(function (response) {
                     self.functions = response.data.lista_funcoes;
                 })

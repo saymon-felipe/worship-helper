@@ -30,17 +30,12 @@ export default {
         },
         removeMember: function () {
             let self = this;
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
             let data = {
                 id_usuario: self.member.id_usuario,
                 id_igreja: self.igreja.id_igreja
             }
 
-            api.post("/igreja/remover-membro", data, {
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.post("/igreja/remover-membro", data)
                 .then(function (response) {
                     console.log(response)
                     this.$emit("success", true);
@@ -50,9 +45,6 @@ export default {
                     self.showResponse(error.response.data.message, ".response", "error");
                 })
         }
-    },
-    mounted: function () {
-        console.log(this.member);
     }
 }
 </script>

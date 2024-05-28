@@ -40,11 +40,6 @@ export default {
             }
             return "Visualizar";
         }
-    },
-    watch: {
-        user: function () {
-            console.log(this.user);
-        }
     }
 }
 </script>

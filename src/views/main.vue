@@ -12,14 +12,6 @@ export default {
     mixins: [globalMethods],
     components: {
         siteTemplate
-    },
-    mounted: function () {
-        this.requireUser();
-    },
-    watch: {
-        user: function () {
-            console.log(this.user);
-        }
     }
 }
 </script>

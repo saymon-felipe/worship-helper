@@ -52,13 +52,7 @@ export default {
 
             }
 
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
-
-            api.post("/igreja/envia-convite", data, {
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.post("/igreja/envia-convite", data)
             .then(function (response) {
                 self.showResponse(response.data.message, ".response", "success");
                 self.$emit("success", true);

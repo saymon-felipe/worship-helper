@@ -20,6 +20,18 @@ export const globalMethods = {
         },
         setJwtInLocalStorage: function (jwt) {
             localStorage.setItem("wh_jwt", jwt);
+            this.checkAndSetJwt();
+        },
+        checkAndSetJwt: function() {
+            let interval = setInterval(() => {
+                let jwt = this.getJwtFromLocalStorage();
+
+                if (jwt != null) {
+                    api.defaults.headers.common['Authorization'] = `Bearer ${jwt}`;
+                    this.$root.jwtLoaded = true;
+                    clearInterval(interval);
+                }
+            }, 100)
         },
         removeJwtFromLocalStorage: function () {
             localStorage.removeItem("wh_jwt");
@@ -36,43 +48,58 @@ export const globalMethods = {
                 object.removeClass("error");
             }
         },
-        checkIfUserIsAuthenticated: function () {
+        logoutUser: function () {
             let self = this;
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
-            let pathName = window.location.href;
-            let windowLocation = window.location.pathname;
 
-            if (windowLocation.indexOf("/register") != -1) {
-                return;
-            }
-            
-            if (jwt == "Bearer null" && windowLocation.indexOf("/login") == -1) {
-                self.$router.push("/login");
-            } else {
-                api.post("/usuario/check_jwt", "", {
-                    headers: {
-                        Authorization: jwt
-                    }
-                })
-                .then(function () {
-                    if (pathName.indexOf("/login") != -1) {
-                        self.$router.push("/home");
-                    }
-                })
-                .catch(function () {
-                    if (pathName.indexOf("/login") == -1) {
-                        self.removeJwtFromLocalStorage();
+            self.removeJwtFromLocalStorage();
+            self.$router.push("/login");
+        },
+        checkIfUserIsAuthenticated: function () {
+            return new Promise((resolve) => {
+                let self = this;
+                let pathName = window.location.href;
+                let jwt = "Bearer " + self.getJwtFromLocalStorage();
+
+                if (jwt == "Bearer null") {
+                    if (pathName.indexOf("/home") != -1) {
                         self.$router.push("/login");
+                        return;
                     }
-                })
-                .then(function () {
-                    if (pathName.indexOf("/login") == -1) {
-                        setTimeout(() => {
-                            self.checkIfUserIsAuthenticated();
-                        }, 60 * 1000); //Repetição da função a cada 1 minuto
+                } else {
+                    let data = {
+                        token: jwt
                     }
-                })
-            }
+                    
+                    api.post("/usuario/check_jwt", data, {
+                        headers: {
+                            'Authorization': jwt
+                        }
+                    }) // Se ja estiver logado no sistema e acessar a página de login, é checkado a valia do token JWT e então redirecionado para a index.
+                    .then(function (res) { 
+                        self.setJwtInLocalStorage(res.data.returnObj.newToken); // Setando o novo jwt que foi resetado
+
+                        if (pathName.indexOf("/login") != -1) { // Se o usuário estiver logado e entrar em login, o mesmo é logado novamente e direcionado para a index.
+                            let loginForm = $("#login-form");
+                            loginForm.find("input").attr("disabled", "disabled");
+                            loginForm.find("button").attr("disabled", "disabled").addClass("btn-loading");
+
+                            setTimeout(() => {
+                                self.$router.push("/home");
+                            }, 1000);
+                        }
+                        resolve();
+                    })
+                    .catch(function () { // Caso contrário ele é deslogado e enviado para login.
+                        self.logoutUser();
+                        return;
+                    })
+                    .then(function () { // Chamada recursiva da função se o usuario estiver na home
+                        if (pathName.indexOf("/home") != -1) {
+                            setTimeout(self.checkIfUserIsAuthenticated, 10 * 1000);
+                        }
+                    })
+                }
+            })
         },
         toggleAddTagInput: function (type) {
             let inputString;
@@ -106,8 +133,8 @@ export const globalMethods = {
             location.reload();
         },
         requireUser: async function() { // Função retorna o usuário pelo id.
-            let self = this, jwt = "Bearer " + self.getJwtFromLocalStorage();
-            self.user = await api.get("/usuario/return_user", { headers: { Authorization: jwt } }).then(res => res.data.usuario);
+            let self = this;
+            self.user = await api.get("/usuario/return_user").then(res => res.data.returnObj);
         },
         pushAvatars: function (target_id) {
             let target = $("#member-" + target_id);
@@ -136,18 +163,13 @@ export const globalMethods = {
         },
         getMyChurch: function () {
             let self = this;
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
             let data = {
                 id_igreja: self.$route.params.id_igreja
             }
 
-            api.post("/igreja/retorna-igreja", data, {
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.post("/igreja/retorna-igreja", data)
                 .then(function (response) {
-                    self.igreja = response.data.igreja;
+                    self.igreja = response.data.returnObj;
                 })
                 .catch(function (error) {
                     console.log(error)
@@ -155,16 +177,11 @@ export const globalMethods = {
         },
         checkPermission: function() {
             let self = this;
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
             let data = {
                 id_igreja: self.$route.params.id_igreja
             }
 
-            api.post("/igreja/permissao-gerenciar", data, {
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.post("/igreja/permissao-gerenciar", data)
                 .then(function (response) {
                     self.havePermission = true;
                     self.loading = false;
@@ -177,13 +194,8 @@ export const globalMethods = {
         },
         checkAppPermission: function() {
             let self = this;
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
 
-            api.post("/usuario/app_administrator", "", {
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.post("/usuario/app_administrator")
                 .then(function () {
                     self.haveAppPermission = true;
                 })
@@ -220,12 +232,14 @@ export const globalMethods = {
         },
         select_user: function (event) {
             let self = this;
-            self.selected_tag = event;
+            
+            self.selected_member = event;
             $("#adm-id").attr("placeholder", "");
         },
         select_tag: function (event) {
             let self = this;
-            self.selected_member = event;
+
+            self.selected_tag = event;
             self.searchParam = "";
         },
         restoreInputLabel: function (element_id, text) {
@@ -238,15 +252,10 @@ export const globalMethods = {
         },
         listAllChurches: function () {
             let self = this;
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
 
-            api.get("/igreja/listar-igrejas", {
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.get("/igreja/listar-igrejas")
                 .then(function (response) {
-                    self.igrejas = response.data.lista_igrejas;
+                    self.igrejas = response.data.returnObj;
                 })
                 .catch(function (error) {
                     console.log(error);
@@ -264,10 +273,9 @@ export const globalMethods = {
             user: {},
             default_church_image: api.defaults.baseURL + "/public/church-default-image.jpg",
             current_date: moment(),
-            loading: true
+            loading: true,
+            year: new Date().getFullYear(),
+            selected_tag: {}
         }
-    },
-    beforeMount: function () {
-        this.checkIfUserIsAuthenticated();
     }
 }

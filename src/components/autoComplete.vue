@@ -74,11 +74,14 @@ export default {
                 if (response.data.status == "empty") {
                     self.$emit('emptySearch');
                 } else {
-                    self.members = response.data.lista_de_usuarios;
+                    self.members = response.data.returnObj;
                 }
             })
         },
         selectUser: function (user) {
+            this.members = [];
+            $(".auto-complete").hide();
+            
             this.$emit('selectUser', user);
         }
     },

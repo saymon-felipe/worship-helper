@@ -67,7 +67,6 @@ export default {
             this.inviteMember = !this.inviteMember;
         },
         inviteMemberToEvent: function () {
-            console.log(this.selected_member);
             this.resetSelectedMember();
             this.submitUserButton = false;
             this.inviteMember = false;

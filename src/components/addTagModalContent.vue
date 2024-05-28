@@ -50,14 +50,14 @@ export default {
         },
         replaceOccupation: function(id_usuario) {
             let self = this;
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
             let data = $("#replace_occupation_form").serializeArray().reduce(function (obj, item) { // Pega todos os dados do formulário e coloca em um objeto.
                 obj[item.name] = parseInt(item.value);
                 return obj;
             }, {});
+
             data["id_usuario"] = id_usuario;
             data["id_igreja"] = this.igreja.id_igreja;
-            console.log(self.member.tag_usuario.length)
+
             if (self.member.tag_usuario.length != 0 && data["id_tag"] == self.member.tag_usuario[0].id_tag) {
                 this.$emit("success", true);
                 return;
@@ -65,13 +65,9 @@ export default {
 
             this.$emit("success", true);
 
-            api.post("/usuario/altera-tag", data, {
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.post("/usuario/altera-tag", data)
                 .then(function (response) {
-                    console.log(self.response)
+                    console.log(response)
                 })
                 .catch(function (error) {
                     console.log(error);
@@ -79,16 +75,11 @@ export default {
         },
         returnOccupations: function () {
             let self = this;
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
             let data = {
                 id_igreja: this.igreja.id_igreja
             }
 
-            api.post("/igreja/retorna-tags", data, {
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.post("/igreja/retorna-tags", data)
                 .then(function (response) {
                     self.occupations = response.data.lista_tags;
                 })

@@ -53,7 +53,8 @@ export default {
                 id_usuario: null,
                 imagem_usuario: "",
                 nome_usuario: ""
-            }
+            },
+            selected_tag: {}
         }
     },
     methods: {
@@ -74,13 +75,7 @@ export default {
 
             data["usuario_administrador"] = self.selected_member.id_usuario;
 
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
-
-            api.post("/igreja/cadastrar-igreja", data, {
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.post("/igreja/cadastrar-igreja", data)
                 .then(function (response) {
                     responseElement.css("opacity", 1).addClass("success");
                     self.response = response.data.message;
@@ -102,15 +97,10 @@ export default {
         },
         uploadPhoto: function (formData) {
             let self = this;
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
 
             self.response = "";
 
-            api.patch("/igreja/church-image/" + self.createdChurchId, formData, { 
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.patch("/igreja/church-image/" + self.createdChurchId, formData)
             .then(function () { 
                 self.previewPhoto = "";
                 self.closeModal();
@@ -118,9 +108,6 @@ export default {
             .catch(function (error) {
                 $(".response").addClass("error");
                 self.response = error.response;
-            })
-            .then(function () {
-                self.loading = false;
             })
         },
         preSendPhoto: function (event) {

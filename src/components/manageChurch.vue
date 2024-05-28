@@ -101,7 +101,6 @@ export default {
             let self = this;
             let element = $("#send-warning");
             let value = element.val();
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
 
             if (value.trim().length == 0) {
                 return;
@@ -112,11 +111,7 @@ export default {
                 mensagem: value
             }
 
-            api.post("/igreja/publicar-aviso", data, {
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.post("/igreja/publicar-aviso", data)
                 .then(function () {
                     element.val("");
                     self.returnWarnings();
@@ -127,17 +122,12 @@ export default {
         },
         returnWarnings: function () {
             let self = this;
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
 
             let data = {
                 id_igreja: this.igreja.id_igreja
             }
 
-            api.post("/igreja/retorna-avisos", data, {
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.post("/igreja/retorna-avisos", data)
                 .then(function (response) {
                     self.warnings = response.data.avisos;
                 })
@@ -147,7 +137,6 @@ export default {
         },
         likeWarning: function (warning_id, usuario_atual_curtiu = false) {
             let self = this;
-            let jwt = "Bearer " + self.getJwtFromLocalStorage();
 
             if (usuario_atual_curtiu) {
                 return;
@@ -159,11 +148,7 @@ export default {
                 confirmacao: true
             }
 
-            api.post("/igreja/curtir-aviso", data, {
-                headers: {
-                    Authorization: jwt
-                }
-            })
+            api.post("/igreja/curtir-aviso", data)
                 .then(function () {
                     self.returnWarnings();
                 })

@@ -6,8 +6,8 @@
                 <div v-for="(occupation, index) in occupations" v-bind:key="index">
                     <div class="input-group">
                         <div class="input-checkbox-container">
-                            <input type="radio" name="id_tag" :value="occupation.id_tag" :id="'occupation-' + occupation.nome_tag">
-                            <label :for="'occupation-' + occupation.nome_tag">{{ occupation.nome_tag }}</label>
+                            <input type="radio" name="id_tag" :value="occupation.id_tag" :id="'occupation-' + occupation.id_tag">
+                            <label :for="'occupation-' + occupation.id_tag">{{ occupation.nome_tag }}</label>
                         </div>
                     </div>
                 </div>
@@ -38,12 +38,14 @@ export default {
     methods: {
         checkCurrentTag: function () {
             setTimeout(() => {
+                console.log(this.member)
+                console.log(this.occupations)
                 if (this.member.tag_usuario[0] == undefined) {
                     return;
                 }
                 for (let i = 0; i < this.occupations.length; i++) {
                     if (this.occupations[i].id_tag == this.member.tag_usuario[0].id_tag) {
-                        $("#occupation-"  + this.occupations[i].nome_tag).prop("checked", true);
+                        $("#occupation-"  + this.occupations[i].id_tag).prop("checked", true);
                     }
                 }
             }, 10)
@@ -56,32 +58,26 @@ export default {
             }, {});
 
             data["id_usuario"] = id_usuario;
-            data["id_igreja"] = this.igreja.id_igreja;
+            data["id_igreja"] = this.$root.igreja.id_igreja;
 
             if (self.member.tag_usuario.length != 0 && data["id_tag"] == self.member.tag_usuario[0].id_tag) {
                 this.$emit("success", true);
                 return;
             }
 
-            this.$emit("success", true);
-
-            api.post("/usuario/altera-tag", data)
-                .then(function (response) {
-                    console.log(response)
-                })
-                .catch(function (error) {
-                    console.log(error);
-                })
+            api.post("/usuario/altera-tag", data).then(() => {
+                self.$emit("success", true);
+            })
         },
         returnOccupations: function () {
             let self = this;
             let data = {
-                id_igreja: this.igreja.id_igreja
+                id_igreja: this.$root.igreja.id_igreja
             }
 
             api.post("/igreja/retorna-tags", data)
                 .then(function (response) {
-                    self.occupations = response.data.lista_tags;
+                    self.occupations = response.data.returnObj;
                 })
                 .catch(function (error) {
                     console.log(error);
@@ -89,7 +85,9 @@ export default {
         }
     },
     mounted: function () {
-        this.returnOccupations();
+        this.checkPermission().then(() => {
+            this.returnOccupations();
+        })
     }
 }
 </script>

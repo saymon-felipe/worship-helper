@@ -101,34 +101,6 @@ export const globalMethods = {
                 }
             })
         },
-        toggleAddTagInput: function (type) {
-            let inputString;
-            let wrapperString;
-            if (type == "function") {
-                inputString = "#new-function-input";
-                wrapperString = ".input-new-function-wrapper";
-            } else {
-                inputString = "#new-tag-input";
-                wrapperString = ".input-new-tag-wrapper";
-            }
-            let input = $(inputString);
-            let wrapper = $(wrapperString);
-            input.val("");
-            if (input.is(":visible")) {
-                input.css("opacity", 0);
-                setTimeout(() => {
-                    input.hide();
-                    wrapper.hide();
-                }, 400);
-            } else {
-                wrapper.show();
-                input.show();
-                input.focus();
-                setTimeout(() => {
-                    input.css("opacity", 1);
-                }, 10)
-            }
-        },
         reload: function () {
             location.reload();
         },
@@ -162,35 +134,44 @@ export const globalMethods = {
             return count + " " + membersText;
         },
         getMyChurch: function () {
-            let self = this;
-            let data = {
-                id_igreja: self.$route.params.id_igreja
-            }
+            return new Promise((resolve) => {
+                let self = this;
+                let data = {
+                    id_igreja: self.$route.params.id_igreja
+                }
 
-            api.post("/igreja/retorna-igreja", data)
-                .then(function (response) {
-                    self.igreja = response.data.returnObj;
-                })
-                .catch(function (error) {
-                    console.log(error)
-                })
+                api.post("/igreja/retorna-igreja", data)
+                    .then(function (response) {
+                        self.$root.igreja = response.data.returnObj;
+                    })
+                    .catch(function (error) {
+                        console.log(error)
+                    }).then(() => {
+                        resolve();
+                    })
+            })
         },
         checkPermission: function() {
-            let self = this;
-            let data = {
-                id_igreja: self.$route.params.id_igreja
-            }
-
-            api.post("/igreja/permissao-gerenciar", data)
-                .then(function (response) {
-                    self.havePermission = true;
-                    self.loading = false;
-                })
-                .catch(function (error) {
-                    self.havePermission = false;
-                    self.loading = false;
-                    console.log(error);
-                })
+            return new Promise((resolve) => {
+                let self = this;
+                let data = {
+                    id_igreja: self.$route.params.id_igreja
+                }
+    
+                api.post("/igreja/permissao-gerenciar", data)
+                    .then(function (response) {
+                        self.havePermission = true;
+                        self.loading = false;
+                        self.getMyChurch().then(() => {
+                            resolve();
+                        });
+                    })
+                    .catch(function (error) {
+                        self.havePermission = false;
+                        self.loading = false;
+                        resolve();
+                    })
+            })
         },
         checkAppPermission: function() {
             let self = this;
@@ -253,13 +234,9 @@ export const globalMethods = {
         listAllChurches: function () {
             let self = this;
 
-            api.get("/igreja/listar-igrejas")
-                .then(function (response) {
-                    self.igrejas = response.data.returnObj;
-                })
-                .catch(function (error) {
-                    console.log(error);
-                })
+            api.get("/igreja/listar-igrejas").then(function (response) {
+                self.igrejas = response.data.returnObj;
+            })
         },
         showModalFunction: function (showModal, modalTitle, modalButtonTitle, modalButton2Title) {
             this.showModal = showModal;
@@ -275,7 +252,19 @@ export const globalMethods = {
             current_date: moment(),
             loading: true,
             year: new Date().getFullYear(),
-            selected_tag: {}
+            selected_tag: {},
+            showModal: false,
+            modalTitle: "",
+            igreja: {
+                imagem_igreja: "",
+                nome_igreja: ""
+            },
+            modalButtonTitle: "",
+            modalButton2Title: "",
+            havePermission: false
         }
+    },
+    mounted: function () {
+        this.$root.igreja = this.igreja;
     }
 }

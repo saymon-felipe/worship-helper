@@ -8,8 +8,8 @@
                 <div v-for="(occupation, index) in functions" v-bind:key="index">
                     <div class="input-group">
                         <div class="input-checkbox-container">
-                            <input type="checkbox" :name="'id_funcao_' + occupation.id_funcao" :value="occupation.id_funcao" :id="'occupation-' + occupation.nome_funcao">
-                            <label :for="'occupation-' + occupation.nome_funcao">{{ occupation.nome_funcao }}</label>
+                            <input type="checkbox" :name="'id_funcao_' + occupation.id_funcao" :value="occupation.id_funcao" :id="'occupation-' + occupation.id_funcao">
+                            <label :for="'occupation-' + occupation.id_funcao">{{ occupation.nome_funcao }}</label>
                         </div>
                     </div>
                 </div>
@@ -44,7 +44,7 @@ export default {
                 for (let i = 0; i < this.functions.length; i++) {
                     this.member.funcoes_usuario.filter(funcao => {
                         if (funcao.id_funcao == this.functions[i].id_funcao) {
-                            $("#occupation-"  + this.functions[i].nome_funcao).prop("checked", true);
+                            $("#occupation-"  + this.functions[i].id_funcao).prop("checked", true);
                             return funcao;
                         }
                     })
@@ -56,34 +56,30 @@ export default {
             let checkedInputs = [];
             let inputs = $(".input-checkbox-container input");
             let data = {};
+            
             inputs.each((index, item) => {
                 if (item.checked) {
                     checkedInputs.push(item.value);
                 }
             })
+
             data.id_usuario = id_usuario;
-            data.id_igreja = this.igreja.id_igreja;
+            data.id_igreja = this.$root.igreja.id_igreja;
             data.new_functions = checkedInputs;
 
-            this.$emit("success", true);
-
-            api.post("/usuario/altera-funcoes", data)
-                .then(function (response) {
-                    console.log(response)
-                })
-                .catch(function (error) {
-                    console.log(error);
-                })
+            api.post("/usuario/altera-funcoes", data).then(function () {
+                self.$emit("success", true);
+            })
         },
         returnOccupations: function () {
             let self = this;
             let data = {
-                id_igreja: this.igreja.id_igreja
+                id_igreja: this.$root.igreja.id_igreja
             }
 
             api.post("/igreja/retorna-funcoes", data)
                 .then(function (response) {
-                    self.functions = response.data.lista_funcoes;
+                    self.functions = response.data.returnObj;
                 })
                 .catch(function (error) {
                     console.log(error);
@@ -91,7 +87,9 @@ export default {
         }
     },
     mounted: function () {
-        this.returnOccupations();
+        this.checkPermission().then(() => {
+            this.returnOccupations();
+        })
     }
 }
 </script>

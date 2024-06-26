@@ -46,9 +46,6 @@ export default {
 <style scoped>
 footer {
     width: 100%;
-    position: fixed;
-    bottom: 0;
-    left: 0;
     background: var(--primary-primary-blue-low);
 }
 

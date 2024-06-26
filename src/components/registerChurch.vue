@@ -9,11 +9,15 @@
                     <p class="font-size-3">{{returnMembersText(church.quantidade_membros)}}</p>
                 </div>
             </div>
+            <div class="church-empty" v-if="igrejas.length <= 0">
+                <h5>Vazio!</h5>
+                <p>Nenhuma igreja cadastrada no Worship Helper</p>
+            </div>
             <div class="background-button">
                 <button class="btn primary register-church" v-on:click="openRegisterChurchModal()">Cadastrar igreja</button>
             </div>
         </div>
-        <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm()">
+        <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm(); listAllChurches();">
             <registerChurchModalContent v-if="registerChurch" @success="closeModal()" />
             <viewChurchModalContent v-if="viewChurch" @church="church" />
         </modal>
@@ -32,7 +36,7 @@ export default {
     data() {
         return {
             showModal: false,
-            igrejas: {},
+            igrejas: [],
             modalTitle: "",
             modalButtonTitle: "",
             modalButton2Title: "",

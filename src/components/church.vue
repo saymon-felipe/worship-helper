@@ -9,11 +9,9 @@
                 </div>
             </div>
         </div>
-        <footerComponent />
     </div>
 </template>
 <script>
-import footerComponent from "./footerComponent.vue";
 import eventComponent from "./eventComponent.vue";
 
 export default {
@@ -66,7 +64,6 @@ export default {
         }
     },
     components: {
-        footerComponent,
         eventComponent
     }
 }

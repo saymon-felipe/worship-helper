@@ -9,7 +9,7 @@
                 <slot />
             </div>
             <div class="modal-footer" v-if="buttonTitle != ''">
-                <button v-on:click="emitSubmitEvent()" class="btn primary">{{ buttonTitle }}</button>&nbsp;&nbsp;&nbsp;
+                <button v-on:click="emitSubmitEvent()" class="btn primary">{{ buttonTitle }}</button>
                 <button v-on:click="emitCancelEvent()" class="btn secondary" v-if="button2Title != ''">{{ button2Title }}</button>
             </div>
         </div>
@@ -109,4 +109,8 @@ export default {
     display: flex;
     justify-content: center;
 }
+
+    .modal-footer button:nth-child(2) {
+        margin-left: 12px;
+    }
 </style>

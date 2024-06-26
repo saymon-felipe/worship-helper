@@ -85,6 +85,7 @@ export default {
         self.$router.push("/login");
       })
       .catch(function (error) {
+        console.log(error)
         self.response = "Erro no cadastro";
         self.resetResponseClass(responseElement);
         responseElement.css("opacity", 1).addClass("error");

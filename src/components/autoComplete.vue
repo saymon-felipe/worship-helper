@@ -44,7 +44,7 @@ export default {
             $(".auto-complete").show();
             api.post('/igreja/retorna-tags', data)
             .then(function (response) {
-                self.tags = response.data.lista_tags;
+                self.tags = response.data.returnObj;
             })
         },
         filterSearch: function (string) {
@@ -83,6 +83,12 @@ export default {
             $(".auto-complete").hide();
             
             this.$emit('selectUser', user);
+        },
+        selectTag: function (tag) {
+            this.tag = [];
+            $(".auto-complete").hide();
+            
+            this.$emit('selectTag', tag);
         }
     },
     mounted: function () {

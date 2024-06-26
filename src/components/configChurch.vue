@@ -1,7 +1,6 @@
 <template>
-    <div class="config-church">
-        <div class="loading" v-if="loading">Loading</div>
-        <div class="config-church-container" v-if="!loading">
+    <div class="config-church app-inner-content">
+        <div class="config-church-container">
             <h3>Configurar igreja</h3>
             <div class="configuration-container">
                 <div class="configuration-header">
@@ -26,27 +25,26 @@
                 </div>
                 <div class="functions-list">
                     <div class="functions-list-container">
-                        <div class="tag" v-for="(currentFunction, index) in functions" v-bind:key="index" :id="'function-' + currentFunction.id_funcoes_igreja">
+                        <div class="tag" v-for="(currentFunction, index) in functions" v-bind:key="index" :id="'function-' + currentFunction.id_funcao">
                             <label>{{ currentFunction.nome_funcao }}</label>
-                            <span class="material-icons" v-on:click="deleteFunction(currentFunction.id_funcoes_igreja)">clear</span>
+                            <span class="material-icons" v-on:click="deleteFunction(currentFunction.id_funcao)">clear</span>
                         </div>
                     </div>
                 </div>
-                <input type="text" class="input" id="new-tag-input" v-on:focusout="createNewTag($event)" maxlength="50">
-                <div class="input-new-tag-wrapper" v-on:click="toggleAddTagInput('tag')"></div>
-                <input type="text" class="input" id="new-function-input" v-on:focusout="createNewFunction($event)" maxlength="50">
-                <div class="input-new-function-wrapper" v-on:click="toggleAddTagInput('function')"></div>
                 <p class="response">{{ response }}</p>
             </div>
         </div>
-        <footerComponent />
+        <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm(); returnPageInformations();">
+            <registerTagOrFunction @success="closeModal(); returnPageInformations();" :type="type" />
+        </modal>
     </div>
 </template>
 <script>
+import modal from "./modal.vue";
+import registerTagOrFunction from "./registerTagOrFunction.vue";
 import { globalMethods } from '../js/globalMethods';
 import api from '../config/api';
 import $ from 'jquery';
-import footerComponent from "./footerComponent.vue";
 
 export default {
     name: "configChurch",
@@ -59,18 +57,28 @@ export default {
                 imagem_igreja: "",
                 nome_igreja: ""
             },
-            response: ""
-        }
-    },
-    components: {
-        footerComponent
-    },
-    watch: {
-        loading: function () {
-            this.getMyChurch();
+            response: "",
+            type: ""
         }
     },
     methods: {
+        toggleAddTagInput: function (type) {
+            let self = this;
+            
+            if (type == "function") {
+                self.modalTitle = "Cadastrar função";
+            } else if (type == "tag") {
+                self.modalTitle = "Cadastrar tag";
+            }
+
+            self.type = type;
+            self.modalButtonTitle = "Cadastrar";
+            self.showModal = true;
+
+            setTimeout(() => {
+                $("#entity").focus();
+            }, 100);
+        },
         removeTagFromDom: function (id_tag) {
             let tag = $("#tag-" + id_tag);
             tag.remove();
@@ -86,14 +94,9 @@ export default {
                 id_igreja: self.$route.params.id_igreja
             }
 
-            api.post("/igreja/deletar-tag", data)
-                .then(function (response) {
-                    self.removeTagFromDom(id_tag);
-                    self.returnChurchTags();
-                })
-                .catch(function (error) {
-                    console.log(error.response.data.message);
-                })
+            self.removeTagFromDom(id_tag);
+
+            api.post("/igreja/deletar-tag", data);
         },
         deleteFunction: function (id_function) {
             let self = this;
@@ -102,66 +105,19 @@ export default {
                 id_igreja: self.$route.params.id_igreja
             }
 
-            api.post("/igreja/deletar-funcao", data)
-                .then(function (response) {
-                    self.removeFunctionFromDom(id_tag);
-                    self.returnChurchFunctions();
-                })
-                .catch(function (error) {
-                    console.log(error.response.data.message);
-                })
-        },
-        createNewTag: function (event) {
-            let value = $("#" + event.target.id).val();
-            if (value.trim().length == 0) {
-                return;
-            }
+            self.removeFunctionFromDom(id_function);
 
-            let self = this;
-            let data = {
-                id_igreja: self.$route.params.id_igreja,
-                new_tag: value
-            }
-
-            api.post("/igreja/criar-tag", data)
-                .then(function () {
-                    self.toggleAddTagInput('tag');
-                    self.returnChurchTags();
-                })
-                .catch(function (error) {
-                    console.log(error.response.data.message);
-                })
-        },
-        createNewFunction: function (event) {
-            let value = $("#" + event.target.id).val();
-            if (value.trim().length == 0) {
-                return;
-            }
-
-            let self = this;
-            let data = {
-                id_igreja: self.$route.params.id_igreja,
-                new_function: value
-            }
-
-            api.post("/igreja/criar-funcao", data)
-                .then(function () {
-                    self.toggleAddTagInput('function');
-                    self.returnChurchFunctions();
-                })
-                .catch(function (error) {
-                    console.log(error.response.data.message);
-                })
+            api.post("/igreja/deletar-funcao", data);
         },
         returnChurchTags: function () {
             let self = this;
             let data = {
-                id_igreja: self.$route.params.id_igreja
+                id_igreja: self.$root.igreja.id_igreja
             }
 
             api.post("/igreja/retorna-tags", data)
                 .then(function (response) {
-                    self.tags = response.data.lista_tags;
+                    self.tags = response.data.returnObj;
                     self.response = "";
                 })
                 .catch(function (error) {
@@ -171,23 +127,34 @@ export default {
         returnChurchFunctions: function () {
             let self = this;
             let data = {
-                id_igreja: self.$route.params.id_igreja
+                id_igreja: self.$root.igreja.id_igreja
             }
 
             api.post("/igreja/retorna-funcoes", data)
                 .then(function (response) {
-                    self.functions = response.data.lista_funcoes;
+                    self.functions = response.data.returnObj;
                     self.response = "";
                 })
                 .catch(function (error) {
                     self.showResponse(error.response.data.message, ".response");
                 })
+        },
+        returnPageInformations: function () {
+            this.returnChurchTags();
+            this.returnChurchFunctions();
         }
     },
     mounted: function () {
-        this.checkPermission();
-        this.returnChurchTags();
-        this.returnChurchFunctions();
+        let self = this;
+
+        this.checkPermission().then(() => {
+            self.returnPageInformations();
+        });
+        
+    },
+    components: {
+        modal,
+        registerTagOrFunction
     }
 }
 </script>
@@ -195,31 +162,31 @@ export default {
 .tag, .function {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    margin: 1.5rem 0;
 }
 
 .tag span, .function span {
     cursor: pointer;
-    margin-left: 2rem;
+    margin-right: 14px;
     color: var(--others-red);
+}
+
+.tag label, .function label {
+    margin-left: 14px;
 }
 
 .configuration-container, .tags-list, .functions-list {
     margin-top: 1rem;
 }
 
-.tags-list, .functions-list {
-    overflow: hidden;
-}
-
-.tags-list-container, .functions-list-container {
-    overflow-y: auto;
-    height: 150px;
-}
-
-.configuration-header {
+.config-church-container {
+    height: 100%;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 2rem;
+    flex-direction: column;
+}
+
+.configuration-container {
+    flex: 1;
 }
 </style>

@@ -152,6 +152,20 @@ a {
   margin: auto;
 }
 
+.church-empty {
+  margin-top: 1rem;
+}
+
+.inner-modal-container {
+  margin-top: 2rem;
+}
+
+.app-inner-content {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
 @keyframes pulse {
   0% {
     box-shadow: 0 0 0 1px rgba(255, 202, 55, 0.774);
@@ -223,6 +237,13 @@ a {
   .create-new-tag:hover {
       background: var(--primary-primary-blue-high);
   }
+
+.configuration-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2rem;
+}
 
 .link, .link:hover {
   color: var(--neutral-white) !important;
@@ -519,7 +540,7 @@ label {
 
 .background-button {
   background: var(--primary-primary-blue-low);
-  position: fixed;
+  position: absolute;
   bottom: 0;
   left: 0;
   padding: 1rem;

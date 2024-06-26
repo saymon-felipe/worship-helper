@@ -10,11 +10,13 @@
                     <slot />
                 </div>
             </div>
+            <footerComponent />
         </div>
     </div>
 </template>
 
 <script>
+import footerComponent from "../components/footerComponent.vue";
 import headerComponent from '../components/header.vue';
 import { globalMethods } from '../js/globalMethods';
 import loadingJson from "../assets/animations/loading.json";
@@ -23,7 +25,8 @@ export default {
     name: "siteTemplate",
     mixins: [globalMethods],
     components: {
-        headerComponent
+        headerComponent,
+        footerComponent
     },
     data() {
         return {
@@ -63,13 +66,27 @@ export default {
 </script>
 <style scoped>
 .main-container {
-    flex-grow: 1;
+    flex: 1;
+    max-height: calc(100vh - 170px);
 }
+
 .inner-container {
     width: 100%;
     max-width: 900px;
     height: 100%;
     margin: auto;
-    padding: 1rem 1rem 5rem 1rem;
+    padding: 1rem;
+    overflow-x: hidden;
+    overflow-y: auto;
+    position: relative;
+    padding-bottom: 5rem;
+}
+
+.app-container {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    min-height: 100vh;
+    overflow: hidden;
 }
 </style>

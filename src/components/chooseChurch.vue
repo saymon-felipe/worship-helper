@@ -45,7 +45,7 @@ export default {
     mixins: [globalMethods],
     data() {
         return {
-            lista_igrejas: {},
+            lista_igrejas: [],
             churchInviteList: {},
             haveAppPermission: false
         }
@@ -84,7 +84,7 @@ export default {
 
             api.post("/usuario/aceita-convite", data)
                 .then(function () {
-                    location.reload();
+                    self.returnInformations();
                 })
                 .catch(function (error) {
                     console.log(error);
@@ -98,7 +98,7 @@ export default {
 
             api.post("/usuario/rejeita-convite", data)
                 .then(function () {
-                    location.reload();
+                    self.returnInformations();
                 })
                 .catch(function (error) {
                     console.log(error);
@@ -106,12 +106,16 @@ export default {
         },
         goToRegisterChurchPage: function () {
             this.$router.push("/register-church");
+        },
+        returnInformations: function () {
+            this.getMyChurchs();
+            this.getChurchInvitesList();
         }
     },
     mounted: function () {
-        this.checkAppPermission();
-        this.getMyChurchs();
-        this.getChurchInvitesList();
+        this.checkPermission().then(() => {
+            this.returnInformations();
+        })
     }
 }
 </script>

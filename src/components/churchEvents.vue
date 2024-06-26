@@ -1,33 +1,33 @@
 <template>
     <div class="church-events">
-        <div class="church-profile">
-            <img :src="igreja.imagem_igreja" class="avatar-p">
-            <div class="church-informations">
-                <h5>{{ igreja.nome_igreja }}</h5>
-                <p class="font-size-3">{{ returnMembersText(igreja.quantidade_membros) }}</p>
+        <div v-if="!loading">
+            <div class="church-profile">
+                <img :src="$root.igreja.imagem_igreja" class="avatar-p">
+                <div class="church-informations">
+                    <h5>{{ $root.igreja.nome_igreja }}</h5>
+                    <p class="font-size-3">{{ returnMembersText($root.igreja.quantidade_membros) }}</p>
+                </div>
             </div>
-        </div>
-        <div class="church-events">
-            <h5>Eventos</h5>
-            <div class="church-events-list">
+            <div class="church-events">
+                <h5>Eventos</h5>
+                <div class="church-events-list">
 
+                </div>
             </div>
+            <div class="create-event-button-container">
+                <button class="btn primary create-event" v-on:click="createEvent()">
+                    Novo Evento
+                    <span class="material-icons">add</span>
+                </button>
+            </div>
+            <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm()">
+                <createEventModalContent @church="$root.igreja" @success="closeModal()" />
+            </modal>
         </div>
-        <div class="create-event-button-container">
-            <button class="btn primary create-event" v-on:click="createEvent()">
-                Novo Evento
-                <span class="material-icons">add</span>
-            </button>
-        </div>
-        <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm()">
-            <createEventModalContent @church="church" @success="closeModal()" />
-        </modal>
-        <footerComponent />
     </div>
 </template>
 <script>
 import { globalMethods } from '../js/globalMethods';
-import footerComponent from "./footerComponent.vue";
 import createEventModalContent from "./createEventModalContent.vue";
 import modal from "./modal.vue";
 
@@ -36,15 +36,7 @@ export default {
     mixins: [globalMethods],
     data() {
         return {
-            igreja: {
-                imagem_igreja: "",
-                nome_igreja: ""
-            },
-            havePermission: false,
-            showModal: false,
-            modalTitle: "",
-            modalButton2Title: "",
-            modalButtonTitle: ""
+            loading: true
         }
     },
     methods: {
@@ -55,11 +47,11 @@ export default {
         }
     },
     mounted: function () {
-        this.checkPermission();
-        this.getMyChurch();
+        this.checkPermission().then(() => {
+            this.loading = false;
+        });
     },
     components: {
-        footerComponent,
         modal,
         createEventModalContent
     }
@@ -67,9 +59,9 @@ export default {
 </script>
 <style scoped>
 .church-events {
-    margin-top: 2rem;
     position: relative;
-    height: calc(100% - 35px);
+    margin-top: 1rem;
+    height: calc(100% - 44px);
 }
 
 .create-event {
@@ -86,7 +78,7 @@ export default {
 
 .create-event-button-container {
     position: absolute;
-    bottom: 3rem;
+    bottom: -66px;
     width: 100%;
 }
 

@@ -29,7 +29,6 @@ export default {
     cursor: pointer;
     transition: all 0.4s;
     padding: .5rem;
-    width: 170px;
     position: absolute;
     bottom: 3px;
     left: 3px;
@@ -45,10 +44,17 @@ export default {
         margin-right: 10px;
     }
 
-    .member-informations {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        width: 100%;
+.member-informations {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+}
+
+    .member-informations > p {
+        white-space: nowrap;
+        max-width: 72vw;
+        text-overflow: ellipsis;
+        overflow: hidden;
     }
 </style>

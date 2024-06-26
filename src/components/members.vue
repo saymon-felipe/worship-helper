@@ -14,7 +14,7 @@
                     <div class="informations-container">
                         <h6 class="font-size-3">{{ member.nome_usuario }}</h6>
                         <span>{{ member.funcoes_usuario.length != 0 ? returnOccupations(member.funcoes_usuario) : '' }}</span>
-                        <span class="member-tag" v-if="member.tag_usuario.length != 0">#{{ member.tag_usuario[0].nome_tag }}</span>
+                        <span class="member-tag" v-if="member.tag_usuario.length != 0">{{ member.tag_usuario[0].nome_tag }}</span>
                     </div>
                     <span class="material-icons" id="member-more-actions" v-on:click="openMemberMoreActions(member.id_usuario)" v-if="havePermission">more_vert</span>
                 </div>
@@ -35,12 +35,11 @@
         </div>
         <div class="member-more-actions-wrapper" v-if="showMemberMoreActions" v-on:click="closeMemberMoreActions()"></div>
         <modal v-if="showModal && havePermission" :title="modalTitle" @closeModal="close_modal()" class="modal" @cancelEvent="cancelChanges()" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm()">
-            <inviteMemberModalContent v-if="inviteMember" :igreja="igreja" @success="closeModal()" />
-            <addTagModalContent v-if="addTag" :igreja="igreja" :member="selected_member" @success="closeModal(); reload()" /> 
-            <addFunctionModalContent v-if="addOccupation" :igreja="igreja" :member="selected_member" @success="closeModal(); reload()" /> 
-            <removeMemberModalContent v-if="removeMember" :igreja="igreja" :member="selected_member" @success="closeModal()" />
+            <inviteMemberModalContent v-if="inviteMember" :igreja="$root.igreja" @success="closeModal()" />
+            <addTagModalContent v-if="addTag" :igreja="$root.igreja" :member="selected_member" @success="closeModal(); fillCopyUsers();" /> 
+            <addFunctionModalContent v-if="addOccupation" :igreja="$root.igreja" :member="selected_member" @success="closeModal(); fillCopyUsers();" /> 
+            <removeMemberModalContent v-if="removeMember" :igreja="$root.igreja" :member="selected_member" @success="closeModal()" />
         </modal>
-        <footerComponent />
     </div>
 </template>
 <script>
@@ -51,7 +50,6 @@ import inviteMemberModalContent from "./inviteMemberModalContent.vue";
 import addTagModalContent from "./addTagModalContent.vue";
 import removeMemberModalContent from "./removeMemberModalContent.vue";
 import addFunctionModalContent from "./addFunctionModalContent.vue";
-import footerComponent from "./footerComponent.vue";
 
 export default {
     name: "members",
@@ -59,18 +57,12 @@ export default {
     data() {
         return {
             showMemberMoreActions: false,
-            modalButtonTitle: "",
-            modalButton2Title: "",
-            modalTitle: "",
-            showModal: false,
             inviteMember: false,
             addTag: false,
             addOccupation: false,
             removeMember: false,
             idUsuarioInChange: null,
             selected_member: {},
-            igreja: {},
-            havePermission: false,
             findUsers: "",
             copy_members: []
         }
@@ -80,16 +72,16 @@ export default {
         inviteMemberModalContent,
         addTagModalContent,
         addFunctionModalContent,
-        removeMemberModalContent,
-        footerComponent
+        removeMemberModalContent
     },
     methods: {
         filterMembers: function () {
             if (this.findUsers.trim().length == 0) {
-                this.copy_members = this.igreja.membros;
+                this.copy_members = this.$root.igreja.membros;
                 return;
             }
-            this.copy_members = this.igreja.membros.filter((membro) => {
+            
+            this.copy_members = this.$root.igreja.membros.filter((membro) => {
                 if (membro.nome_usuario.toLowerCase().indexOf(this.findUsers.toLowerCase()) != -1) {
                     return membro;
                 }
@@ -185,21 +177,22 @@ export default {
                 }
             }
             return occupations;
+        },
+        fillCopyUsers: function () {
+            let self = this;
+
+            this.checkPermission().then(() => {
+                self.copy_members = self.$root.igreja.membros;
+            });
         }
     },
     watch: {
-        loading: function () {
-            this.getMyChurch();
-        },
-        igreja: function () {
-            this.copy_members = this.igreja.membros;
-        },
         findUsers: function () {
             this.filterMembers();
         }
     },
     mounted: function () {
-        this.checkPermission();
+        this.fillCopyUsers();
     }
 }
 </script>

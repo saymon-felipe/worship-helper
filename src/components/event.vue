@@ -40,12 +40,10 @@
                 </div>
             </div>
         </div>
-        <footerComponent />
     </section>
 </template>
 <script>
 import { globalMethods } from '../js/globalMethods';
-import footerComponent from "../components/footerComponent.vue";
 
 export default {
     name: "event",
@@ -165,9 +163,6 @@ export default {
     },
     mounted: function () {
         this.getParam();
-    },
-    components: {
-        footerComponent
     }
 }
 </script>

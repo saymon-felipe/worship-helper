@@ -50,7 +50,7 @@ export default {
             
             api.patch("/usuario/update_image", formData)
             .then(function () { 
-                location.reload();
+                self.requireUser();
                 self.response = "";
             })
             .catch(function (error) {
@@ -79,7 +79,7 @@ export default {
             
             api.patch("/usuario/remove_image", data)
             .then(function(){
-                location.reload();
+                self.requireUser();
             })
         },
         submitImage: function () {

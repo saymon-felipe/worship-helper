@@ -41,7 +41,6 @@ export default {
                     this.$emit("success", true);
                 })
                 .catch(function (error) {
-                    console.log();
                     self.showResponse(error.response.data.message, ".response", "error");
                 })
         }

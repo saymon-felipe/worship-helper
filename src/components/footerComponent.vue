@@ -1,6 +1,6 @@
 <template>
     <footer>
-        <div class="container">
+        <div class="container" v-if="current_church.id_igreja != null">
             <div class="menu-option" v-on:click="returnToHome()">
                 <span class="material-icons">home</span>
                 <p>Início</p>
@@ -26,7 +26,10 @@ export default {
     mixins: [globalMethods],
     data() {
         return {
-            current_church: this.getCurrentChurchInLocalStorage()
+            currentId: null,
+            current_church: {
+                id_igreja: null
+            }
         }
     },
     methods: {
@@ -39,7 +42,18 @@ export default {
                 return "Gerenciar";
             }
             return "Visualizar";
+        },
+        watchChurchInSessionStorage: function () {
+            setInterval(() => {
+                if (sessionStorage.getItem("current_church") != null && this.currentId != JSON.parse(sessionStorage.getItem("current_church")).id_igreja) {
+                    this.currentId = sessionStorage.getItem("current_church").id_igreja;
+                    this.current_church = this.getCurrentChurchInLocalStorage();
+                }
+            }, 1000)
         }
+    },
+    mounted: function () {
+        this.watchChurchInSessionStorage();
     }
 }
 </script>

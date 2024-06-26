@@ -56,7 +56,6 @@ export default {
     mixins: [globalMethods],
     data() {
         return {
-            showMemberMoreActions: false,
             inviteMember: false,
             addTag: false,
             addOccupation: false,
@@ -148,36 +147,6 @@ export default {
             this.modalButtonTitle2 = "";
             this.resetVariables("invite");
         },
-        closeMemberMoreActions: function () {
-            let elements = $(".member-more-actions");
-            this.showMemberMoreActions = false;
-            elements.each(function (index, element) {
-                element.style.opacity = 0;
-                setTimeout(() => {
-                    element.style.display = "none";
-                }, 400);
-            })
-        },
-        openMemberMoreActions: function (element_id) {
-            let element = $("#member-" + element_id + " .member-more-actions");
-            this.showMemberMoreActions = true;
-            element.show();
-            setTimeout(() => {
-                element.css("opacity", 1);
-            }, 10);
-        },
-        returnOccupations: function (funcoes_usuario) {
-            let occupations = "";
-            for (let i = 0; i < funcoes_usuario.length; i++) {
-                occupations += funcoes_usuario[i].nome_funcao;
-                if (funcoes_usuario.length > 1 && i == funcoes_usuario.length - 2) {
-                    occupations += " e ";
-                } else if (i < funcoes_usuario.length - 1) {
-                    occupations += ", ";
-                }
-            }
-            return occupations;
-        },
         fillCopyUsers: function () {
             let self = this;
 
@@ -240,54 +209,10 @@ export default {
     margin: 1rem 0;
 }
 
-.member-more-actions-wrapper {
-    position: fixed;
-    width: 100vw;
-    height: 100vh;
-    left: 0;
-    top: 0;
-    background: transparent;
-    cursor: pointer;
-}
-
 .member-informations {
     display: flex;
     justify-content: space-between;
     margin-left: 1rem;
     width: 100%;
 }
-
-.member-more-actions {
-    position: absolute;
-    right: 3rem;
-    background: var(--primary-primary-blue-high-2);
-    padding: .5rem;
-    border-radius: 10px;
-    transition: all 0.4s;
-    opacity: 0;
-    display: none;
-    z-index: 2;
-}
-
-    .member-more-actions ul {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        list-style: none;
-        margin: 0;
-        padding: 0;
-    }
-
-        .member-more-actions ul li {
-            cursor: pointer;
-            margin: 2px 0;
-            width: 100%;
-            text-align: center;
-            padding: 4px 10px;
-            transition: all 0.4s;
-        }
-
-            .member-more-actions ul li:hover {
-                background: var(--primary-primary-blue-medium);
-            }
 </style>

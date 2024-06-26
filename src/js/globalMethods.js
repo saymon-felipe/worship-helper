@@ -192,7 +192,11 @@ export const globalMethods = {
             element.show();
             setTimeout(() => {
                 element.css("opacity", 1);
-            }, 10);
+            }, 1)
+
+            setTimeout(() => {
+                element.css("opacity", 0);
+            }, 5 * 1000)
         },
         close_modal: function () {
             let self = this;
@@ -217,14 +221,44 @@ export const globalMethods = {
             self.selected_member = event;
             $("#adm-id").attr("placeholder", "");
         },
-        select_tag: function (event) {
+        select_function: function (event) {
             let self = this;
 
-            self.selected_tag = event;
+            self.selected_function = event;
             self.searchParam = "";
+        },
+        openMemberMoreActions: function (element_id) {
+            let element = $("#member-" + element_id + " .member-more-actions");
+            this.showMemberMoreActions = true;
+            element.show();
+            setTimeout(() => {
+                element.css("opacity", 1);
+            }, 10);
+        },
+        closeMemberMoreActions: function () {
+            let elements = $(".member-more-actions");
+            this.showMemberMoreActions = false;
+            elements.each(function (index, element) {
+                element.style.opacity = 0;
+                setTimeout(() => {
+                    element.style.display = "none";
+                }, 400);
+            })
         },
         restoreInputLabel: function (element_id, text) {
             $(element_id).attr("placeholder", text);
+        },
+        returnOccupations: function (funcoes_usuario) {
+            let occupations = "";
+            for (let i = 0; i < funcoes_usuario.length; i++) {
+                occupations += funcoes_usuario[i].nome_funcao;
+                if (funcoes_usuario.length > 1 && i == funcoes_usuario.length - 2) {
+                    occupations += " e ";
+                } else if (i < funcoes_usuario.length - 1) {
+                    occupations += ", ";
+                }
+            }
+            return occupations;
         },
         resetSelectedMember: function () {
             this.selected_member.id_usuario = null;
@@ -252,7 +286,7 @@ export const globalMethods = {
             current_date: moment(),
             loading: true,
             year: new Date().getFullYear(),
-            selected_tag: {},
+            selected_function: {},
             showModal: false,
             modalTitle: "",
             igreja: {
@@ -261,7 +295,9 @@ export const globalMethods = {
             },
             modalButtonTitle: "",
             modalButton2Title: "",
-            havePermission: false
+            havePermission: false,
+            showMemberMoreActions: false,
+            response: ""
         }
     },
     mounted: function () {

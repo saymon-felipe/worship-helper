@@ -161,10 +161,6 @@ export default {
 }
 </script>
 <style scoped>
-.response {
-    margin-top: 1rem;
-}
-
 .church-image {
     display: flex;
     align-items: center;

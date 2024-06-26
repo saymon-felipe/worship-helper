@@ -69,10 +69,6 @@ export default {
 }
 </script>
 <style scoped>
-.response {
-    margin-top: 1rem;
-}
-
 .invite-member {
     position: relative;
 }

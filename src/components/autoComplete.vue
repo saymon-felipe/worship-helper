@@ -7,9 +7,9 @@
                 <p>{{ member.descricao_usuario }}</p>
             </div>
         </div>
-        <div class="member" v-for="(tag, index) in tags" :key="index" v-on:click="selectTag(tag)">
+        <div class="member" v-for="(func, index) in functions" :key="index" v-on:click="selectFunction(func)">
             <div class="member-informations">
-                <h5>{{ tag.nome_tag }}</h5>
+                <h5>{{ func.nome_funcao }}</h5>
             </div>
         </div>
     </div>
@@ -20,11 +20,11 @@ import api from '../config/api';
 
 export default {
     name: "autoComplete",
-    props: ['search', 'isTag', 'igreja'],
+    props: ['search', 'isFunction', 'igreja'],
     data() {
         return {
             members: [],
-            tags: []
+            functions: []
         }
     },
     watch: {
@@ -34,7 +34,7 @@ export default {
         }
     },
     methods: {
-        searchTags: function () {
+        searchFunctions: function () {
             let self = this;
 
             let data = {
@@ -42,9 +42,9 @@ export default {
             }
             
             $(".auto-complete").show();
-            api.post('/igreja/retorna-tags', data)
+            api.post('/igreja/retorna-funcoes', data)
             .then(function (response) {
-                self.tags = response.data.returnObj;
+                self.functions = response.data.returnObj;
             })
         },
         filterSearch: function (string) {
@@ -84,16 +84,16 @@ export default {
             
             this.$emit('selectUser', user);
         },
-        selectTag: function (tag) {
-            this.tag = [];
+        selectFunction: function (func) {
+            this.functions = [];
             $(".auto-complete").hide();
             
-            this.$emit('selectTag', tag);
+            this.$emit('selectFunction', func);
         }
     },
     mounted: function () {
-        if (this.isTag) {
-            this.searchTags();
+        if (this.isFunction) {
+            this.searchFunctions();
         }
     }
 }

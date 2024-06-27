@@ -10,8 +10,10 @@
             </div>
             <div class="church-actions-container">
                 <div class="church-action">
-                    <span class="material-icons">playlist_play</span>
-                    <span>Acervo de músicas</span>
+                    <router-link :to="'/home/manage-church/' + $root.igreja.id_igreja + '/musics'">
+                        <span class="material-icons">playlist_play</span>
+                        <span>Acervo de músicas</span>
+                    </router-link>
                 </div>
                 <div class="church-action">
                     <router-link :to="'/home/manage-church/' + $root.igreja.id_igreja + '/members'">

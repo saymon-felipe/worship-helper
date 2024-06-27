@@ -136,8 +136,15 @@ export const globalMethods = {
         getMyChurch: function () {
             return new Promise((resolve) => {
                 let self = this;
+
+                let church_id = self.$route.params.id_igreja;
+
+                if (church_id == undefined) {
+                    church_id = JSON.parse(sessionStorage.getItem("current_church")).id_igreja;
+                }
+
                 let data = {
-                    id_igreja: self.$route.params.id_igreja
+                    id_igreja: church_id
                 }
 
                 api.post("/igreja/retorna-igreja", data)
@@ -154,10 +161,17 @@ export const globalMethods = {
         checkPermission: function() {
             return new Promise((resolve) => {
                 let self = this;
-                let data = {
-                    id_igreja: self.$route.params.id_igreja
+
+                let church_id = self.$route.params.id_igreja;
+
+                if (church_id == undefined) {
+                    church_id = JSON.parse(sessionStorage.getItem("current_church")).id_igreja;
                 }
-    
+                
+                let data = {
+                    id_igreja: church_id
+                }
+
                 api.post("/igreja/permissao-gerenciar", data)
                     .then(function (response) {
                         self.havePermission = true;

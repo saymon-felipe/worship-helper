@@ -1,29 +1,27 @@
 <template>
     <div class="church-events">
-        <div v-if="!loading">
-            <div class="church-profile">
-                <img :src="$root.igreja.imagem_igreja" class="avatar-p">
-                <div class="church-informations">
-                    <h5>{{ $root.igreja.nome_igreja }}</h5>
-                    <p class="font-size-3">{{ returnMembersText($root.igreja.quantidade_membros) }}</p>
-                </div>
+        <div class="church-profile">
+            <img :src="igreja.imagem_igreja" class="avatar-p">
+            <div class="church-informations">
+                <h5>{{ igreja.nome_igreja }}</h5>
+                <p class="font-size-3">{{ returnMembersText(igreja.quantidade_membros) }}</p>
             </div>
-            <div class="church-events">
-                <h5>Eventos</h5>
-                <div class="church-events-list">
-
-                </div>
-            </div>
-            <div class="create-event-button-container">
-                <button class="btn primary create-event" v-on:click="createEvent()">
-                    Novo Evento
-                    <span class="material-icons">add</span>
-                </button>
-            </div>
-            <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm()">
-                <createEventModalContent @church="$root.igreja" @success="closeModal()" />
-            </modal>
         </div>
+        <div class="church-events">
+            <h5>Eventos</h5>
+            <div class="church-events-list">
+
+            </div>
+        </div>
+        <div class="create-event-button-container">
+            <button class="btn primary create-event" v-on:click="createEvent()">
+                Novo Evento
+                <span class="material-icons">add</span>
+            </button>
+        </div>
+        <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm()">
+            <createEventModalContent @church="igreja" @success="closeModal()" />
+        </modal>
     </div>
 </template>
 <script>
@@ -36,7 +34,7 @@ export default {
     mixins: [globalMethods],
     data() {
         return {
-            loading: true
+            igreja: {}
         }
     },
     methods: {
@@ -48,7 +46,7 @@ export default {
     },
     mounted: function () {
         this.checkPermission().then(() => {
-            this.loading = false;
+            this.igreja = this.$root.igreja;
         });
     },
     components: {

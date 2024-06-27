@@ -10,6 +10,8 @@ import manageChurch from "../components/manageChurch.vue";
 import members from "../components/members.vue";
 import configChurch from "../components/configChurch.vue";
 import churchEvents from "../components/churchEvents.vue";
+import churchMusics from "../components/churchMusics.vue";
+import musicLibrary from "../components/musicLibrary.vue";
 
 const routes = [
     {
@@ -77,6 +79,20 @@ const routes = [
                 component: churchEvents,
                 meta: {
                     title: "Eventos - Worship Helper"
+                }
+            },
+            {
+                path: "music-library",
+                component: musicLibrary,
+                meta: {
+                    title: "Biblioteca de músicas - Worship Helper"
+                }
+            },
+            {
+                path: 'manage-church/:id_igreja/musics',
+                component: churchMusics,
+                meta: {
+                    title: "Músicas - Worship Helper"
                 }
             },
             {

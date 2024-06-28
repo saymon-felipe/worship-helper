@@ -162,6 +162,8 @@ export const globalMethods = {
             return new Promise((resolve) => {
                 let self = this;
 
+                if (self.$route.href == "/home") return;
+
                 let church_id = self.$route.params.id_igreja;
 
                 if (church_id == undefined) {
@@ -291,6 +293,10 @@ export const globalMethods = {
             this.modalTitle = modalTitle;
             this.modalButtonTitle = modalButtonTitle;
             this.modalButton2Title = modalButton2Title;
+        },
+        relativeTime: function (timeString) {
+            const relativeTime = moment(timeString).fromNow();
+            return relativeTime;
         }
     },
     data() {

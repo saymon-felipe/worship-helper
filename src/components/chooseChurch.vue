@@ -113,9 +113,7 @@ export default {
         }
     },
     mounted: function () {
-        this.checkPermission().then(() => {
-            this.returnInformations();
-        })
+        this.returnInformations();
     }
 }
 </script>

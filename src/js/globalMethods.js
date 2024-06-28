@@ -162,6 +162,7 @@ export const globalMethods = {
             return new Promise((resolve) => {
                 let self = this;
 
+                console.log(self.$route.href)
                 if (self.$route.href == "/home") return;
 
                 let church_id = self.$route.params.id_igreja;

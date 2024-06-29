@@ -12,17 +12,39 @@
             <button type="button" class="btn primary" id="search-music" v-on:click="searchMusic()">Buscar música</button>
             <div class="music-utilities">
                 <div class="searching-music font-size-2" v-if="searchingMusic">Buscando música</div>
-                <div class="music-list">
-                    <div class="youtube-video" v-for="(video, index) in musicList" :key="index" v-on:click="selectVideo(video.url, index)" :id="'video-' + index">
+                <div class="music-list" v-if="choosingMusic">
+                    <div class="youtube-video" v-for="(video, index) in musicList" :key="index" v-on:click="selectVideo(video.url, index, video.videoId, video.videoThumbnail)" :id="'video-' + index">
                         <img :src="video.videoThumbnail">
                         <div class="youtube-video-informations">
                             <p class="font-size-3">{{ video.title }}</p>
                             <p class="font-size-4">{{ relativeTime(video.publishedAt) }}</p>
                         </div>
                     </div>
+                    <div class="video-preview" v-if="selectedUrl != '' && playVideo">
+                        <div class="video-preview-buttons">
+                            <button class="btn" v-on:click="playVideo = false">Voltar</button>
+                            <button class="btn primary" v-on:click="submitVideo()">Selecionar video</button>
+                        </div>
+                        <iframe id="ytplayer" width="100%" height="100%" :src="'https://www.youtube.com/embed/' + selectedId" frameborder="0" allowfullscreen />
+                    </div>
                 </div>
-                <div class="cipher">
-                    <iframe src="https://www.cifraclub.com.br/michael-jackson/smooth-criminal/" width="100%" height="600px"></iframe>
+                <div class="cipher-list" v-if="choosingCipher">
+                    <div class="loading-ciphers" v-if="cipherList.length == 0">
+                        <p class="font-size-3">Carregando cifras</p>
+                    </div>
+                    <div class="cipher-topic" v-for="(cipher, index) in cipherList" :key="index" v-on:click="selectCipher(cipher.href, index)" :id="'cipher-' + index">
+                        <p class="font-size-3">{{ cipher.title }}</p>
+                    </div>
+                    <div class="cipher-preview" v-if="selectedCipher && viewCipher">
+                        <div class="cipher-preview-buttons">
+                            <button class="btn" v-on:click="viewCipher = false">Voltar</button>
+                            <button class="btn primary" v-on:click="submitCipher()">Selecionar cifra</button>
+                        </div>
+                        <iframe :src="selectedCipherHref" width="100%" height="600px"></iframe>
+                    </div>
+                </div>
+                <div class="all-ready" v-if="!choosingCipher && !choosingMusic">
+                    <p class="font-size-3">Música e cifra selecionadas, prossiga com a criação da música.</p>
                 </div>
             </div>
             <input type="submit" id="submit-informations-form" style="display: none;">
@@ -41,51 +63,64 @@ export default {
     data() {
         return {
             searchingMusic: false,
-            musicList: [
-                {
-                    title: "Smooth Criminal - Michael Jackson",
-                    videoId: "cy42sn8-Wc",
-                    publishedAt: "2010-11-19T11:39:43Z",
-                    url: "https://www.youtube.com/watch?v=cy42sn8-Wcs",
-                    videoThumbnail: "https://i.ytimg.com/vi/cy42sn8-Wcs/hqdefault.jpg?sqp=-oaymwEjCOADEI4CSFryq4qpAxUIARUAAAAAGAElAADIQj0AgKJDeAE=&rs=AOn4CLDJihl8llORfES27985AmSc4WjBQw"
-                },
-                {
-                    title: "Smooth Criminal - Michael Jackson",
-                    videoId: "cy42sn8-Wc",
-                    publishedAt: "2010-11-19T11:39:43Z",
-                    url: "https://www.youtube.com/watch?v=cy42sn8-Wcs",
-                    videoThumbnail: "https://i.ytimg.com/vi/cy42sn8-Wcs/hqdefault.jpg?sqp=-oaymwEjCOADEI4CSFryq4qpAxUIARUAAAAAGAElAADIQj0AgKJDeAE=&rs=AOn4CLDJihl8llORfES27985AmSc4WjBQw"
-                },
-                {
-                    title: "Smooth Criminal - Michael Jackson",
-                    videoId: "cy42sn8-Wc",
-                    publishedAt: "2010-11-19T11:39:43Z",
-                    url: "https://www.youtube.com/watch?v=cy42sn8-Wcs",
-                    videoThumbnail: "https://i.ytimg.com/vi/cy42sn8-Wcs/hqdefault.jpg?sqp=-oaymwEjCOADEI4CSFryq4qpAxUIARUAAAAAGAElAADIQj0AgKJDeAE=&rs=AOn4CLDJihl8llORfES27985AmSc4WjBQw"
-                },
-                {
-                    title: "Smooth Criminal - Michael Jackson",
-                    videoId: "cy42sn8-Wc",
-                    publishedAt: "2010-11-19T11:39:43Z",
-                    url: "https://www.youtube.com/watch?v=cy42sn8-Wcs",
-                    videoThumbnail: "https://i.ytimg.com/vi/cy42sn8-Wcs/hqdefault.jpg?sqp=-oaymwEjCOADEI4CSFryq4qpAxUIARUAAAAAGAElAADIQj0AgKJDeAE=&rs=AOn4CLDJihl8llORfES27985AmSc4WjBQw"
-                },
-                {
-                    title: "Smooth Criminal - Michael Jackson",
-                    videoId: "cy42sn8-Wc",
-                    publishedAt: "2010-11-19T11:39:43Z",
-                    url: "https://www.youtube.com/watch?v=cy42sn8-Wcs",
-                    videoThumbnail: "https://i.ytimg.com/vi/cy42sn8-Wcs/hqdefault.jpg?sqp=-oaymwEjCOADEI4CSFryq4qpAxUIARUAAAAAGAElAADIQj0AgKJDeAE=&rs=AOn4CLDJihl8llORfES27985AmSc4WjBQw"
-                }
-            ],
-            selectedUrl: ""
+            playVideo: false,
+            cipherList: [],
+            musicList: [],
+            selectedUrl: "",
+            selectedId: "",
+            choosingMusic: true,
+            choosingCipher: false,
+            selectedCipher: false,
+            selectedCipherHref: "",
+            viewCipher: false,
+            selectedVideoThumbnail: ""
         }
     },
     methods: {
-        selectVideo: function (url, index) {
+        submitVideo: function () {
+            this.choosingMusic = false;
+            this.choosingCipher = true;
+            this.playVideo = false;
+            this.selectedId = "";
+
+            this.searchCipher();
+        },
+        submitCipher: function () {
+            this.choosingCipher = false;
+            this.viewCipher = false;
+        },
+        selectCipher: function (href, index) {
+            this.selectedCipher = true;
+            this.viewCipher = true;
+            this.selectedCipherHref = href;
+
+            $(".cipher-topic").removeClass("selected");
+            $("#cipher-" + index).addClass("selected");
+        },
+        selectVideo: function (url, index, id, thumbnail) {
             this.selectedUrl = url;
+            this.selectedId = id;
+            this.selectedVideoThumbnail = thumbnail;
+            this.playVideo = true;
+
             $(".youtube-video").removeClass("selected");
             $("#video-" + index).addClass("selected");
+        },
+        searchCipher: function () {
+            let self = this;
+
+            let data = {
+                name: $("#name").val(),
+                artist: $("#artist").val()
+            }
+
+            api.post("/musicas/procurar-cifra", data)
+            .then(function (response) {
+                self.cipherList = response.data.returnObj;
+            })
+            .catch(function (error) {
+                console.log(error);
+            })
         },
         searchMusic: function () {
             let self = this;
@@ -95,12 +130,10 @@ export default {
                 artist: $("#artist").val()
             }
 
-            return
-
             api.post("/musicas/procurar", data)
             .then(function (response) {
                 self.musicList = response.data.returnObj;
-                console.log(self.musicList)
+                self.searchingMusic = false
             })
             .catch(function (error) {
                 console.log(error);
@@ -109,16 +142,18 @@ export default {
         createMusic: function () {
             let self = this;
 
-            let data = $("#create-music-form").serializeArray().reduce(function (obj, item) { // Pega todos os dados do formulário e coloca em um objeto.
-                obj[item.name] = parseInt(item.value);
-                return obj;
-            }, {});
+            let data = {
+                name: $("#name").val(),
+                artist: $("#artist").val()
+            }
 
-            data["video_url"] = this.selectVideo;
+            data["video_url"] = this.selectedUrl;
+            data["cipher_url"] = this.selectedCipherHref;
+            data["video_image"] = this.selectedVideoThumbnail;
 
             api.post("/musicas", data)
-            .then(function (response) {
-                self.functions = response.data.returnObj;
+            .then(function () {
+                self.$emit("success");
             })
             .catch(function (error) {
                 console.log(error);
@@ -139,7 +174,7 @@ export default {
     margin-top: 3rem;
 }
 
-.youtube-video {
+.youtube-video, .cipher-topic {
     display: flex;
     align-items: center;
     margin: 1rem 0;;
@@ -151,7 +186,7 @@ export default {
         margin-right: 1rem;
     }
 
-.music-list {
+.music-list, .cipher-list {
     max-height: 36vh;
     overflow-y: scroll;
 }
@@ -162,18 +197,35 @@ export default {
     padding: 5px 0;
 }
 
-.cipher {
+.cipher-preview, .video-preview {
     position: fixed;
     top: 0;
     left: 0;
-    height: 100vh;
+    height: 100%;
     width: 100vw;
     z-index: 9999;
 }
 
-    .cipher iframe {
-        height: 100vh;
-        width: 100vw;
+    .cipher-preview iframe {
+        height: 100%;
+        width: 100%;
         background: white;
+    }
+
+.video-preview, .cipher-preview {
+    display: flex;
+    flex-direction: column;
+    align-items: center
+}
+
+.video-preview-buttons, .cipher-preview-buttons {
+    display: flex;
+    width: 100%;
+    padding: 1rem;
+    background: var(--primary-primary-blue-low);
+}
+
+    .video-preview-buttons button:first-child, .cipher-preview-buttons button:first-child {
+        margin-right: 1rem;
     }
 </style>

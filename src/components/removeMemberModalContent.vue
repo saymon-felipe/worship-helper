@@ -17,7 +17,7 @@ import api from '../config/api';
 
 export default {
     name: "removeMemberModalContent",
-    props: ["member", "igreja"],
+    props: ["member"],
     mixins: [globalMethods],
     data() {
         return {
@@ -32,18 +32,20 @@ export default {
             let self = this;
             let data = {
                 id_usuario: self.member.id_usuario,
-                id_igreja: self.igreja.id_igreja
+                id_igreja: self.$root.igreja.id_igreja
             }
 
             api.post("/igreja/remover-membro", data)
                 .then(function (response) {
-                    console.log(response)
                     this.$emit("success", true);
                 })
                 .catch(function (error) {
                     self.showResponse(error.response.data.message, ".response", "error");
                 })
         }
+    },
+    mounted: function () {
+        this.checkPermission();
     }
 }
 </script>

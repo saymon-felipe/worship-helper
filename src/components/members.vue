@@ -35,16 +35,15 @@
         </div>
         <div class="member-more-actions-wrapper" v-if="showMemberMoreActions" v-on:click="closeMemberMoreActions()"></div>
         <modal v-if="showModal && havePermission" :title="modalTitle" @closeModal="close_modal()" class="modal" @cancelEvent="cancelChanges()" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm()">
-            <inviteMemberModalContent v-if="inviteMember" :igreja="$root.igreja" @success="closeModal()" />
-            <addTagModalContent v-if="addTag" :igreja="$root.igreja" :member="selected_member" @success="closeModal(); fillCopyUsers();" /> 
-            <addFunctionModalContent v-if="addOccupation" :igreja="$root.igreja" :member="selected_member" @success="closeModal(); fillCopyUsers();" /> 
-            <removeMemberModalContent v-if="removeMember" :igreja="$root.igreja" :member="selected_member" @success="closeModal()" />
+            <inviteMemberModalContent v-if="inviteMember" @success="closeModal()" />
+            <addTagModalContent v-if="addTag" :member="selected_member" @success="closeModal(); fillCopyUsers();" /> 
+            <addFunctionModalContent v-if="addOccupation" :member="selected_member" @success="closeModal(); fillCopyUsers();" /> 
+            <removeMemberModalContent v-if="removeMember" :member="selected_member" @success="closeModal()" />
         </modal>
     </div>
 </template>
 <script>
 import { globalMethods } from '../js/globalMethods';
-import $ from 'jquery';
 import modal from "./modal.vue";
 import inviteMemberModalContent from "./inviteMemberModalContent.vue";
 import addTagModalContent from "./addTagModalContent.vue";
@@ -56,6 +55,7 @@ export default {
     mixins: [globalMethods],
     data() {
         return {
+            igreja: {},
             inviteMember: false,
             addTag: false,
             addOccupation: false,
@@ -79,7 +79,7 @@ export default {
                 this.copy_members = this.$root.igreja.membros;
                 return;
             }
-            
+
             this.copy_members = this.$root.igreja.membros.filter((membro) => {
                 if (membro.nome_usuario.toLowerCase().indexOf(this.findUsers.toLowerCase()) != -1) {
                     return membro;
@@ -161,7 +161,10 @@ export default {
         }
     },
     mounted: function () {
-        this.fillCopyUsers();
+        this.checkPermission().then(() => {
+            this.fillCopyUsers();
+            this.igreja = this.$root.igreja;
+        });
     }
 }
 </script>

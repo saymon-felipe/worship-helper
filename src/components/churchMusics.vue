@@ -9,18 +9,24 @@
         </div>
         <div class="configuration-header">
             <h3>Acervo de músicas</h3>
-            <button class="create-new-tag" v-on:click="goToLibrary()">
+            <button class="create-new-tag" v-on:click="createMusic()" v-if="haveAppPermission">
                 <span class="material-icons">add</span>
             </button>
         </div>
         <div class="music-list">
             <musicComponent v-for="(music, index) in musics" :key="index" :music="music"></musicComponent>
         </div>
+        <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm()">
+            <createMusicModalContent @success="closeModal()" />
+        </modal>
     </div>
 </template>
 <script>
 import { globalMethods } from '../js/globalMethods';
 import musicComponent from "./musicComponent.vue";
+import createMusicModalContent from "./createMusicModalContent.vue";
+import modal from "./modal.vue";
+import api from '../config/api';
 
 export default {
     name: "churchMusic",
@@ -28,54 +34,42 @@ export default {
     data() {
         return {
             igreja: {},
-            musics: [
-                {
-                    id: 0,
-                    image: "https://www.staccatoescolademusica.com.br/img/blog-img/upload-blog/540752-5-2-2021-16-31-36-1m.jpg",
-                    name: "Eu quero conhecer Jesus",
-                    artist: "Alessando vilas boas",
-                    tags: [
-                        {
-                            id: 0,
-                            name: "#worship"
-                        },
-                        {
-                            id: 1,
-                            name: "#pop"
-                        }
-                    ]
-                },
-                {
-                    id: 1,
-                    image: "https://i.scdn.co/image/ab67616d0000b27310fb0a45e54936b489b3bbf0",
-                    name: "Dançar na chuva",
-                    artist: "Fernandinho",
-                    tags: [
-                        {
-                            id: 0,
-                            name: "#jovem"
-                        },
-                        {
-                            id: 1,
-                            name: "#rock"
-                        }
-                    ]
-                }
-            ]
+            musics: []
         }
     },
     methods: {
         goToLibrary: function () {
             this.$router.push("/home/music-library");
+        },
+        createMusic: function () {
+            this.showModal = true;
+            this.modalTitle = "Adicionar música";
+            this.modalButtonTitle = "Adicionar música";
+        },
+        returnMusics: function () {
+            let self = this;
+
+            api.get("/musicas")
+                .then(function (response) {
+                    self.musics = response.data.returnObj;
+                })
+                .catch(function (error) {
+                    console.log(error);
+                })
         }
     },
     mounted: function () {
         this.checkPermission().then(() => {
             this.igreja = this.$root.igreja;
         });
+
+        this.checkAppPermission();
+        this.returnMusics();
     },
     components: {
-        musicComponent
+        musicComponent,
+        createMusicModalContent,
+        modal
     }
 }
 </script>

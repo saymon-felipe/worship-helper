@@ -317,7 +317,8 @@ export const globalMethods = {
             modalButton2Title: "",
             havePermission: false,
             showMemberMoreActions: false,
-            response: ""
+            response: "",
+            haveAppPermission: false
         }
     },
     mounted: function () {

@@ -13,7 +13,7 @@
             <div class="music-utilities">
                 <div class="searching-music font-size-2" v-if="searchingMusic">Buscando música</div>
                 <div class="music-list" v-if="choosingMusic">
-                    <div class="youtube-video" v-for="(video, index) in musicList" :key="index" v-on:click="selectVideo(video.url, index, video.videoId, video.videoThumbnail)" :id="'video-' + index">
+                    <div class="youtube-video" v-for="(video, index) in musicList" :key="index" v-on:click="selectVideo(video, index)" :id="'video-' + index">
                         <img :src="video.videoThumbnail">
                         <div class="youtube-video-informations">
                             <p class="font-size-3">{{ video.title }}</p>
@@ -23,7 +23,7 @@
                     <div class="video-preview" v-if="selectedUrl != '' && playVideo">
                         <div class="video-preview-buttons">
                             <button class="btn" v-on:click="playVideo = false">Voltar</button>
-                            <button class="btn primary" v-on:click="submitVideo()">Selecionar video</button>
+                            <button class="btn primary" v-on:click="submitVideo()">Selecionar música</button>
                         </div>
                         <iframe id="ytplayer" width="100%" height="100%" :src="'https://www.youtube.com/embed/' + selectedId" frameborder="0" allowfullscreen />
                     </div>
@@ -58,7 +58,6 @@ import $ from 'jquery';
 
 export default {
     name: "createMusicModalContent",
-    props: ["igreja"],
     mixins: [globalMethods],
     data() {
         return {
@@ -79,10 +78,10 @@ export default {
     methods: {
         submitVideo: function () {
             this.choosingMusic = false;
-            this.choosingCipher = true;
             this.playVideo = false;
+            this.choosingCipher = true;
             this.selectedId = "";
-
+            
             this.searchCipher();
         },
         submitCipher: function () {
@@ -97,10 +96,10 @@ export default {
             $(".cipher-topic").removeClass("selected");
             $("#cipher-" + index).addClass("selected");
         },
-        selectVideo: function (url, index, id, thumbnail) {
-            this.selectedUrl = url;
-            this.selectedId = id;
-            this.selectedVideoThumbnail = thumbnail;
+        selectVideo: function (video, index) {
+            this.selectedUrl = video.url;
+            this.selectedId = video.videoId;
+            this.selectedVideoThumbnail = video.videoThumbnail;
             this.playVideo = true;
 
             $(".youtube-video").removeClass("selected");
@@ -128,6 +127,10 @@ export default {
             let data = {
                 name: $("#name").val(),
                 artist: $("#artist").val()
+            }
+
+            if (!this.haveAppPermission) {
+                this.searchMusicInDatabase(data);
             }
 
             api.post("/musicas/procurar", data)
@@ -159,8 +162,6 @@ export default {
                 console.log(error);
             })
         }
-    },
-    mounted: function () {
     }
 }
 </script>

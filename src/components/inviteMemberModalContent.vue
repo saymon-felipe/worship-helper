@@ -22,7 +22,6 @@ import api from '../config/api';
 export default {
     name: "inviteMemberModalContent",
     mixins: [globalMethods],
-    props: ["igreja"],
     data() {
         return {
             searchParam: "",
@@ -48,7 +47,7 @@ export default {
 
             let data = {
                 id_usuario: self.selected_member.id_usuario,
-                id_igreja: self.igreja.id_igreja
+                id_igreja: self.$root.igreja.id_igreja
 
             }
 
@@ -65,6 +64,9 @@ export default {
     components: {
         autoComplete,
         selectedMember
+    },
+    mounted: function () {
+        this.checkPermission();
     }
 }
 </script>

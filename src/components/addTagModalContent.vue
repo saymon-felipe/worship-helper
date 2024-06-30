@@ -38,8 +38,6 @@ export default {
     methods: {
         checkCurrentTag: function () {
             setTimeout(() => {
-                console.log(this.member)
-                console.log(this.occupations)
                 if (this.member.tag_usuario[0] == undefined) {
                     return;
                 }

@@ -6,8 +6,10 @@
                 <p>Início</p>
             </div>
             <div class="menu-option">
-                <span class="material-icons">search</span>
-                <p>Biblioteca de <br> louvores</p>
+                <router-link :to="'/home/manage-church/' + current_church.id_igreja + '/musics'">
+                    <span class="material-icons">search</span>
+                    <p>Biblioteca de <br> louvores</p>
+                </router-link>
             </div>
             <div class="menu-option">
                 <router-link class="link" :to="'/home/manage-church/' + current_church.id_igreja">

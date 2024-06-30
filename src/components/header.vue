@@ -18,6 +18,9 @@
                             <span>Alterar perfil</span>
                         </router-link>
                     </li>
+                    <li v-on:click="goToAdmin()" v-if="haveAppPermission">
+                        <span>Admin</span>
+                    </li>
                     <li v-on:click="logout()">
                         <span class="material-icons">power_settings_new</span>
                         <span>Sair</span>
@@ -68,6 +71,7 @@ export default {
         }
     },
     mounted: function () {
+        this.checkAppPermission();
         this.requireUser();
     }
 }

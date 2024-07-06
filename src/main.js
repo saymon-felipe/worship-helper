@@ -38,11 +38,14 @@ app.config.globalProperties.getMyChurch = getMyChurch;
 
 function checkPermission() {
     let church_id = this.$route.params.id_igreja;
+    let localStorageChurch = JSON.parse(sessionStorage.getItem("current_church"));
 
     if (church_id == undefined) {
-        church_id = JSON.parse(sessionStorage.getItem("current_church")).id_igreja;
+        church_id = localStorageChurch != undefined ? localStorageChurch.id_igreja : undefined;
     }
     
+    if (church_id == undefined) return;
+
     let data = {
         id_igreja: church_id
     }

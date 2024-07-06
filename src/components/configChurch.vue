@@ -53,11 +53,6 @@ export default {
         return {
             tags: [],
             functions: [],
-            igreja: {
-                imagem_igreja: "",
-                nome_igreja: ""
-            },
-            response: "",
             type: ""
         }
     },
@@ -91,7 +86,7 @@ export default {
             let self = this;
             let data = {
                 id_tag: id_tag,
-                id_igreja: self.$route.params.id_igreja
+                id_igreja: self.igreja.id_igreja
             }
 
             self.removeTagFromDom(id_tag);
@@ -102,7 +97,7 @@ export default {
             let self = this;
             let data = {
                 id_function: id_function,
-                id_igreja: self.$route.params.id_igreja
+                id_igreja: self.igreja.id_igreja
             }
 
             self.removeFunctionFromDom(id_function);
@@ -112,7 +107,7 @@ export default {
         returnChurchTags: function () {
             let self = this;
             let data = {
-                id_igreja: self.$root.igreja.id_igreja
+                id_igreja: self.igreja.id_igreja
             }
 
             api.post("/igreja/retorna-tags", data)
@@ -121,13 +116,13 @@ export default {
                     self.response = "";
                 })
                 .catch(function (error) {
-                    self.showResponse(error.response.data.message, ".response");
+                    self.showResponse(error.response.data, ".response");
                 })
         },
         returnChurchFunctions: function () {
             let self = this;
             let data = {
-                id_igreja: self.$root.igreja.id_igreja
+                id_igreja: self.igreja.id_igreja
             }
 
             api.post("/igreja/retorna-funcoes", data)
@@ -136,7 +131,7 @@ export default {
                     self.response = "";
                 })
                 .catch(function (error) {
-                    self.showResponse(error.response.data.message, ".response");
+                    self.showResponse(error.response.data, ".response");
                 })
         },
         returnPageInformations: function () {
@@ -145,12 +140,7 @@ export default {
         }
     },
     mounted: function () {
-        let self = this;
-
-        this.checkPermission().then(() => {
-            self.returnPageInformations();
-        });
-        
+        this.returnPageInformations();
     },
     components: {
         modal,

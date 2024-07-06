@@ -1,5 +1,5 @@
 <template>
-    <router-link :to="library != 'true' ? '/home/musics/' + music.id : ''" v-on:click="addMusic()">
+    <router-link :to="library != 'true' ? '/home/musics/' + music.id : ''">
         <div class="music-component">
             <img :src="music.image" class="avatar-p">
             <div class="music-informations">
@@ -17,11 +17,6 @@ export default {
     name: "musicComponent",
     props: ["music", "library"],
     methods: {
-        addMusic: function () {
-            if (this.library == "true") {
-                this.$emit("selectMusic", this.music.id);
-            }
-        }
     }
 }
 </script>

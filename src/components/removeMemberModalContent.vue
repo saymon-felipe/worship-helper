@@ -32,7 +32,7 @@ export default {
             let self = this;
             let data = {
                 id_usuario: self.member.id_usuario,
-                id_igreja: self.$root.igreja.id_igreja
+                id_igreja: self.igreja.id_igreja
             }
 
             api.post("/igreja/remover-membro", data)
@@ -40,12 +40,11 @@ export default {
                     this.$emit("success", true);
                 })
                 .catch(function (error) {
-                    self.showResponse(error.response.data.message, ".response", "error");
+                    self.showResponse(error.response.data, ".response", "error");
                 })
         }
     },
     mounted: function () {
-        this.checkPermission();
     }
 }
 </script>

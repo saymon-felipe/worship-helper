@@ -16,7 +16,7 @@
         <div class="music-list">
             <musicComponent v-for="(music, index) in musics" :key="index" :music="music"></musicComponent>
         </div>
-        <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm()">
+        <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm(); returnMusics();">
             <createMusicModalContent @success="closeModal()" />
         </modal>
     </div>
@@ -33,7 +33,6 @@ export default {
     mixins: [globalMethods],
     data() {
         return {
-            igreja: {},
             musics: []
         }
     },
@@ -59,11 +58,6 @@ export default {
         }
     },
     mounted: function () {
-        this.checkPermission().then(() => {
-            this.igreja = this.$root.igreja;
-        });
-
-        this.checkAppPermission();
         this.returnMusics();
     },
     components: {

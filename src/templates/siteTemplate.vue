@@ -37,6 +37,9 @@ export default {
         initSystemRequests: function () {
             let self = this;
 
+            self.checkAppPermission();
+            self.checkPermission();
+
             self.requireUser().then(() => {
                 self.loading = false;
             })

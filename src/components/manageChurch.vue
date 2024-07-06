@@ -18,7 +18,7 @@
                 <div class="church-action">
                     <router-link :to="'/home/manage-church/' + igreja.id_igreja + '/members'">
                         <span class="material-icons">group</span>
-                        <span>{{ havePermission ? "Gerenciar" : "Ver" }} membros</span>
+                        <span>{{ haveAdminPermission ? "Gerenciar" : "Ver" }} membros</span>
                     </router-link>
                 </div>
                 <div class="church-action">
@@ -27,7 +27,7 @@
                         <span>Calendário de cultos</span>
                     </router-link>
                 </div>
-                <div class="church-action" v-if="havePermission">
+                <div class="church-action" v-if="haveAdminPermission">
                     <router-link :to="'/home/manage-church/' + igreja.id_igreja + '/config'">
                         <span class="material-icons">settings</span>
                         <span>Configurações da igreja</span>
@@ -52,7 +52,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="create-warning" v-if="havePermission">
+                <div class="create-warning" v-if="haveAdminPermission">
                     <div class="personalized-input">
                         <form action="sendWarning" @submit.prevent="createNewWarning()">
                             <input type="text" name="warning" class="input" placeholder="Publique um aviso" id="send-warning" maxlength="100">
@@ -75,7 +75,6 @@ export default {
     mixins: [globalMethods],
     data() {
         return {
-            igreja: {},
             warnings: [
                 {
                     criador: {
@@ -152,12 +151,7 @@ export default {
         }
     },
     mounted: function () {
-        let self = this;
-        console.log("entrou")
-        this.checkPermission().then(() => {
-            self.igreja = self.$root.igreja;
-            self.returnWarnings();
-        });
+        this.returnWarnings();
     }
 }
 </script>

@@ -63,8 +63,7 @@ export default {
             submitUserButton: false,
             addTag: false,
             selected_tag: {},
-            event_selected_members: [],
-            igreja: {}
+            event_selected_members: []
         }
     },
     methods: {
@@ -80,8 +79,6 @@ export default {
             }, {});
 
             data["event_members"] = this.event_selected_members;
-
-            console.log(data)
         },
         removeMember: function (member_id) {
             this.event_selected_members = this.event_selected_members.filter(member => member.id_usuario != member_id);
@@ -125,9 +122,6 @@ export default {
         selectedMember
     },
     mounted: function () {
-        this.checkPermission().then(() => {
-            this.igreja = this.$root.igreja;
-        });
     }
 }
 </script>

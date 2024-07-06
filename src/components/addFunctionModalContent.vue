@@ -34,7 +34,6 @@ export default {
     },
     watch: {
         functions: function () {
-
             this.checkCurrentFunction();
         }
     },
@@ -64,7 +63,7 @@ export default {
             })
 
             data.id_usuario = id_usuario;
-            data.id_igreja = this.$root.igreja.id_igreja;
+            data.id_igreja = this.igreja.id_igreja;
             data.new_functions = checkedInputs;
 
             api.post("/usuario/altera-funcoes", data).then(function () {
@@ -74,7 +73,7 @@ export default {
         returnOccupations: function () {
             let self = this;
             let data = {
-                id_igreja: this.$root.igreja.id_igreja
+                id_igreja: this.igreja.id_igreja
             }
 
             api.post("/igreja/retorna-funcoes", data)
@@ -87,9 +86,6 @@ export default {
         }
     },
     mounted: function () {
-        this.checkPermission().then(() => {
-            this.returnOccupations();
-        })
     }
 }
 </script>

@@ -32,7 +32,7 @@
             </div>
         </div>
         <div class="background-button" v-if="haveAppPermission">
-            <button class="btn primary register-church" v-on:click="goToRegisterChurchPage()">Cadastrar igreja</button>
+            <button class="btn primary register-church" v-on:click="goToRegisterChurchPage()">Igrejas cadastradas</button>
         </div>
     </div>
 </template>
@@ -46,8 +46,7 @@ export default {
     data() {
         return {
             lista_igrejas: [],
-            churchInviteList: {},
-            haveAppPermission: false
+            churchInviteList: {}
         }
     },
     methods: {

@@ -47,7 +47,7 @@ export default {
 
             let data = {
                 id_usuario: self.selected_member.id_usuario,
-                id_igreja: self.$root.igreja.id_igreja
+                id_igreja: self.igreja.id_igreja
 
             }
 
@@ -57,7 +57,7 @@ export default {
                 self.$emit("success", true);
             })
             .catch(function (error) {
-                self.showResponse(error.response.data.message, ".response", "error");
+                self.showResponse(error.response.data, ".response", "error");
             })
         }
     },
@@ -66,7 +66,6 @@ export default {
         selectedMember
     },
     mounted: function () {
-        this.checkPermission();
     }
 }
 </script>

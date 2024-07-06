@@ -26,12 +26,12 @@ export default {
         createEntity: function() {
             let self = this;
 
-            let data = $("#" + event.target.id).serializeArray().reduce(function (obj, item) {
+            let data = $("#create-entity").serializeArray().reduce(function (obj, item) {
                 obj[item.name] = item.value;
                 return obj;
             }, {});
 
-            data["id_igreja"] = self.$root.igreja.id_igreja;
+            data["id_igreja"] = self.igreja.id_igreja;
 
             let path = "criar-funcao";
 
@@ -45,7 +45,6 @@ export default {
         }
     },
     mounted: function () {
-        this.checkPermission();
     }
 }
 </script>

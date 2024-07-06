@@ -13,9 +13,11 @@
 </template>
 <script>
 import eventComponent from "./eventComponent.vue";
+import { globalMethods } from '../js/globalMethods';
 
 export default {
     name: "manageChurch",
+    mixins: [globalMethods],
     data() {
         return {
             events: [
@@ -62,6 +64,8 @@ export default {
                 }
             ]
         }
+    },
+    mounted: function () {
     },
     components: {
         eventComponent

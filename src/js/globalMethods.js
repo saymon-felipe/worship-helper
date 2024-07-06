@@ -12,7 +12,10 @@ export const globalMethods = {
                 quantidade_membros: object.quantidade_membros,
                 administrador: object.administrador
             }
+
             sessionStorage.setItem("current_church", JSON.stringify(obj));
+
+            this.checkPermission();
         },
         getCurrentChurchInLocalStorage: function () {
             let church = JSON.parse(sessionStorage.getItem("current_church"));
@@ -133,73 +136,6 @@ export const globalMethods = {
             }
             return count + " " + membersText;
         },
-        getMyChurch: function () {
-            return new Promise((resolve) => {
-                let self = this;
-
-                let church_id = self.$route.params.id_igreja;
-
-                if (church_id == undefined) {
-                    church_id = JSON.parse(sessionStorage.getItem("current_church")).id_igreja;
-                }
-
-                let data = {
-                    id_igreja: church_id
-                }
-
-                api.post("/igreja/retorna-igreja", data)
-                    .then(function (response) {
-                        self.$root.igreja = response.data.returnObj;
-                    })
-                    .catch(function (error) {
-                        console.log(error)
-                    }).then(() => {
-                        resolve();
-                    })
-            })
-        },
-        checkPermission: function() {
-            return new Promise((resolve) => {
-                let self = this;
-
-                if (self.$route.href == "/home") return;
-
-                let church_id = self.$route.params.id_igreja;
-
-                if (church_id == undefined) {
-                    church_id = JSON.parse(sessionStorage.getItem("current_church")).id_igreja;
-                }
-                
-                let data = {
-                    id_igreja: church_id
-                }
-
-                api.post("/igreja/permissao-gerenciar", data)
-                    .then(function (response) {
-                        self.havePermission = true;
-                        self.loading = false;
-                        self.getMyChurch().then(() => {
-                            resolve();
-                        });
-                    })
-                    .catch(function (error) {
-                        self.havePermission = false;
-                        self.loading = false;
-                        resolve();
-                    })
-            })
-        },
-        checkAppPermission: function() {
-            let self = this;
-
-            api.post("/usuario/app_administrator")
-                .then(function () {
-                    self.haveAppPermission = true;
-                })
-                .catch(function () {
-                    self.haveAppPermission = false;
-                })
-        },
         showResponse: function (text, element_primary_class, element_class = "") {
             this.response = text;
             let element = $(element_primary_class);
@@ -309,16 +245,10 @@ export const globalMethods = {
             selected_function: {},
             showModal: false,
             modalTitle: "",
-            igreja: {
-                imagem_igreja: "",
-                nome_igreja: ""
-            },
             modalButtonTitle: "",
             modalButton2Title: "",
-            havePermission: false,
             showMemberMoreActions: false,
-            response: "",
-            haveAppPermission: false
+            response: ""
         }
     },
     mounted: function () {

@@ -71,7 +71,6 @@ export default {
         }
     },
     mounted: function () {
-        this.checkAppPermission();
         this.requireUser();
     }
 }

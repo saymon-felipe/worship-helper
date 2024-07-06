@@ -56,7 +56,7 @@ export default {
             }, {});
 
             data["id_usuario"] = id_usuario;
-            data["id_igreja"] = this.$root.igreja.id_igreja;
+            data["id_igreja"] = this.igreja.id_igreja;
 
             if (self.member.tag_usuario.length != 0 && data["id_tag"] == self.member.tag_usuario[0].id_tag) {
                 this.$emit("success", true);
@@ -70,7 +70,7 @@ export default {
         returnOccupations: function () {
             let self = this;
             let data = {
-                id_igreja: this.$root.igreja.id_igreja
+                id_igreja: this.igreja.id_igreja
             }
 
             api.post("/igreja/retorna-tags", data)
@@ -83,9 +83,7 @@ export default {
         }
     },
     mounted: function () {
-        this.checkPermission().then(() => {
-            this.returnOccupations();
-        })
+        this.returnOccupations();
     }
 }
 </script>

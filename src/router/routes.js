@@ -11,6 +11,7 @@ import members from "../components/members.vue";
 import configChurch from "../components/configChurch.vue";
 import churchEvents from "../components/churchEvents.vue";
 import churchMusics from "../components/churchMusics.vue";
+import musicEntity from "../components/musicEntity.vue";
 
 const routes = [
     {
@@ -50,6 +51,13 @@ const routes = [
                 component: church,
                 meta: {
                     title: "Visualizar igreja - Worship Helper"
+                }
+            },
+            {
+                path: 'musics/:id_musica',
+                component: musicEntity,
+                meta: {
+                    title: "Visualizar música - Worship Helper"
                 }
             },
             {

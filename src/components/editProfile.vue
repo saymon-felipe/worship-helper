@@ -34,7 +34,6 @@ export default {
     mixins: [globalMethods],
     mounted: function () {
         this.requireUser();
-        console.log(this.$route)
     },
     data() {
         return {

@@ -1,8 +1,8 @@
 <template>
     <div class="members-container">
         <div class="members-header">
-            <h5>{{ havePermission ? 'Gerenciar' : 'Ver' }} membros</h5>
-            <span class="material-icons add-member-button" v-on:click="addMember()" v-if="havePermission">add</span>
+            <h5>{{ haveAdminPermission ? 'Gerenciar' : 'Ver' }} membros</h5>
+            <span class="material-icons add-member-button" v-on:click="addMember()" v-if="haveAdminPermission">add</span>
         </div>
         <div class="member-search">
             <input type="text" name="search_member" id="search-member" class="input" v-model="findUsers" placeholder="Digite o nome da pessoa">
@@ -16,9 +16,9 @@
                         <span>{{ member.funcoes_usuario.length != 0 ? returnOccupations(member.funcoes_usuario) : '' }}</span>
                         <span class="member-tag" v-if="member.tag_usuario.length != 0">{{ member.tag_usuario[0].nome_tag }}</span>
                     </div>
-                    <span class="material-icons" id="member-more-actions" v-on:click="openMemberMoreActions(member.id_usuario)" v-if="havePermission">more_vert</span>
+                    <span class="material-icons" id="member-more-actions" v-on:click="openMemberMoreActions(member.id_usuario)" v-if="haveAdminPermission">more_vert</span>
                 </div>
-                <div class="member-more-actions" v-if="havePermission">
+                <div class="member-more-actions" v-if="haveAdminPermission">
                     <ul>
                         <li v-on:click="addTagFunction(member)">
                             <span>Atribuir tag</span>
@@ -34,7 +34,7 @@
             </div>
         </div>
         <div class="member-more-actions-wrapper" v-if="showMemberMoreActions" v-on:click="closeMemberMoreActions()"></div>
-        <modal v-if="showModal && havePermission" :title="modalTitle" @closeModal="close_modal()" class="modal" @cancelEvent="cancelChanges()" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm()">
+        <modal v-if="showModal && haveAdminPermission" :title="modalTitle" @closeModal="close_modal()" class="modal" @cancelEvent="cancelChanges()" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm()">
             <inviteMemberModalContent v-if="inviteMember" @success="closeModal()" />
             <addTagModalContent v-if="addTag" :member="selected_member" @success="closeModal(); fillCopyUsers();" /> 
             <addFunctionModalContent v-if="addOccupation" :member="selected_member" @success="closeModal(); fillCopyUsers();" /> 
@@ -55,7 +55,6 @@ export default {
     mixins: [globalMethods],
     data() {
         return {
-            igreja: {},
             inviteMember: false,
             addTag: false,
             addOccupation: false,
@@ -76,11 +75,11 @@ export default {
     methods: {
         filterMembers: function () {
             if (this.findUsers.trim().length == 0) {
-                this.copy_members = this.$root.igreja.membros;
+                this.copy_members = this.igreja.membros;
                 return;
             }
 
-            this.copy_members = this.$root.igreja.membros.filter((membro) => {
+            this.copy_members = this.igreja.membros.filter((membro) => {
                 if (membro.nome_usuario.toLowerCase().indexOf(this.findUsers.toLowerCase()) != -1) {
                     return membro;
                 }
@@ -148,11 +147,7 @@ export default {
             this.resetVariables("invite");
         },
         fillCopyUsers: function () {
-            let self = this;
-
-            this.checkPermission().then(() => {
-                self.copy_members = self.$root.igreja.membros;
-            });
+            this.copy_members = this.igreja.membros;
         }
     },
     watch: {
@@ -161,10 +156,7 @@ export default {
         }
     },
     mounted: function () {
-        this.checkPermission().then(() => {
-            this.fillCopyUsers();
-            this.igreja = this.$root.igreja;
-        });
+        this.fillCopyUsers();
     }
 }
 </script>

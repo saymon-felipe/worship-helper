@@ -34,7 +34,6 @@ export default {
     mixins: [globalMethods],
     data() {
         return {
-            igreja: {}
         }
     },
     methods: {
@@ -45,9 +44,6 @@ export default {
         }
     },
     mounted: function () {
-        this.checkPermission().then(() => {
-            this.igreja = this.$root.igreja;
-        });
     },
     components: {
         modal,

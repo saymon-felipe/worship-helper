@@ -25,7 +25,7 @@ import $ from 'jquery';
 
 export default {
     name: "addFunctionModalContent",
-    props: ["member", "igreja"],
+    props: ["member"],
     mixins: [globalMethods],
     data() {
         return {
@@ -86,6 +86,7 @@ export default {
         }
     },
     mounted: function () {
+        this.returnOccupations();
     }
 }
 </script>

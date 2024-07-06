@@ -22,9 +22,9 @@ import api from '../config/api';
 import { globalMethods } from '../js/globalMethods';
 
 export default {
-    name: "addOccupationModalContent",
+    name: "addTagModalContent",
     mixins: [globalMethods],
-    props: ["member", "igreja"],
+    props: ["member"],
     data() {
         return {
             occupations: []

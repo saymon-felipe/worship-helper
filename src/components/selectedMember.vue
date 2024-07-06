@@ -40,8 +40,11 @@ export default {
     .selected-member img {
         width: 30px;
         height: 30px;
+        min-width: 30px;
         border-radius: 50%;
         margin-right: 10px;
+        min-height: 30px;
+        object-fit: cover;
     }
 
 .member-informations {

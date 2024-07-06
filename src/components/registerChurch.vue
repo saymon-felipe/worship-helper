@@ -18,7 +18,7 @@
             </div>
         </div>
         <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm(); listAllChurches();">
-            <registerChurchModalContent v-if="registerChurch" @success="closeModal()" />
+            <registerChurchModalContent v-if="registerChurch" @success="closeModal(); listAllChurches();" />
             <viewChurchModalContent v-if="viewChurch" @church="church" />
         </modal>
     </div>

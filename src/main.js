@@ -2,6 +2,7 @@ import { createApp, VueElement } from 'vue';
 import App from './App.vue';
 import router from './router';
 import api from './config/api';
+import { moment, momentTimezone } from './config/moment';
 
 const app = createApp(App);
 
@@ -13,6 +14,8 @@ app.config.globalProperties.igreja = {
 app.config.globalProperties.haveAdminPermission = false;
 app.config.globalProperties.is_member = false;
 app.config.globalProperties.haveAppPermission = false;
+app.config.globalProperties.moment = moment;
+app.config.globalProperties.momentTimezone = momentTimezone;
 
 function getMyChurch() {
     let church_id = this.$route.params.id_igreja;

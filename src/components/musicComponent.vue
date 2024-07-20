@@ -6,7 +6,7 @@
                 <span class="font-size-3">{{ music.name }}</span>
                 <span class="font-size-4">{{ music.artist }}</span>
                 <div class="music-tags">
-                    <div class="music-tag" v-for="(tag, index) in music.tags" :key="index">{{ tag.name }}</div>
+                    <div class="music-tag" v-for="(tag, index) in music.tags" :key="index">{{ tag.nome }}</div>
                 </div>
             </div>
         </div>

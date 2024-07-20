@@ -46,7 +46,7 @@ export default {
         getMusic: function () {
             let self = this;
 
-            api.get("/musicas/" + self.$route.params.id_musica)
+            api.get("/musicas/retorna_musica/" + self.$route.params.id_musica)
                 .then(function (response) {
                     self.music = response.data.returnObj;
                 })
@@ -85,7 +85,8 @@ export default {
         padding-top: 15px;
         display: flex;
         flex-direction: column;
-        align-items: center
+        align-items: center;
+        z-index: 2;
     }
 
         .class-music-cipher iframe {

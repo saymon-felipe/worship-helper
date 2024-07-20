@@ -9,6 +9,12 @@
                 <label for="artist">Artista</label>
                 <input type="text" name="artist" id="artist" required>
             </div>
+            <div class="tags-musica">
+                <div class="input-group">
+                    <label>Tags</label>
+                    <selectMultiple :items="musicTagsList" maxlength="3" @selectedItems="selectTags($event)"></selectMultiple>
+                </div>
+            </div>
             <button type="button" class="btn primary" id="search-music" v-on:click="searchMusic()">Buscar música</button>
             <div class="music-utilities">
                 <div class="searching-music font-size-2" v-if="searchingMusic">Buscando música</div>
@@ -55,6 +61,7 @@
 import { globalMethods } from '../js/globalMethods';
 import api from '../config/api';
 import $ from 'jquery';
+import selectMultiple from "./selectMultiple.vue";
 
 export default {
     name: "createMusicModalContent",
@@ -72,10 +79,18 @@ export default {
             selectedCipher: false,
             selectedCipherHref: "",
             viewCipher: false,
-            selectedVideoThumbnail: ""
+            selectedVideoThumbnail: "",
+            musicTags: [],
+            musicTagsList: []
         }
     },
+    components: {
+        selectMultiple
+    },
     methods: {
+        selectTags: function (event) {
+            this.musicTags = event;
+        },
         submitVideo: function () {
             this.choosingMusic = false;
             this.playVideo = false;
@@ -153,6 +168,7 @@ export default {
             data["video_url"] = this.selectedUrl;
             data["cipher_url"] = this.selectedCipherHref;
             data["video_image"] = this.selectedVideoThumbnail;
+            data["music_tags"] = this.musicTags;
 
             api.post("/musicas", data)
             .then(function () {
@@ -161,7 +177,21 @@ export default {
             .catch(function (error) {
                 console.log(error);
             })
+        },
+        returnMusicTags: function () {
+            let self = this;
+
+            api.get("/musicas/tags")
+            .then(function (response) {
+                self.musicTagsList = response.data.returnObj;
+            })
+            .catch(function (error) {
+                console.log(error);
+            })
         }
+    },
+    mounted: function () {
+        this.returnMusicTags();
     }
 }
 </script>
@@ -188,7 +218,7 @@ export default {
     }
 
 .music-list, .cipher-list {
-    max-height: 36vh;
+    max-height: 26vh;
     overflow-y: scroll;
 }
 

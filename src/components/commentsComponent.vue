@@ -19,7 +19,7 @@
         <div class="create-warning" v-if="haveAdminPermission">
             <div class="personalized-input">
                 <form action="sendWarning" @submit.prevent="createNewWarning()">
-                    <input type="text" name="warning" class="input" :placeholder="type == 'aviso' ? 'Publique um aviso' : type == 'musica' ? 'Publique um comentário' : ''" id="send-warning" maxlength="100">
+                    <input type="text" name="warning" :placeholder="type == 'aviso' ? 'Publique um aviso' : type == 'musica' ? 'Publique um comentário' : ''" id="send-warning" maxlength="100">
                     <button type="submit" class="material-icons btn-empty" id="send-warning-button">send</button>
                 </form>
             </div>

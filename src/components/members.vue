@@ -5,7 +5,7 @@
             <span class="material-icons add-member-button" v-on:click="addMember()" v-if="haveAdminPermission">add</span>
         </div>
         <div class="member-search">
-            <input type="text" name="search_member" id="search-member" class="input" v-model="findUsers" placeholder="Digite o nome da pessoa">
+            <input type="text" name="search_member" id="search-member" v-model="findUsers" placeholder="Digite o nome da pessoa">
         </div>
         <div class="members-container">
             <div class="member" :id="'member-' + member.id_usuario" v-for="(member, index) in copy_members" v-bind:key="index">

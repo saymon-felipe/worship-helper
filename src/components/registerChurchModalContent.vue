@@ -3,11 +3,11 @@
         <form action="register-church" id="form-informations" @submit.prevent="getFormInformations($event)">
             <div class="input-group">
                 <label for="church-name">Nome</label>
-                <input type="text" placeholder="Insira o nome da igreja" name="nome_igreja" id="church-name" class="input" required />
+                <input type="text" placeholder="Insira o nome da igreja" name="nome_igreja" id="church-name" required />
             </div>
             <div class="input-group">
                 <label for="adm-id">Administrador</label>
-                <input type="text" inputmode="numeric" placeholder="Insira o nome do administrador" name="usuario_administrador" id="adm-id" v-model="searchParam" class="input" />
+                <input type="text" placeholder="Insira o nome do administrador" name="usuario_administrador" id="adm-id" @input="fillSearchParam($event)" />
                 <selectedMember :selected_member="selected_member" @removeUser="restoreInputLabel('#adm-id', 'Insira o nome do administrador')" />
                 <autoComplete :search="searchParam" v-if="searchParam != ''" @selectUser="select_user($event)"></autoComplete>
             </div>

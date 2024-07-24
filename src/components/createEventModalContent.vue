@@ -3,11 +3,11 @@
         <form id="new-event-form" @submit.prevent="createEvent()">
             <div class="input-group">
                 <h5>Nome do evento</h5>
-                <input type="text" class="input" name="event_name" placeholder="Ex. Santa Ceia" maxlength="15" required>
+                <input type="text" name="event_name" placeholder="Ex. Santa Ceia" maxlength="15" required>
             </div>
             <div class="input-group">
                 <h5>Dia do evento</h5>
-                <input type="datetime-local" class="input" name="event_date" required>
+                <input type="datetime-local" name="event_date" required>
             </div>
             <div class="event-musics">
                 <div class="configuration-header">
@@ -28,7 +28,7 @@
                     </button>
                 </div>
                 <div class="member-input-group">
-                    <input type="text" class="input" name="invite_member" id="invite-member-input" placeholder="Usuário" v-if="inviteMember" v-model="searchParam">
+                    <input type="text"  name="invite_member" id="invite-member-input" placeholder="Usuário" v-if="inviteMember" @input="fillSearchParam($event)">
                     <selectedMember :selected_member="selected_member" @removeUser="restoreInputLabel('#invite-member-input', 'Usuário')" />
                     <autoComplete :search="searchParam" v-if="searchParam != ''" @selectUser="select_user($event); submitUserButton = true;"></autoComplete>
                     <autoComplete :search="''" v-if="addTag" :isFunction="true" :igreja="igreja" @selectFunction="select_function($event); pushToObjectAndReset();"></autoComplete>

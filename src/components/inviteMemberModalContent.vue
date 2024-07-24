@@ -3,7 +3,7 @@
         <form action="invite-member" @submit.prevent="inviteMember()">
             <div class="input-group">
                 <label for="invite-member-input">Usuário</label>
-                <input type="text" class="input" name="invite_member" id="invite-member-input" placeholder="Usuário" v-model="searchParam">
+                <input type="text" name="invite_member" id="invite-member-input" placeholder="Usuário" @input="fillSearchParam($event)">
                 <selectedMember :selected_member="selected_member" @removeUser="restoreInputLabel('#invite-member-input', 'Usuário')" />
                 <autoComplete :search="searchParam" v-if="searchParam != ''" @selectUser="select_user($event)"></autoComplete>
             </div>
@@ -66,6 +66,10 @@ export default {
         selectedMember
     },
     mounted: function () {
+        $("#invite-member-input").focus();
+        setTimeout(() => {
+            $("#invite-member-input")[0].scrollIntoView();
+        }, 100)
     }
 }
 </script>

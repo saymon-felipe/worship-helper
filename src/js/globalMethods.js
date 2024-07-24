@@ -233,6 +233,11 @@ export const globalMethods = {
         relativeTime: function (timeString) {
             const relativeTime = moment(timeString).fromNow();
             return relativeTime;
+        },
+        fillSearchParam: function (event) {
+            let value = $(event.target).val();
+
+            this.searchParam = value;
         }
     },
     data() {

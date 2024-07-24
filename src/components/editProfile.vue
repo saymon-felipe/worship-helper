@@ -19,7 +19,7 @@
         </div>
         <div class="user-bio-container">
             <h4>Biografia</h4>
-            <textarea name="descricao_usuario" id="descricao-usuario" v-model="user.descricao_usuario" placeholder="Insira a sua descrição" class="input" v-on:focus="saveUserDescription()" v-on:blur="updateBio($event)"></textarea>
+            <textarea name="descricao_usuario" id="descricao-usuario" v-model="user.descricao_usuario" placeholder="Insira a sua descrição" v-on:focus="saveUserDescription()" v-on:blur="updateBio($event)"></textarea>
             <span class="response">{{ response }}</span>
         </div>
     </section>

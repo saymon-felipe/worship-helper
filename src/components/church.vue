@@ -2,7 +2,12 @@
     <div class="manage-church">
         <div class="container">
             <div class="event-list">
+                <h5>Eventos</h5>
                 <eventComponent :event="event" v-for="(event, index) in eventos" :key="index" />
+                <div class="church-empty" v-if="eventos.length <= 0">
+                    <h5>Vazio!</h5>
+                    <p>Nenhum evento disponível para a sua igreja</p>
+                </div>
             </div>
         </div>
     </div>

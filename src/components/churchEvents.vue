@@ -10,7 +10,7 @@
         <div class="church-events">
             <h5>Eventos</h5>
             <div class="church-events-list">
-
+                <eventComponent v-for="(event, index) in eventos" :event="event" :key="index" />
             </div>
         </div>
         <div class="create-event-button-container">
@@ -27,13 +27,16 @@
 <script>
 import { globalMethods } from '../js/globalMethods';
 import createEventModalContent from "./createEventModalContent.vue";
+import eventComponent from "./eventComponent.vue";
 import modal from "./modal.vue";
+import api from '../config/api';
 
 export default {
     name: "churchEvents",
     mixins: [globalMethods],
     data() {
         return {
+            eventos: []
         }
     },
     methods: {
@@ -41,13 +44,29 @@ export default {
             this.showModal = true;
             this.modalTitle = "Novo evento";
             this.modalButtonTitle = "Criar evento";
+        },
+        returnEvents: function () {
+            let self = this;
+            let data = {
+                id_igreja: self.igreja.id_igreja
+            }
+
+            api.post("/igreja/retorna-eventos", data)
+            .then(function (response) {
+                self.eventos = response.data.returnObj;
+            })
+            .catch(function (error) {
+                console.log(error);
+            })
         }
     },
     mounted: function () {
+        this.returnEvents();
     },
     components: {
         modal,
-        createEventModalContent
+        createEventModalContent,
+        eventComponent
     }
 }
 </script>
@@ -72,11 +91,16 @@ export default {
 
 .create-event-button-container {
     position: absolute;
-    bottom: -66px;
+    bottom: -90px;
     width: 100%;
 }
 
     .create-event-button-container button {
         margin: auto;
     }
+
+.church-events-list {
+    height: 53vh;
+    overflow-y: auto;
+}
 </style>

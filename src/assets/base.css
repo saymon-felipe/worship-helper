@@ -159,6 +159,8 @@ a {
 
 .inner-modal-container {
   margin-top: 2rem;
+  overflow-y: auto;
+  height: 62vh;
 }
 
 .app-inner-content {
@@ -188,6 +190,10 @@ a {
 @media (max-width: 515px) {
   h3 {
     font-size: var(--font-size-h5) !important;
+  }
+
+  h4 {
+    font-size: var(--font-size-h6) !important;
   }
 }
 
@@ -475,6 +481,14 @@ input, textarea, select {
   border-radius: 10px;
   border: none;
   font-size: var(--font-size-3);
+  width: 100%;
+  background: var(--secondary-secondary-blue-high-2);
+  color: var(--neutral-white);
+}
+
+input::placeholder, textarea::placeholder {
+  color: var(--neutral-white);
+  font-style: italic;
 }
 
 .input-group {
@@ -560,16 +574,6 @@ label {
   background: var(--tertiary-tertiary-green-high-2);
 }
 
-.input {
-  background: var(--secondary-secondary-blue-high-2);
-  color: var(--neutral-white);
-}
-
-  .input::placeholder {
-    color: var(--neutral-white);
-    font-style: italic;
-  }
-
 .church-profile {
     display: flex;
     align-items: center;
@@ -619,4 +623,21 @@ label {
     top: 0;
     background: transparent;
     cursor: pointer;
+}
+
+.preview-buttons {
+  display: flex;
+  width: 100%;
+  padding: 1rem;
+  background: var(--primary-primary-blue-low);
+}
+
+  .preview-buttons button:first-child {
+      margin-right: 1rem;
+  }
+
+.selected {
+    outline: 2px solid var(--primary-primary-blue-high);
+    border-radius: 8px;
+    padding: 5px 0;
 }

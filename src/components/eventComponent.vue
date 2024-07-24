@@ -1,20 +1,21 @@
 <template>
-    <div class="event-container">
+    <div class="event-container" v-on:click="goToEvent(event.id_evento)">
         <div class="event-header">
             <div class="event-informations">
-                {{ event_close }}
+                {{ event_close }} {{ returnCloseText() }}
                 <h3>{{ event.nome_evento }}</h3>
+                <h4>{{ moment.parseZone(event.data_inicio_evento).format("dddd DD/MM/yyyy HH:mm") }}</h4>
             </div>
             <div class="event-icons">
-                <span class="material-icons warning" v-if="!event.user_voted">error</span>
-                <span class="material-icons success" v-if="event.user_voted">check_circle</span>
+                <span class="material-icons warning" style="display: none;" v-if="!event.user_voted">error</span>
+                <span class="material-icons success" style="display: none;" v-if="event.user_voted">check_circle</span>
                 <span class="material-icons pulse" :class="urgent_event ? 'danger' : 'warning'">notifications</span>
             </div>
         </div>
         <div class="event-footer">
             <div class="event-informations">
                 <div class="creator-tag">
-                    {{ event.usuario_criador.tag_usuario_nome }}
+                    {{ event.criador_tag }}
                 </div>
                 <div class="music-quantity">
                     <span class="material-icons">playlist_play</span>
@@ -48,12 +49,21 @@ export default {
         }
     },
     methods: {
+        goToEvent: function (event_id) {
+            this.$router.push("/home/event/" + event_id);
+        },
+        returnCloseText: function () {
+            let startDate = moment(this.event.data_inicio_evento);
+            let dateDiff = startDate.diff(this.current_date, 'days');
+
+            return "Faltam " + dateDiff + " dias";
+        },
         checkIfEventIsClose: function () {
             let startDate = moment(this.event.data_inicio_evento);
-
             let dateDiff = startDate.diff(this.current_date, 'days');
+
             if (dateDiff < 5) {
-                this.event_close = "Evento próximo";
+                this.event_close = "Evento próximo - ";
                 this.urgent_event = true;
             }
         }
@@ -68,6 +78,7 @@ export default {
     background: var(--secondary-secondary-blue-high-2);
     border-radius: 10px;
     padding: 10px;
+    margin: 1rem 0;
 }
 
 .event-icons {

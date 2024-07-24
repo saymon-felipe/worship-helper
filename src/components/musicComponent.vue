@@ -1,6 +1,6 @@
 <template>
-    <router-link :to="library != 'true' ? '/home/musics/' + music.id : ''">
-        <div class="music-component">
+    <div class="music-component" v-on:click="clickInMusic($event)">
+        <div class="music-inner">
             <img :src="music.image" class="avatar-p">
             <div class="music-informations">
                 <span class="font-size-3">{{ music.name }}</span>
@@ -10,13 +10,39 @@
                 </div>
             </div>
         </div>
-    </router-link>
+        <div class="remove-music" v-on:click="removeMusic()" v-if="allowremove == 'true'">
+            <span class="material-icons">close</span>
+        </div>
+    </div>
 </template>
 <script>
+import $ from 'jquery';
+
 export default {
     name: "musicComponent",
-    props: ["music", "library"],
+    props: ["music", "library", "clicktype", "allowremove"],
     methods: {
+        removeMusic: function () {
+            this.$emit("remove", this.music);
+        },
+        clickInMusic: function (event) {
+            let element = $(event.currentTarget);
+
+            switch (this.clicktype) {
+                case "select":
+                    $(".music-component").removeClass("selected");
+                    element.addClass("selected");
+                    this.$emit("select", this.music);
+                    break;
+                case "none":
+                    break;
+                case undefined:
+                    if (this.library != "true") {
+                        this.$router.push('/home/musics/' + this.music.id);
+                    }
+                    break;
+            }
+        }
     }
 }
 </script>
@@ -25,7 +51,17 @@ export default {
     margin: 1rem 0;
 }
 
-.music-component, .music-tags {
+.music-component, .music-tags, .music-inner {
+    display: flex;
+    align-items: center;
+}
+
+.music-component {
+    justify-content: space-between;
+}
+
+.remove-music {
+    margin-right: .8rem;
     display: flex;
     align-items: center;
 }

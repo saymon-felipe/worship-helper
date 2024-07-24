@@ -27,7 +27,7 @@
                         </div>
                     </div>
                     <div class="video-preview" v-if="selectedUrl != '' && playVideo">
-                        <div class="video-preview-buttons">
+                        <div class="preview-buttons">
                             <button class="btn" v-on:click="playVideo = false">Voltar</button>
                             <button class="btn primary" v-on:click="submitVideo()">Selecionar música</button>
                         </div>
@@ -42,7 +42,7 @@
                         <p class="font-size-3">{{ cipher.title }}</p>
                     </div>
                     <div class="cipher-preview" v-if="selectedCipher && viewCipher">
-                        <div class="cipher-preview-buttons">
+                        <div class="preview-buttons">
                             <button class="btn" v-on:click="viewCipher = false">Voltar</button>
                             <button class="btn primary" v-on:click="submitCipher()">Selecionar cifra</button>
                         </div>
@@ -222,12 +222,6 @@ export default {
     overflow-y: scroll;
 }
 
-.selected {
-    outline: 2px solid var(--primary-primary-blue-high);
-    border-radius: 8px;
-    padding: 5px 0;
-}
-
 .cipher-preview, .video-preview {
     position: fixed;
     top: 0;
@@ -248,15 +242,4 @@ export default {
     flex-direction: column;
     align-items: center
 }
-
-.video-preview-buttons, .cipher-preview-buttons {
-    display: flex;
-    width: 100%;
-    padding: 1rem;
-    background: var(--primary-primary-blue-low);
-}
-
-    .video-preview-buttons button:first-child, .cipher-preview-buttons button:first-child {
-        margin-right: 1rem;
-    }
 </style>

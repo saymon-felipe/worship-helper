@@ -1,19 +1,23 @@
 <template>
     <div class="create-event-modal-content inner-modal-container">
         <form id="new-event-form" @submit.prevent="createEvent()">
-            <div class="event-date">
-                <h5>Dia</h5>
-                <input type="datetime-local" class="input" name="event_date" id="event-date-input" required>
+            <div class="input-group">
+                <h5>Nome do evento</h5>
+                <input type="text" class="input" name="event_name" placeholder="Ex. Santa Ceia" maxlength="15" required>
+            </div>
+            <div class="input-group">
+                <h5>Dia do evento</h5>
+                <input type="datetime-local" class="input" name="event_date" required>
             </div>
             <div class="event-musics">
                 <div class="configuration-header">
                     <h5>Músicas</h5>
-                    <button type="button" class="create-new-tag">
+                    <button type="button" class="create-new-tag" v-on:click="openSearchMusic()">
                         <span class="material-icons">add</span>
                     </button>
                 </div>
                 <div class="music-list">
-
+                    <musicComponent v-for="(music, index) in event_selected_musics" :key="index" :music="music" clicktype="none" allowremove="true" @remove="removeMusic($event)"></musicComponent>
                 </div>
             </div>
             <div class="event-members">
@@ -39,6 +43,7 @@
             <input type="submit" id="submit-informations-form" style="display: none;">
         </form>
         <p class="response">{{ response }}</p>
+        <searchMusic v-show="showSearchMusic" @select="selectMusic($event)" @close="showSearchMusic = false" />
     </div>
 </template>
 <script>
@@ -47,6 +52,9 @@ import selectedEventMember from "./selectedEventMember.vue";
 import selectedMember from "./selectedMember.vue";
 import { globalMethods } from '../js/globalMethods';
 import $ from 'jquery';
+import searchMusic from "./searchMusic.vue";
+import musicComponent from "./musicComponent.vue";
+import api from '../config/api';
 
 export default {
     name: "createEventModalContent",
@@ -63,13 +71,35 @@ export default {
             submitUserButton: false,
             addTag: false,
             selected_tag: {},
-            event_selected_members: []
+            event_selected_members: [],
+            event_selected_musics: [],
+            showSearchMusic: false
         }
     },
     methods: {
+        removeMusic: function (music) {
+            this.event_selected_musics = this.event_selected_musics.filter(obj => obj.id != music.id);
+        },
+        selectMusic: function (music) {
+            if (this.event_selected_musics.indexOf(music) == -1) {
+                this.event_selected_musics.push(music);
+            }
+            
+            this.showSearchMusic = false;
+        },
+        openSearchMusic: function () {
+            this.showSearchMusic = true;
+        },
         createEvent: function () {
+            let self = this;
+
             if (this.event_selected_members.length == 0) {
                 this.showResponse("Nenhum membro selecionado", ".response", "error");
+                return;
+            }
+
+            if (this.event_selected_musics.length == 0) {
+                this.showResponse("Nenhuma música selecionada", ".response", "error");
                 return;
             }
 
@@ -78,7 +108,22 @@ export default {
                 return obj;
             }, {});
 
+            if (data.event_name.trim() == "") {
+                this.showResponse("Nome inválido", ".response", "error");
+                return;
+            }
+
             data["event_members"] = this.event_selected_members;
+            data["event_musics"] = this.event_selected_musics;
+            data["id_igreja"] = this.igreja.id_igreja;
+
+            api.post("/igreja/cadastrar-evento", data)
+            .then(function () {
+                self.$emit("success");
+            })
+            .catch(function (error) {
+                console.log(error);
+            })
         },
         removeMember: function (member_id) {
             this.event_selected_members = this.event_selected_members.filter(member => member.id_usuario != member_id);
@@ -110,6 +155,9 @@ export default {
         },
         inviteMemberFunction: function() {
             this.inviteMember = !this.inviteMember;
+            setTimeout(() => {
+                $("#invite-member-input").focus();
+            }, 1);
         },
         inviteMemberToEvent: function () {
             this.submitUserButton = false;
@@ -119,7 +167,9 @@ export default {
     components: {
         autoComplete,
         selectedEventMember,
-        selectedMember
+        selectedMember,
+        searchMusic,
+        musicComponent
     },
     mounted: function () {
     }
@@ -147,12 +197,20 @@ export default {
 
 .submit-user-button {
     position: absolute;
-    width: 50px;
-    height: 48px;
+    right: 5px;
+    top: 0;
+    bottom: 0;
+    margin: auto;
+    width: 40px;
+    height: 40px;
     margin-left: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .member-input-group {
     position: relative;
+    margin-top: 1rem;
 }
 </style>

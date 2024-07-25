@@ -236,7 +236,7 @@ export const globalMethods = {
         },
         fillSearchParam: function (event) {
             let value = $(event.target).val();
-
+            
             this.searchParam = value;
         }
     },

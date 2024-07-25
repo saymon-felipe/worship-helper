@@ -19,8 +19,8 @@
                 <span class="material-icons">add</span>
             </button>
         </div>
-        <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm()">
-            <createEventModalContent @church="igreja" @success="closeModal()" />
+        <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm(); returnEvents();">
+            <createEventModalContent @church="igreja" @success="closeModal(); returnEvents();" />
         </modal>
     </div>
 </template>

@@ -28,7 +28,7 @@
                     </button>
                 </div>
                 <div class="member-input-group">
-                    <input type="text"  name="invite_member" id="invite-member-input" placeholder="Usuário" v-if="inviteMember" @input="fillSearchParam($event)">
+                    <input type="text"  name="invite_member" id="invite-member-input" placeholder="Usuário" v-if="inviteMember" @input="fillSearchParam($event); manageScroll()">
                     <selectedMember :selected_member="selected_member" @removeUser="restoreInputLabel('#invite-member-input', 'Usuário')" />
                     <autoComplete :search="searchParam" v-if="searchParam != ''" @selectUser="select_user($event); submitUserButton = true;"></autoComplete>
                     <autoComplete :search="''" v-if="addTag" :isFunction="true" :igreja="igreja" @selectFunction="select_function($event); pushToObjectAndReset();"></autoComplete>
@@ -77,6 +77,13 @@ export default {
         }
     },
     methods: {
+        manageScroll: function () {
+            setTimeout(() => {
+                if (this.searchParam.length == 3) {
+                    $(".inner-modal-container").scrollTop(999999);
+                }
+            }, 100)
+        },
         removeMusic: function (music) {
             this.event_selected_musics = this.event_selected_musics.filter(obj => obj.id != music.id);
         },
@@ -157,11 +164,16 @@ export default {
             this.inviteMember = !this.inviteMember;
             setTimeout(() => {
                 $("#invite-member-input").focus();
+                $(".inner-modal-container").scrollTop(999999);
             }, 1);
         },
         inviteMemberToEvent: function () {
             this.submitUserButton = false;
             this.addTag = true;
+
+            setTimeout(() => {
+                $(".inner-modal-container").scrollTop(999999);
+            }, 100)
         }
     },
     components: {

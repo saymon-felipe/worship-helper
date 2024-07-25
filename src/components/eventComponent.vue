@@ -55,8 +55,13 @@ export default {
         returnCloseText: function () {
             let startDate = moment(this.event.data_inicio_evento);
             let dateDiff = startDate.diff(this.current_date, 'days');
+            let returnText = "Faltam " + dateDiff + " dias";
 
-            return "Faltam " + dateDiff + " dias";
+            if (dateDiff == 0) {
+                returnText = "Hoje";
+            }
+
+            return returnText;
         },
         checkIfEventIsClose: function () {
             let startDate = moment(this.event.data_inicio_evento);

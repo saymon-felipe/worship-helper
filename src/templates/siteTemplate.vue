@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div class="loading" v-if="loading">
+        <div class="loading" v-if="globalState.loadingApp">
             <lottie-player id="loading-system" background="transparent" speed="1" loop autoplay></lottie-player>
         </div>
         <div class="app-container" v-else>
@@ -20,6 +20,7 @@ import footerComponent from "../components/footerComponent.vue";
 import headerComponent from '../components/header.vue';
 import { globalMethods } from '../js/globalMethods';
 import loadingJson from "../assets/animations/loading.json";
+import { getCurrentInstance } from 'vue';
 
 export default {
     name: "siteTemplate",
@@ -28,10 +29,12 @@ export default {
         headerComponent,
         footerComponent
     },
-    data() {
+    setup() {
+        const globalState = getCurrentInstance().appContext.config.globalProperties.$globalState;
+
         return {
-            loading: true
-        }
+            globalState
+        };
     },
     methods: {
         initSystemRequests: function () {
@@ -39,10 +42,7 @@ export default {
 
             self.checkAppPermission();
             self.checkPermission();
-
-            self.requireUser().then(() => {
-                self.loading = false;
-            })
+            self.requireUser();
         }
     },
     mounted: function () {

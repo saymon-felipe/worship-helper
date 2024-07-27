@@ -1,4 +1,4 @@
-import { createApp, VueElement } from 'vue';
+import { createApp, reactive } from 'vue';
 import App from './App.vue';
 import router from './router';
 import api from './config/api';
@@ -17,8 +17,12 @@ app.config.globalProperties.haveAppPermission = false;
 app.config.globalProperties.moment = moment;
 app.config.globalProperties.momentTimezone = momentTimezone;
 
+app.config.globalProperties.$globalState = reactive({
+    loadingApp: true
+});
+
 function getMyChurch() {
-    let church_id = this.$route.params.id_igreja;
+    let church_id = app.config.globalProperties.$route.params.id_igreja;
 
     if (church_id == undefined) {
         church_id = JSON.parse(sessionStorage.getItem("current_church")).id_igreja;
@@ -31,6 +35,7 @@ function getMyChurch() {
     api.post("/igreja/retorna-igreja", data)
         .then(function (response) {
             app.config.globalProperties.igreja = response.data.returnObj;
+            app.config.globalProperties.$globalState.loadingApp = false;
         })
         .catch(function (error) {
             console.log(error)
@@ -40,7 +45,7 @@ function getMyChurch() {
 app.config.globalProperties.getMyChurch = getMyChurch;
 
 function checkPermission() {
-    let church_id = this.$route.params.id_igreja;
+    let church_id = app.config.globalProperties.$route.params.id_igreja;
     let localStorageChurch = JSON.parse(sessionStorage.getItem("current_church"));
 
     if (church_id == undefined) {
@@ -58,7 +63,7 @@ function checkPermission() {
             app.config.globalProperties.haveAdminPermission = response.data.returnObj.administrador;
             app.config.globalProperties.is_member = response.data.returnObj.apenas_membro;
             
-            app.config.globalProperties.getMyChurch();
+            getMyChurch();
         })
 }
 

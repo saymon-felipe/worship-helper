@@ -2,7 +2,7 @@
     <div class="music-container">
         <div class="music-header">
             <musicComponent :music="music"></musicComponent>
-            <div class="music-tone">
+            <div class="music-tone" v-if="event_id != 0">
                 {{ music.tom }}
             </div>
         </div>

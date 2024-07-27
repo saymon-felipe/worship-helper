@@ -16,10 +16,15 @@
             <h3>Músicas</h3>
             <div class="music-list">
                 <div class="music" v-for="(music, index) in event.musicas" :key="index" v-on:click="goToMusic(music.id_musica)">
-                    <img :src="music.imagem_musica" class="avatar-pp">
-                    <div class="music-informations">
-                        <h5>{{ music.nome_musica }}</h5>
-                        <p>{{ music.artista_musica }}</p>
+                    <div class="music-header">
+                        <img :src="music.imagem_musica" class="avatar-pp">
+                        <div class="music-informations">
+                            <h5>{{ music.nome_musica }}</h5>
+                            <p>{{ music.artista_musica }}</p>
+                        </div>
+                    </div>
+                    <div class="music-tone">
+                        {{ music.tom }}
                     </div>
                     <div class="vote" v-if="false">
                         <span class="material-icons success" v-if="user_voted">check_circle</span>
@@ -57,7 +62,7 @@ export default {
     },
     methods: {
         goToMusic: function (music_id) {
-            this.$router.push('/home/musics/' + music_id);
+            this.$router.push('/home/musics/' + music_id + "?event=" + this.event_id);
         },
         getParam: function () {
             this.event_id = this.$route.params.id_evento;
@@ -101,14 +106,21 @@ export default {
         margin-right: 1rem;
     }
 
-
-
 .music, .member {
     display: flex;
     align-items: center;
     position: relative;
     margin: 1rem 0;
     cursor: pointer;
+}
+
+.music {
+    justify-content: space-between;
+}
+
+.music-header {
+    display: flex;
+    align-items: center;
 }
 
 .vote {

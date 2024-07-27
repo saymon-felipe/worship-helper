@@ -13,6 +13,7 @@
         <div class="remove-music" v-on:click="removeMusic()" v-if="allowremove == 'true'">
             <span class="material-icons">close</span>
         </div>
+        
     </div>
 </template>
 <script>
@@ -21,6 +22,11 @@ import $ from 'jquery';
 export default {
     name: "musicComponent",
     props: ["music", "library", "clicktype", "allowremove"],
+    data() {
+        return {
+            showVideo: false
+        }
+    },
     methods: {
         removeMusic: function () {
             this.$emit("remove", this.music);

@@ -2,7 +2,6 @@
     <div class="search-music">
         <div class="preview-buttons">
             <button class="btn" v-on:click="close()">Voltar</button>
-            <button class="btn primary" v-on:click="submitMusic()">Selecionar música</button>
         </div>
         <div class="music-search">
             <input type="text" placeholder="Pesquisar música ou artista" v-model="searchMusicString">
@@ -10,12 +9,14 @@
         <div class="music-list">
             <musicComponent v-for="(music, index) in filteredMusics" :key="index" :music="music" clicktype="select" @select="selectedMusic = $event"></musicComponent>
         </div>
+        <musicDetails v-if="selectedMusic.id != undefined && musicTone == null" :music="selectedMusic" @select="submitMusicWithTone($event)" @close="selectedMusic = {}"></musicDetails>
     </div>
 </template>
 <script>
 import api from '../config/api';
 import { globalMethods } from '../js/globalMethods';
 import musicComponent from "./musicComponent.vue";
+import musicDetails from "./musicDetails.vue";
 import $ from 'jquery';
 
 export default {
@@ -26,7 +27,8 @@ export default {
             musics: [],
             searchMusicString: "",
             filteredMusics: [],
-            selectedMusic: {}
+            selectedMusic: {},
+            musicTone: null
         }
     },
     watch: {
@@ -35,6 +37,10 @@ export default {
         }
     },
     methods: {
+        submitMusicWithTone: function (event) {
+            this.selectedMusic["tone"] = event;
+            this.submitMusic();
+        },
         close: function () {
             this.$emit("close");
             $(".music-component").removeClass("selected");
@@ -59,7 +65,8 @@ export default {
         }
     },
     components: {
-        musicComponent
+        musicComponent,
+        musicDetails
     },
     mounted: function () {
         this.returnMusics();
@@ -89,5 +96,9 @@ export default {
 .music-search {
     padding: 0 1rem;
     margin-top: 2rem;
+}
+
+.preview-buttons button {
+    margin: 0;
 }
 </style>

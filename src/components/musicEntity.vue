@@ -1,13 +1,18 @@
 <template>
     <div class="music-container">
-        <musicComponent :music="music"></musicComponent>
+        <div class="music-header">
+            <musicComponent :music="music"></musicComponent>
+            <div class="music-tone">
+                {{ music.tom }}
+            </div>
+        </div>
         <div class="music-content">
             <button class="btn primary" v-on:click="openCipherContainer()">Ver cifra</button>
             <div class="youtube-video">
                 <iframe id="ytplayer" width="100%" height="100%" :src="'https://www.youtube.com/embed/' + music.video_id" frameborder="0" allowfullscreen />
             </div>
         </div>
-        <div class="class-music-cipher" v-if="showCipherContainer">
+        <div class="music-cipher" v-if="showCipherContainer">
             <button class="btn" v-on:click="closeCipherContainer()">Voltar</button>
             <iframe id="cc" width="100%" height="100%" :src="music.cipher_url" frameborder="0" allowfullscreen />
         </div>
@@ -32,7 +37,8 @@ export default {
     data() {
         return {
             music: {},
-            showCipherContainer: false
+            showCipherContainer: false,
+            event_id: 0
         }
     },
     components: {
@@ -46,7 +52,11 @@ export default {
         getMusic: function () {
             let self = this;
 
-            api.get("/musicas/retorna_musica/" + self.$route.params.id_musica)
+            let data = {
+                event_id: this.event_id
+            }
+
+            api.post("/musicas/retorna_musica/" + self.$route.params.id_musica, data)
                 .then(function (response) {
                     self.music = response.data.returnObj;
                 })
@@ -59,9 +69,18 @@ export default {
         },
         openCipherContainer: function () {
             this.showCipherContainer = true;
+        },
+        getParams: function () {
+            let url = new URLSearchParams(window.location.search);
+            let event = url.get("event");
+
+            if (event != null && event != "") {
+                this.event_id = event;
+            }
         }
     },
     mounted: function () {
+        this.getParams();
         this.getMusic();
     }
 }
@@ -75,7 +94,7 @@ export default {
         max-height: 250px;
     }
 
-    .class-music-cipher {
+    .music-cipher {
         height: 100vh;
         background: var(--primary-primary-blue-low);
         position: fixed;
@@ -89,11 +108,17 @@ export default {
         z-index: 2;
     }
 
-        .class-music-cipher iframe {
+        .music-cipher iframe {
             background-color: white;
         }
 
-        .class-music-cipher button {
+        .music-cipher button {
             margin-bottom: 15px;
         }
+
+.music-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
 </style>

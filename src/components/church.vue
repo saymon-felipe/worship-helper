@@ -28,6 +28,7 @@ export default {
     methods: {
         returnEvents: function () {
             let self = this;
+
             let data = {
                 id_igreja: self.igreja.id_igreja
             }
@@ -42,7 +43,9 @@ export default {
         }
     },
     mounted: function () {
-        this.returnEvents();
+        setTimeout(() => {
+            this.returnEvents();
+        }, 100);
     },
     components: {
         eventComponent

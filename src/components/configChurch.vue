@@ -116,7 +116,7 @@ export default {
                     self.response = "";
                 })
                 .catch(function (error) {
-                    self.showResponse(error.response.data, ".response");
+                    self.showResponse(error.response.data, ".response", "error");
                 })
         },
         returnChurchFunctions: function () {
@@ -131,7 +131,7 @@ export default {
                     self.response = "";
                 })
                 .catch(function (error) {
-                    self.showResponse(error.response.data, ".response");
+                    self.showResponse(error.response.data, ".response", "error");
                 })
         },
         returnPageInformations: function () {

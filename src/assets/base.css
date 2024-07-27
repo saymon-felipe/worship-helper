@@ -616,13 +616,13 @@ label {
           }
 
 .member-more-actions-wrapper {
-    position: fixed;
-    width: 100vw;
-    height: 100vh;
-    left: 0;
-    top: 0;
-    background: transparent;
-    cursor: pointer;
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  left: 0;
+  top: 0;
+  background: transparent;
+  cursor: pointer;
 }
 
 .preview-buttons {
@@ -633,11 +633,23 @@ label {
 }
 
   .preview-buttons button:first-child {
-      margin-right: 1rem;
+    margin-right: 1rem;
   }
 
 .selected {
-    outline: 2px solid var(--primary-primary-blue-high);
-    border-radius: 8px;
-    padding: 5px 0;
+  outline: 2px solid var(--primary-primary-blue-high);
+  border-radius: 8px;
+  padding: 5px 0;
+}
+
+.music-tone {
+  background: var(--primary-primary-blue-high-2);
+  width: 50px;
+  height: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-1);
+  font-weight: 700;
+  border-radius: 50%;
 }

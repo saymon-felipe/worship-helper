@@ -8,11 +8,9 @@
             <div class="youtube-video">
                 <iframe id="ytplayer" width="100%" height="100%" :src="'https://www.youtube.com/embed/' + music.video_id" frameborder="0" allowfullscreen />
             </div>
-            <div class="music-tone">
-                <div class="input-group">
-                    <label for="tone">Tom da música</label>
-                    <musicToneSelect @select="musicTone = $event" :musicid="music.id"></musicToneSelect>
-                </div>
+            <div class="input-group">
+                <label for="tone">Tom da música</label>
+                <musicToneSelect @select="musicTone = $event" :musicid="music.id"></musicToneSelect>
             </div>
             <button class="btn primary show-cipher" v-on:click="openCipherContainer()">Ver cifra</button>
             <div class="music-cipher" v-if="showCipherContainer">

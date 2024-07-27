@@ -14,6 +14,9 @@
         </div>
         <div class="music-cipher" v-if="showCipherContainer">
             <button class="btn" v-on:click="closeCipherContainer()">Voltar</button>
+            <div class="music-tone" v-if="event_id != 0">
+                Tom: {{ music.tom }}
+            </div>
             <iframe id="cc" width="100%" height="100%" :src="music.cipher_url" frameborder="0" allowfullscreen />
         </div>
         
@@ -114,6 +117,14 @@ export default {
 
         .music-cipher button {
             margin-bottom: 15px;
+        }
+
+        .music-cipher .music-tone {
+            position: fixed;
+            right: 1rem;
+            top: 5rem;
+            width: 115px;
+            border-radius: 20px;
         }
 
 .music-header {

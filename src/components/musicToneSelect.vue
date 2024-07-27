@@ -12,7 +12,7 @@
                 <div class="option" v-for="(tone, index) in churchTones" :key="index" :value="tone.id" v-on:click="selectItem(tone)">
                     <span>{{ tone.nome }}</span>
                 </div>
-                <div class="empty">
+                <div class="empty" v-if="churchTones.length == 0">
                     <span>Nenhum tom para essa música foi definido ainda</span>
                 </div>
             </div>

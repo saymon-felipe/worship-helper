@@ -5,14 +5,14 @@
             <button class="btn primary" v-on:click="submitMusic()">Selecionar música</button>
         </div>
         <div class="music-details-container">
-            <div class="youtube-video">
-                <iframe id="ytplayer" width="100%" height="100%" :src="'https://www.youtube.com/embed/' + music.video_id" frameborder="0" allowfullscreen />
-            </div>
+            <button class="btn primary show-cipher" v-on:click="openCipherContainer()">Ver cifra</button>
             <div class="input-group">
                 <label for="tone">Tom da música</label>
                 <musicToneSelect @select="musicTone = $event" :musicid="music.id"></musicToneSelect>
             </div>
-            <button class="btn primary show-cipher" v-on:click="openCipherContainer()">Ver cifra</button>
+            <div class="youtube-video">
+                <iframe id="ytplayer" width="100%" height="100%" :src="'https://www.youtube.com/embed/' + music.video_id" frameborder="0" allowfullscreen />
+            </div>
             <div class="music-cipher" v-if="showCipherContainer">
                 <button class="btn" v-on:click="closeCipherContainer()">Voltar</button>
                 <iframe id="cc" width="100%" height="100%" :src="music.cipher_url" frameborder="0" allowfullscreen />

@@ -40,6 +40,7 @@ export default {
             }
 
             api.post("/igreja/" + path, data).then(function () {
+                $("#entity").val("");
                 self.$emit("success", true);
             })
         }

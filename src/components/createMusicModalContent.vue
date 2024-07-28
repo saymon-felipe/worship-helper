@@ -53,6 +53,7 @@
                     <p class="font-size-3">Música e cifra selecionadas, prossiga com a criação da música.</p>
                 </div>
             </div>
+            <p class="response">{{ response }}</p>
             <input type="submit" id="submit-informations-form" style="display: none;">
         </form>
     </div>
@@ -170,12 +171,22 @@ export default {
             data["video_image"] = this.selectedVideoThumbnail;
             data["music_tags"] = this.musicTags;
 
+            if (this.musicTags.length == 0) {
+                this.showResponse("Tags faltando", ".response", "error");
+                return;
+            }
+
+            if (data.video_url == "" || data.cipher_url == "") {
+                this.showResponse("Video ou cifra faltando", ".response", "error");
+                return;
+            }
+
             api.post("/musicas", data)
             .then(function () {
                 self.$emit("success");
             })
             .catch(function (error) {
-                console.log(error);
+                self.showResponse(error.response.data, ".response", "error");
             })
         },
         returnMusicTags: function () {

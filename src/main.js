@@ -45,26 +45,30 @@ function getMyChurch() {
 app.config.globalProperties.getMyChurch = getMyChurch;
 
 function checkPermission() {
-    let church_id = app.config.globalProperties.$route.params.id_igreja;
-    let localStorageChurch = JSON.parse(sessionStorage.getItem("current_church"));
+    if (window.location.pathname != "/home") { //Se entrar aqui está na raiz
+        let church_id = app.config.globalProperties.$route.params.id_igreja;
+        let localStorageChurch = JSON.parse(sessionStorage.getItem("current_church"));
 
-    if (church_id == undefined) {
-        church_id = localStorageChurch != undefined ? localStorageChurch.id_igreja : undefined;
-    }
+        if (church_id == undefined) {
+            church_id = localStorageChurch != undefined ? localStorageChurch.id_igreja : undefined;
+        }
+        
+        if (church_id == undefined) return;
+
+        let data = {
+            id_igreja: church_id
+        }
     
-    if (church_id == undefined) return;
-
-    let data = {
-        id_igreja: church_id
+        api.post("/igreja/permissao", data)
+            .then(function (response) {
+                app.config.globalProperties.haveAdminPermission = response.data.returnObj.administrador;
+                app.config.globalProperties.is_member = response.data.returnObj.apenas_membro;
+                
+                getMyChurch();
+            })
+    } else {
+        app.config.globalProperties.$globalState.loadingApp = false;
     }
-
-    api.post("/igreja/permissao", data)
-        .then(function (response) {
-            app.config.globalProperties.haveAdminPermission = response.data.returnObj.administrador;
-            app.config.globalProperties.is_member = response.data.returnObj.apenas_membro;
-            
-            getMyChurch();
-        })
 }
 
 app.config.globalProperties.checkPermission = checkPermission;

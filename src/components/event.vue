@@ -69,8 +69,14 @@ export default {
         },
         getEvent: function () {
             let self = this;
+            let churchId = this.getCurrentChurchId();
+
+            if (churchId == null) {
+                return;
+            }
+
             let data = {
-                id_igreja: this.igreja.id_igreja
+                id_igreja: churchId
             }
 
             api.post("/igreja/retorna-evento/" + self.event_id, data)

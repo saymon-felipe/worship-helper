@@ -28,9 +28,14 @@ export default {
     methods: {
         returnEvents: function () {
             let self = this;
+            let churchId = self.getCurrentChurchId();
+
+            if (churchId == null) {
+                return;
+            }
 
             let data = {
-                id_igreja: self.igreja.id_igreja
+                id_igreja: churchId
             }
 
             api.post("/igreja/retorna-eventos", data)

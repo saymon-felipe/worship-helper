@@ -21,6 +21,18 @@ export const globalMethods = {
             let church = JSON.parse(sessionStorage.getItem("current_church"));
             return church;
         },
+        getCurrentChurchId: function () {
+            if (this.igreja && this.igreja.id_igreja != null) {
+                return this.igreja.id_igreja;
+            }
+
+            if (this.$route && this.$route.params && this.$route.params.id_igreja != null) {
+                return this.$route.params.id_igreja;
+            }
+
+            let church = this.getCurrentChurchInLocalStorage();
+            return church ? church.id_igreja : null;
+        },
         setJwtInLocalStorage: function (jwt) {
             localStorage.setItem("wh_jwt", jwt);
             this.checkAndSetJwt();

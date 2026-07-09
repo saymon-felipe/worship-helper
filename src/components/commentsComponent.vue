@@ -69,13 +69,18 @@ export default {
             let self = this;
             let element = $("#send-warning");
             let value = element.val();
+            let churchId = this.getCurrentChurchId();
 
             if (value.trim().length == 0) {
                 return;
             }
 
+            if (this.type == "aviso" && churchId == null) {
+                return;
+            }
+
             let data = {
-                id_igreja: this.igreja.id_igreja,
+                id_igreja: churchId,
                 mensagem: value,
                 id_musica: this.id_musica
             }
@@ -91,9 +96,14 @@ export default {
         },
         returnWarnings: function () {
             let self = this;
+            let churchId = this.getCurrentChurchId();
+
+            if (this.type == "aviso" && churchId == null) {
+                return;
+            }
 
             let data = {
-                id_igreja: this.igreja.id_igreja,
+                id_igreja: churchId,
                 id_musica: this.id_musica
             }
 
@@ -107,13 +117,18 @@ export default {
         },
         likeWarning: function (warning_id, usuario_atual_curtiu = false) {
             let self = this;
+            let churchId = this.getCurrentChurchId();
 
             if (usuario_atual_curtiu) {
                 return;
             }
 
+            if (this.type == "aviso" && churchId == null) {
+                return;
+            }
+
             let data = {
-                id_igreja: self.igreja.id_igreja,
+                id_igreja: churchId,
                 id_aviso: warning_id,
                 confirmacao: true
             }

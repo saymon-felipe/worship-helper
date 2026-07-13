@@ -118,15 +118,13 @@ export const globalMethods = {
         },
         requireUser: async function (force = false) {
             if (!force && appStore.state.user) {
-                this.user = appStore.state.user;
-                return this.user;
+                return appStore.state.user;
             }
 
-            this.user = await api.get("/usuario/return_user").then((res) => {
+            return await api.get("/usuario/return_user").then((res) => {
                 appStore.setUser(res.data.returnObj);
                 return appStore.state.user;
             });
-            return this.user;
         },
         pushAvatars: function (target_id) {
             let target = $("#member-" + target_id);
@@ -250,9 +248,13 @@ export const globalMethods = {
             this.searchParam = $(event.target).val();
         }
     },
+    computed: {
+        user() {
+            return appStore.state.user || {};
+        }
+    },
     data() {
         return {
-            user: appStore.state.user || {},
             default_church_image: api.defaults.baseURL + "/public/church-default-image.jpg",
             current_date: moment(),
             loading: true,

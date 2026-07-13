@@ -77,7 +77,9 @@
             </modal>
         </Transition>
         
-        <imageCropModal v-if="cropModalOpen" :imageSrc="cropImageSrc" @close="cropModalOpen = false" @confirm="onCropConfirm" />
+        <Transition name="modal-fade">
+            <imageCropModal v-if="cropModalOpen" :imageSrc="cropImageSrc" @close="cropModalOpen = false" @confirm="onCropConfirm" />
+        </Transition>
     </div>
 </template>
 

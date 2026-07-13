@@ -14,6 +14,7 @@
   "dependencies": {
     "@lottiefiles/lottie-player": "^1.7.1",
     "axios": "^1.18.1",
+    "cropperjs": "^1.6.2",
     "jquery": "^3.7.1",
     "moment": "^2.30.1",
     "moment-timezone": "^0.5.48",

@@ -43,22 +43,32 @@
             <textarea name="descricao_usuario" id="descricao-usuario" v-model="user.descricao_usuario" placeholder="Ex: Sou guitarrista e toco na igreja há 3 anos..." v-on:focus="saveUserDescription()" v-on:blur="updateBio($event)"></textarea>
             <span class="response-message">{{ response }}</span>
         </div>
+        
+        <Transition name="modal-fade">
+            <imageCropModal v-if="cropModalOpen" :imageSrc="cropImageSrc" @close="cropModalOpen = false" @confirm="onCropConfirm" />
+        </Transition>
     </section>
 </template>
 <script>
 import { globalMethods } from '../js/globalMethods';
 import api from '../config/api';
 import $ from 'jquery';
+import imageCropModal from "./imageCropModal.vue";
 
 export default {
     name: "editProfile",
     mixins: [globalMethods],
+    components: {
+        imageCropModal
+    },
     data() {
         return {
             response: "",
             descricao_usuario: "",
             formData: null,
-            default_avatar_image: api.defaults.baseURL + "/public/user-default-image.png" // Fallback seguro
+            default_avatar_image: api.defaults.baseURL + "/public/user-default-image.png", // Fallback seguro
+            cropModalOpen: false,
+            cropImageSrc: ""
         }
     },
     methods: {
@@ -79,19 +89,27 @@ export default {
             })
         },
         submitFormImage: function (event) {
-            let self = this;
             let file = event.target.files.item(0);
-            let submit = $("#submit-image-input");
-            self.formData = new FormData;
+            if (!file) return;
 
             if (file.type === "image/jpeg" || file.type === "image/jpg" || file.type === "image/png") { 
-                self.formData.set("imagem_usuario", file);
-                submit.click();
+                this.cropImageSrc = URL.createObjectURL(file);
+                this.cropModalOpen = true;
+                event.target.value = "";
             } else {
-                self.response = "Tipo de arquivo não suportado (apenas JPG ou PNG)";
+                this.response = "Tipo de arquivo não suportado (apenas JPG ou PNG)";
                 let responseElement = $(".response-message");
                 responseElement.show().addClass("error").css("opacity", 1);
             }
+        },
+        onCropConfirm: function (blob) {
+            this.cropModalOpen = false;
+            let file = new File([blob], 'cropped-user.png', { type: 'image/png' });
+            
+            this.formData = new FormData();
+            this.formData.set("imagem_usuario", file);
+            
+            this.sendImage(this.formData);
         },
         removePhoto: function () {
             let self = this;

@@ -35,24 +35,13 @@
         </div>
 
         <!-- Cipher Fullscreen Viewer Overlay -->
-        <div class="music-cipher-overlay" v-if="showCipherContainer">
-            <div class="cipher-header-bar">
-                <button class="close-cipher-btn" v-on:click="closeCipherContainer()">
-                    <span class="material-icons">arrow_back</span>
-                    <span>Voltar</span>
-                </button>
-                <div class="cipher-title-info">
-                    <h4>{{ music.name }}</h4>
-                    <p>{{ music.artist }}</p>
-                </div>
-                <div class="cipher-tone-badge" v-if="event_id != 0 && music.tom">
-                    <span>Tom: {{ music.tom }}</span>
-                </div>
-            </div>
-            <div class="cipher-content-container">
-                <cipherViewer :cipherText="music.cipher_text" :title="music.cipher_title || music.name" :artist="music.artist" :originalTone="music.tom"></cipherViewer>
-            </div>
-        </div>
+        <cipherModal
+            :show="showCipherContainer"
+            :music="music"
+            :showToneBadge="event_id != 0 && music.tom != null"
+            :toneName="music.tom"
+            @close="closeCipherContainer()"
+        />
         
         <!-- Comments Section -->
         <div class="music-comments-section" v-if="music.id != undefined">
@@ -77,7 +66,7 @@ import { globalMethods } from '../js/globalMethods';
 import api from '../config/api';
 import musicComponent from "./musicComponent.vue";
 import commentsComponent from "./commentsComponent.vue";
-import cipherViewer from "./cipherViewer.vue";
+import cipherModal from "./cipherModal.vue";
 import modal from "./modal.vue";
 
 export default {
@@ -94,7 +83,7 @@ export default {
     components: {
         musicComponent,
         commentsComponent,
-        cipherViewer,
+        cipherModal,
         modal
     },
     methods: {

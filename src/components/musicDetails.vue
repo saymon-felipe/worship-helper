@@ -51,26 +51,21 @@
                 />
             </div>
             
-            <Transition name="route">
-                <div class="music-cipher" v-if="showCipherContainer">
-                    <div class="preview-buttons">
-                        <button class="btn" v-on:click="closeCipherContainer()">Voltar</button>
-                        <button class="btn primary" v-on:click="selectTransposedTone()" v-if="!loadingCipher">Salvar cifra</button>
-                    </div>
-                    <div class="cipher-loading" v-if="loadingCipher">
-                        <span class="material-icons rotating">sync</span>
-                        <span>Carregando cifra</span>
-                    </div>
-                    <cipherViewer ref="cipherViewer" v-else :cipherText="displayMusic.cipher_text" :title="displayMusic.cipher_title || displayMusic.name" :artist="displayMusic.artist"></cipherViewer>
-                </div>
-            </Transition>
+            <cipherModal
+                :show="showCipherContainer"
+                :music="displayMusic"
+                :loading="loadingCipher"
+                buttonTitle="Salvar cifra"
+                @close="closeCipherContainer()"
+                @submit="handleCipherSubmit"
+            />
         </div>
         <p class="response">{{ response }}</p>
     </div>
 </template>
 <script>
 import { globalMethods } from '../js/globalMethods';
-import cipherViewer from "./cipherViewer.vue";
+import cipherModal from "./cipherModal.vue";
 import api from "../config/api";
 
 const FLAT_TO_SHARP = {
@@ -239,7 +234,7 @@ export default {
             const candidates = this.toneCandidates(toneName);
             return this.allTones.find(tone => candidates.includes(String(tone.nome || "").toLowerCase()));
         },
-        selectTransposedTone: async function () {
+        handleCipherSubmit: async function (selectedToneName) {
             if (!this.displayMusic.cipher_text) {
                 this.showResponse("Cifra não disponível para esta música", ".response", "error");
                 return;
@@ -247,7 +242,6 @@ export default {
 
             await this.loadTones();
 
-            const selectedToneName = this.$refs.cipherViewer ? this.$refs.cipherViewer.selectedToneName : "";
             const selectedTone = this.findToneByName(selectedToneName);
 
             if (!selectedTone) {
@@ -260,7 +254,7 @@ export default {
         }
     },
     components: {
-        cipherViewer
+        cipherModal
     },
     mounted: function () {
         this.loadMusicDetails();

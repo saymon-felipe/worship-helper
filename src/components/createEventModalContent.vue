@@ -1,6 +1,6 @@
 <template>
     <div class="create-event-modal-content inner-modal-container">
-        <form id="new-event-form" @submit.prevent="createEvent()">
+        <form id="new-event-form" @submit.prevent="createEvent($event)">
             <!-- Linha 1: Nome e Data -->
             <div class="form-row-grid">
                 <div class="input-group">
@@ -188,7 +188,7 @@ export default {
         openSearchMusic: function () {
             this.showSearchMusic = true;
         },
-        createEvent: function () {
+        createEvent: function (event) {
             let self = this;
 
             if (this.event_selected_members.length == 0) {
@@ -201,10 +201,7 @@ export default {
                 return;
             }
 
-            let data = $("#new-event-form").serializeArray().reduce(function (obj, item) {
-                obj[item.name] = item.value;
-                return obj;
-            }, {});
+            let data = Object.fromEntries(new FormData(event.target).entries());
 
             if (data.event_name.trim() == "") {
                 this.showResponse("Nome inválido", ".response", "error");

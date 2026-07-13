@@ -32,7 +32,7 @@
                         :cipherText="music.cipher_text"
                         :title="music.cipher_title || music.name"
                         :artist="music.artist"
-                        :originalTone="toneName"
+                        :targetTone="toneName"
                     />
                 </div>
             </div>

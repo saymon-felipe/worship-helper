@@ -4,7 +4,7 @@
         <div class="music-detail-header-card">
             <musicComponent :music="music" clicktype="none" class="embedded-music-component"></musicComponent>
             <div class="tone-info-box" v-if="event_id != 0 && music.tom">
-                <span class="tone-label">Tom Escaldado</span>
+                <span class="tone-label">Tom Escolhido</span>
                 <div class="music-tone">{{ music.tom }}</div>
             </div>
         </div>

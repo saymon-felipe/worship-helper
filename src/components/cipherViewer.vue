@@ -55,13 +55,18 @@ function transposeNote(note, steps) {
     return NOTES[(index + steps + NOTES.length * 4) % NOTES.length];
 }
 
+function getToneRoot(tone) {
+    const match = String(tone || "").trim().match(/^([A-G](?:#|b)?)/);
+    return match ? normalizeNote(match[1]) : "";
+}
+
 function isChordToken(token) {
     return CHORD_PATTERN.test(token.replace(/[()[\],]/g, ""));
 }
 
 export default {
     name: "cipherViewer",
-    props: ["cipherText", "title", "artist", "originalTone"],
+    props: ["cipherText", "title", "artist", "originalTone", "targetTone"],
     data() {
         return {
             transposeSteps: 0
@@ -120,6 +125,32 @@ export default {
         }
     },
     methods: {
+        syncTargetTone: function () {
+            const originalRoot = getToneRoot(this.resolvedOriginalTone);
+            const targetRoot = getToneRoot(this.targetTone);
+
+            if (!originalRoot || !targetRoot) {
+                this.transposeSteps = 0;
+                return;
+            }
+
+            const originalIndex = NOTES.indexOf(originalRoot);
+            const targetIndex = NOTES.indexOf(targetRoot);
+
+            if (originalIndex === -1 || targetIndex === -1) {
+                this.transposeSteps = 0;
+                return;
+            }
+
+            let steps = targetIndex - originalIndex;
+            if (steps > 6) {
+                steps -= NOTES.length;
+            } else if (steps < -6) {
+                steps += NOTES.length;
+            }
+
+            this.transposeSteps = steps;
+        },
         transpose: function (steps) {
             this.transposeSteps += steps;
         },
@@ -228,6 +259,17 @@ export default {
             }
             return "";
         }
+    },
+    watch: {
+        targetTone: function () {
+            this.syncTargetTone();
+        },
+        cipherText: function () {
+            this.syncTargetTone();
+        }
+    },
+    mounted: function () {
+        this.syncTargetTone();
     }
 }
 </script>

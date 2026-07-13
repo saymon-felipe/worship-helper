@@ -155,18 +155,42 @@ export const globalMethods = {
             return count + " " + membersText;
         },
         showResponse: function (text, element_primary_class, element_class = "") {
-            this.response = text;
+            const responseText = typeof text === "string"
+                ? text
+                : (text && (text.error || text.message)) || "Não foi possível concluir a ação";
+
+            this.response = responseText;
+            this.responseTimers = this.responseTimers || {};
             let element = $(element_primary_class);
+            const currentTimer = this.responseTimers[element_primary_class];
+
+            if (currentTimer) {
+                clearTimeout(currentTimer.show);
+                clearTimeout(currentTimer.hide);
+            }
+
+            const responseId = Date.now().toString() + Math.random().toString(16).slice(2);
+            element.data("response-id", responseId);
             this.resetResponseClass(element);
             element.addClass(element_class);
             element.show();
-            setTimeout(() => {
-                element.css("opacity", 1);
+
+            const showTimer = setTimeout(() => {
+                if (element.data("response-id") === responseId) {
+                    element.css("opacity", 1);
+                }
             }, 1);
 
-            setTimeout(() => {
-                element.css("opacity", 0);
+            const hideTimer = setTimeout(() => {
+                if (element.data("response-id") === responseId) {
+                    element.css("opacity", 0);
+                }
             }, 5 * 1000);
+
+            this.responseTimers[element_primary_class] = {
+                show: showTimer,
+                hide: hideTimer
+            };
         },
         close_modal: function () {
             this.showModal = false;

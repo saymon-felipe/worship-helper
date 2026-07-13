@@ -72,10 +72,19 @@ export default {
             api.post('/usuario/find_users', data)
             .then(function (response) {
                 if (response.data.status == "empty") {
-                    self.$emit('emptySearch');
+                    self.$emit('emptySearch', "Nenhum usuário encontrado");
                 } else {
                     self.members = response.data.returnObj;
                 }
+            })
+            .catch(function (error) {
+                self.members = [];
+                $(".auto-complete").hide();
+                const data = error.response ? error.response.data : null;
+                const message = typeof data === "string"
+                    ? data
+                    : (data && (data.message || data.error)) || "Nenhum usuário encontrado";
+                self.$emit('emptySearch', message);
             })
         },
         selectUser: function (user) {

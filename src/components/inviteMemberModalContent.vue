@@ -5,12 +5,12 @@
                 <label for="invite-member-input">Usuário ou e-mail</label>
                 <input type="text" name="invite_member" id="invite-member-input" placeholder="Digite o nome ou e-mail do membro" v-model="searchParam" :disabled="sendingInvite">
                 <selectedMember :selected_member="selected_member" @removeUser="clearSelectedMember()" />
-                <autoComplete :search="searchParam" v-if="searchParam != '' && !sendingInvite" @selectUser="select_user($event)"></autoComplete>
+                <autoComplete :search="searchParam" v-if="searchParam != '' && !sendingInvite" @selectUser="select_user($event)" @emptySearch="showAutocompleteError($event)"></autoComplete>
                 <small class="invite-helper">Se a pessoa ainda não tiver conta, digite o e-mail para enviar o convite.</small>
             </div>
 
             <div class="invite-loading" v-if="sendingInvite">
-                <span class="invite-loading-spinner"></span>
+                <span class="material-icons rotating">sync</span>
                 <span>Enviando convite...</span>
             </div>
 
@@ -55,6 +55,22 @@ export default {
         isValidEmail: function (value) {
             return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(value || "").trim());
         },
+        getErrorMessage: function (error, fallback = "Não foi possível concluir a ação") {
+            const data = error && error.response ? error.response.data : error;
+
+            if (typeof data === "string") {
+                return data;
+            }
+
+            if (data && typeof data === "object") {
+                return data.error || data.message || fallback;
+            }
+
+            return fallback;
+        },
+        showAutocompleteError: function (message) {
+            this.showResponse(message || "Nenhum usuário encontrado", ".response", "error");
+        },
         select_user: function (user) {
             if (this.sendingInvite) {
                 return;
@@ -86,9 +102,13 @@ export default {
             self.$emit("loading", true);
 
             let data = {
-                id_usuario: self.selected_member.id_usuario,
-                email_usuario: self.selected_member.id_usuario == null ? typedValue : "",
                 id_igreja: self.getCurrentChurchId()
+            };
+
+            if (self.selected_member.id_usuario != null) {
+                data.id_usuario = Number(self.selected_member.id_usuario);
+            } else {
+                data.email_usuario = typedValue;
             }
 
             api.post("/igreja/envia-convite", data)
@@ -97,7 +117,7 @@ export default {
                 self.$emit("success", true);
             })
             .catch(function (error) {
-                const message = error.response && error.response.data ? error.response.data : "Não foi possível enviar o convite";
+                const message = self.getErrorMessage(error, "Não foi possível enviar o convite");
                 self.showResponse(message, ".response", "error");
             })
             .finally(function () {
@@ -138,26 +158,41 @@ export default {
 .invite-loading {
     display: flex;
     align-items: center;
-    gap: 10px;
-    margin-top: 14px;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 1.5rem;
+    padding: 12px 18px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: var(--radius-md);
     color: var(--secondary-blue-soft);
     font-size: var(--font-size-4);
     font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    animation: fadeIn var(--transition-normal);
 }
 
-.invite-loading-spinner {
-    width: 18px;
-    height: 18px;
-    border-radius: var(--radius-pill);
-    border: 2px solid rgba(56, 182, 255, 0.22);
-    border-top-color: var(--secondary-blue-soft);
-    animation: spin 0.8s linear infinite;
+.rotating {
+    animation: rotate 1s linear infinite;
 }
 
-@keyframes spin {
+@keyframes rotate {
+    from {
+        transform: rotate(0deg);
+    }
     to {
         transform: rotate(360deg);
     }
 }
-</style>
 
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>

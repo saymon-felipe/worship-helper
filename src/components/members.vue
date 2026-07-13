@@ -122,6 +122,7 @@ import inviteMemberModalContent from "./inviteMemberModalContent.vue";
 import addTagModalContent from "./addTagModalContent.vue";
 import removeMemberModalContent from "./removeMemberModalContent.vue";
 import addFunctionModalContent from "./addFunctionModalContent.vue";
+import { appStore } from '../store/appStore';
 
 export default {
     name: "membersList",
@@ -245,6 +246,33 @@ export default {
         fillCopyUsers: function () {
             this.copy_members = this.getSourceMembers();
         },
+        loadChurchPermission: function (churchId) {
+            const currentChurch = this.getCurrentChurchInLocalStorage();
+            const cachedAdmin = currentChurch ? currentChurch.administrador : null;
+            const hasCachedPermission = typeof cachedAdmin === "boolean" || cachedAdmin === 0 || cachedAdmin === 1 || cachedAdmin === "0" || cachedAdmin === "1";
+
+            if (currentChurch && currentChurch.id_igreja == churchId && hasCachedPermission) {
+                this.canManageChurch = cachedAdmin === true || cachedAdmin === 1 || cachedAdmin === "1";
+                appStore.setChurchPermission({
+                    administrador: this.canManageChurch,
+                    apenas_membro: !this.canManageChurch
+                });
+                return Promise.resolve(this.canManageChurch);
+            }
+
+            return api.post("/igreja/permissao", { id_igreja: churchId })
+                .then((response) => {
+                    const permission = response.data.returnObj || {};
+                    this.canManageChurch = permission.administrador == 1 || permission.administrador === true;
+                    appStore.setChurchPermission(permission);
+                    return this.canManageChurch;
+                })
+                .catch((error) => {
+                    console.log(error);
+                    this.canManageChurch = false;
+                    return false;
+                });
+        },
         openMemberMoreActions: function (member_id) {
             this.closeMemberMoreActions();
             this.idUsuarioInChange = member_id;
@@ -268,20 +296,14 @@ export default {
             }
 
             this.loadingMembers = true;
-            this.canManageChurch = this.haveAdminPermission;
 
-            return api.post("/igreja/retorna-membros", { id_igreja: churchId })
+            return this.loadChurchPermission(churchId)
+                .then(() => api.post("/igreja/retorna-membros", { id_igreja: churchId }))
                 .then((response) => {
                     if (response.data && response.data.returnObj) {
                         this.copy_members = response.data.returnObj;
                     }
-                    return api.post("/igreja/retorna-convites-pendentes", { id_igreja: churchId })
-                        .then((response) => {
-                            this.pendingInvites = response.data.returnObj || [];
-                        })
-                        .catch(() => {
-                            this.pendingInvites = [];
-                        });
+                    return this.returnPendingInvites();
                 })
                 .catch((err) => {
                     console.error(err);
@@ -292,7 +314,11 @@ export default {
         },
         returnPendingInvites: function () {
             const churchId = this.getCurrentChurchId();
-            if (!churchId) return;
+            if (!churchId || !this.canManageChurch) {
+                this.pendingInvites = [];
+                return Promise.resolve();
+            }
+
             return api.post("/igreja/retorna-convites-pendentes", { id_igreja: churchId })
                 .then((response) => {
                     this.pendingInvites = response.data.returnObj || [];

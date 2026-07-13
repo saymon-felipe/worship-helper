@@ -9,6 +9,13 @@ const api = axios.create({
     timeout: 15000
 });
 
+function isAuthenticationFailure(error) {
+    const data = error.response ? error.response.data : null;
+    const message = typeof data === "string" ? data : data && data.message;
+
+    return typeof message === "string" && message.toLowerCase().includes("falha na autentica");
+}
+
 api.interceptors.request.use((config) => {
     const token = appStore.state.auth.token || localStorage.getItem(authStorageKey);
 
@@ -22,7 +29,7 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response && error.response.status === 401) {
+        if (error.response && error.response.status === 401 && isAuthenticationFailure(error)) {
             appStore.clearAuth();
         }
 

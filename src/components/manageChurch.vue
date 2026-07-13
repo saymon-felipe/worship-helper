@@ -62,9 +62,11 @@ export default {
         loadChurchPermission: function () {
             const churchId = this.getCurrentChurchId();
             const currentChurch = this.getCurrentChurchInLocalStorage();
+            const cachedAdmin = currentChurch ? currentChurch.administrador : null;
+            const hasCachedPermission = typeof cachedAdmin === "boolean" || cachedAdmin === 0 || cachedAdmin === 1 || cachedAdmin === "0" || cachedAdmin === "1";
 
-            if (currentChurch && currentChurch.id_igreja == churchId) {
-                this.canManageChurch = currentChurch.administrador == 1 || currentChurch.administrador === true;
+            if (currentChurch && currentChurch.id_igreja == churchId && hasCachedPermission) {
+                this.canManageChurch = cachedAdmin === true || cachedAdmin === 1 || cachedAdmin === "1";
                 appStore.setChurchPermission({
                     administrador: this.canManageChurch,
                     apenas_membro: !this.canManageChurch

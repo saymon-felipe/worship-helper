@@ -68,6 +68,14 @@ function getCurrentChurchId() {
     return churchId != undefined && !isNaN(churchId) ? parseInt(churchId, 10) : undefined;
 }
 
+function isCachedAdminPermission(value) {
+    return typeof value === "boolean" || value === 0 || value === 1 || value === "0" || value === "1";
+}
+
+function isAdminPermission(value) {
+    return value === true || value === 1 || value === "1";
+}
+
 function getMyChurch() {
     const churchId = getCurrentChurchId();
 
@@ -108,10 +116,10 @@ function checkPermission() {
         return;
     }
 
-    if (storedChurch && storedChurch.id_igreja == churchId && storedChurch.administrador != null) {
+    if (storedChurch && storedChurch.id_igreja == churchId && isCachedAdminPermission(storedChurch.administrador)) {
         appStore.setChurchPermission({
-            administrador: storedChurch.administrador == 1 || storedChurch.administrador === true,
-            apenas_membro: storedChurch.administrador != 1 && storedChurch.administrador !== true
+            administrador: isAdminPermission(storedChurch.administrador),
+            apenas_membro: !isAdminPermission(storedChurch.administrador)
         });
         getMyChurch();
         return;

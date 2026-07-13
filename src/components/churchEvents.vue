@@ -13,7 +13,12 @@
         <div class="church-events">
             <h5>Eventos</h5>
             <div class="church-events-list">
-                <eventComponent v-for="(event, index) in eventos" :event="event" :key="index" />
+                <eventComponent v-for="(event, index) in eventos" :event="event" :key="index" v-if="eventos.length > 0" />
+                <div class="church-empty" v-else>
+                    <span class="material-icons empty-icon" style="font-size: 48px; color: var(--neutral-gray-low); margin-bottom: 12px;">event_busy</span>
+                    <h5>Nenhum evento agendado</h5>
+                    <p>Crie um novo evento para escalar membros e planejar o repertório.</p>
+                </div>
             </div>
         </div>
         <div class="create-event-button-container">
@@ -22,9 +27,11 @@
                 <span class="material-icons">add</span>
             </button>
         </div>
-        <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm(); returnEvents();">
-            <createEventModalContent @church="igreja" @success="closeModal(); returnEvents();" />
-        </modal>
+        <Transition name="modal-fade">
+            <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm(); returnEvents();">
+                <createEventModalContent @church="igreja" @success="closeModal(); returnEvents();" />
+            </modal>
+        </Transition>
     </div>
 </template>
 <script>

@@ -85,14 +85,16 @@
             </div>
             <p class="response">{{ response }}</p>
         </div>
-        <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm(); returnPageInformations();">
-            <registerTagOrFunction
-                :type="type"
-                :churchId="resolvedChurchId"
-                @success="closeModal(); returnPageInformations();"
-                @error="handleRegisterError"
-            />
-        </modal>
+        <Transition name="modal-fade">
+            <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm(); returnPageInformations();">
+                <registerTagOrFunction
+                    :type="type"
+                    :churchId="resolvedChurchId"
+                    @success="closeModal(); returnPageInformations();"
+                    @error="handleRegisterError"
+                />
+            </modal>
+        </Transition>
     </div>
 </template>
 <script>
@@ -141,7 +143,7 @@ export default {
             let self = this;
 
             if (!self.hasActiveChurch) {
-                self.showResponse("Nao foi possivel identificar a igreja atual. Recarregue a pagina e tente novamente.", ".response", "error");
+                self.showResponse("Não foi possível identificar a igreja atual. Recarregue a página e tente novamente.", ".response", "error");
                 return;
             }
 

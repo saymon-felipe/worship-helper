@@ -34,7 +34,7 @@ export default {
             const resolvedChurchId = Number(self.churchId ?? self.getCurrentChurchId());
 
             if (!Number.isInteger(resolvedChurchId) || resolvedChurchId <= 0) {
-                self.$emit("error", "Nao foi possivel identificar a igreja atual. Recarregue a pagina e tente novamente.");
+                self.$emit("error", "Não foi possível identificar a igreja atual. Recarregue a página e tente novamente.");
                 return;
             }
 

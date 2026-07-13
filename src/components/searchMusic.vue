@@ -9,7 +9,9 @@
         <div class="music-list">
             <musicComponent v-for="(music, index) in filteredMusics" :key="index" :music="music" clicktype="select" @select="selectedMusic = $event"></musicComponent>
         </div>
-        <musicDetails v-if="selectedMusic.id != undefined && musicTone == null" :music="selectedMusic" @select="submitMusicWithTone($event)" @close="selectedMusic = {}"></musicDetails>
+        <Transition name="route">
+            <musicDetails v-if="selectedMusic.id != undefined && musicTone == null" :music="selectedMusic" @select="submitMusicWithTone($event)" @close="selectedMusic = {}"></musicDetails>
+        </Transition>
     </div>
 </template>
 <script>

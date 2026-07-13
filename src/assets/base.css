@@ -553,7 +553,7 @@ label {
   padding: 1.5rem;
   box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
   transition: transform var(--transition-normal);
-  transform: translateY(100%);
+  transform: translateY(0);
   display: flex;
   flex-direction: column;
 }
@@ -892,4 +892,25 @@ label {
 .route-leave-to {
   opacity: 0;
   transform: translateY(-8px);
+}
+
+/* Transição de Modais (Fade + Slide) */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+
+.modal-fade-enter-active .modal-container,
+.modal-fade-leave-active .modal-container {
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-fade-enter-from .modal-container,
+.modal-fade-leave-to .modal-container {
+  transform: translateY(80vh);
 }

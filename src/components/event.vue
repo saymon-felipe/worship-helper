@@ -28,7 +28,7 @@
 
         <!-- Musics Section -->
         <div class="event-section">
-            <h3>Louvores Escaldados</h3>
+            <h3>Louvores Escalados</h3>
             <div class="music-list">
                 <div class="music-row-card" v-for="(music, index) in event.musicas" :key="index" v-on:click="goToMusic(music.id_musica)">
                     <div class="music-row-left">
@@ -39,7 +39,7 @@
                         </div>
                     </div>
                     <div class="music-row-right">
-                        <div class="music-tone-badge" title="Tom da mÃºsica">
+                        <div class="music-tone-badge" title="Tom da música">
                             <span>{{ music.tom }}</span>
                         </div>
                         <span class="material-icons chevron-icon">chevron_right</span>
@@ -47,8 +47,8 @@
                 </div>
                 <div class="church-empty" v-if="!event.musicas || event.musicas.length <= 0">
                     <span class="material-icons empty-icon">music_off</span>
-                    <h5>Nenhuma mÃºsica escalada</h5>
-                    <p>Adicione louvores a este evento para visualizÃ¡-los aqui.</p>
+                    <h5>Nenhuma música escalada</h5>
+                    <p>Adicione louvores a este evento para visualizá-los aqui.</p>
                 </div>
             </div>
         </div>
@@ -72,7 +72,7 @@
                 <div class="church-empty" v-if="!event.membros_evento || event.membros_evento.length <= 0">
                     <span class="material-icons empty-icon">person_off</span>
                     <h5>Nenhum membro escalado</h5>
-                    <p>Adicione mÃºsicos ou auxiliares na escala deste evento.</p>
+                    <p>Adicione músicos ou auxiliares na escala deste evento.</p>
                 </div>
             </div>
         </div>
@@ -123,7 +123,7 @@ export default {
             })
         },
         formatEventDate: function (date) {
-            let rawDate = moment.parseZone(date).format("dddd, DD/MM/YYYY [Ã s] HH:mm");
+            let rawDate = moment.parseZone(date).format("dddd, DD/MM/YYYY [às] HH:mm");
             return rawDate.charAt(0).toUpperCase() + rawDate.slice(1);
         }
     },
@@ -290,7 +290,7 @@ export default {
 
 /* Members layout details */
 .member-row-card {
-    cursor: default; /* Membros nÃ£o sÃ£o necessariamente clicÃ¡veis */
+    cursor: default; /* Membros não são necessariamente clicáveis */
 }
 
 .member-thumbnail {
@@ -371,7 +371,7 @@ export default {
     }
     
     .occupation-badge {
-        display: none; /* Esconder badge extra no mobile para nÃ£o amontoar */
+        display: none; /* Esconder badge extra no mobile para não amontoar */
     }
 }
 </style>

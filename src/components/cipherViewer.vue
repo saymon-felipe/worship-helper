@@ -69,28 +69,37 @@ export default {
     },
     computed: {
         transposeLabel: function () {
-            const tone = this.resolvedOriginalTone;
             if (this.transposeSteps === 0) {
-                if (tone) {
-                    return `${tone} - Tom original`;
+                if (this.selectedToneName) {
+                    return `${this.selectedToneName} - Tom original`;
                 }
                 return "Tom original";
             }
 
             const label = this.transposeSteps > 0 ? `+${this.transposeSteps}` : `${this.transposeSteps}`;
-            
-            if (tone) {
-                let cleanNote = tone.trim();
-                const match = cleanNote.match(/^([A-G](?:#|b)?)/);
-                if (match) {
-                    const root = match[1];
-                    const suffix = cleanNote.slice(root.length);
-                    const transposedRoot = transposeNote(root, this.transposeSteps);
-                    return `${transposedRoot}${suffix} - ${label}`;
-                }
+
+            if (this.selectedToneName) {
+                return `${this.selectedToneName} - ${label}`;
             }
 
             return label;
+        },
+        selectedToneName: function () {
+            const tone = this.resolvedOriginalTone;
+            if (!tone) {
+                return "";
+            }
+
+            const cleanNote = tone.trim();
+            const match = cleanNote.match(/^([A-G](?:#|b)?)/);
+            if (!match) {
+                return cleanNote;
+            }
+
+            const root = match[1];
+            const suffix = cleanNote.slice(root.length);
+            const transposedRoot = transposeNote(root, this.transposeSteps);
+            return `${transposedRoot}${suffix}`;
         },
         resolvedOriginalTone: function () {
             if (this.originalTone) {

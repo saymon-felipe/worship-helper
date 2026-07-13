@@ -13,20 +13,20 @@
                 <div class="input-group">
                     <label class="section-label">
                         <span class="material-icons">schedule</span>
-                        <span>Dia e HorÃ¡rio</span>
+                        <span>Dia e Horário</span>
                     </label>
                     <input type="datetime-local" name="event_date" required>
                 </div>
             </div>
 
-            <!-- SeÃ§Ã£o: MÃºsicas (RepertÃ³rio) -->
+            <!-- Seção: Músicas (Repertório) -->
             <div class="event-musics">
                 <div class="section-header-inline">
                     <div class="section-header-title">
                         <span class="material-icons">music_note</span>
-                        <h5>RepertÃ³rio do Culto</h5>
+                        <h5>Repertório do Culto</h5>
                     </div>
-                    <button type="button" class="btn-icon-add" @click="openSearchMusic()" title="Adicionar mÃºsica">
+                    <button type="button" class="btn-icon-add" @click="openSearchMusic()" title="Adicionar música">
                         <span class="material-icons">add</span>
                     </button>
                 </div>
@@ -34,7 +34,7 @@
                 <div class="music-list-modal">
                     <div class="selected-music-item-card" v-for="(music, index) in event_selected_musics" :key="index">
                         <div class="music-info-side">
-                            <img :src="music.image || default_music_image" class="music-mini-avatar" alt="Capa da mÃºsica">
+                            <img :src="music.image || default_music_image" class="music-mini-avatar" alt="Capa da música">
                             <div class="music-text">
                                 <span class="music-title">{{ music.name }}</span>
                                 <span class="music-author">{{ music.artist }}</span>
@@ -42,19 +42,19 @@
                         </div>
                         <div class="music-right-side">
                             <span class="tone-tag-badge" v-if="music.tone">{{ music.tone.nome }}</span>
-                            <button type="button" class="btn-remove-music" @click="removeMusic(music)" title="Remover mÃºsica">
+                            <button type="button" class="btn-remove-music" @click="removeMusic(music)" title="Remover música">
                                 <span class="material-icons">close</span>
                             </button>
                         </div>
                     </div>
                     <div class="empty-music-state" v-if="event_selected_musics.length === 0">
                         <span class="material-icons">playlist_add</span>
-                        <p>Nenhuma mÃºsica adicionada ainda. Clique no "+" acima para escolher.</p>
+                        <p>Nenhuma música adicionada ainda. Clique no "+" acima para escolher.</p>
                     </div>
                 </div>
             </div>
 
-            <!-- SeÃ§Ã£o: Escala de Integrantes -->
+            <!-- Seção: Escala de Integrantes -->
             <div class="event-members">
                 <div class="section-header-inline">
                     <div class="section-header-title">
@@ -82,7 +82,7 @@
                     </div>
                     <div class="empty-members-state" v-if="event_selected_members.length === 0">
                         <span class="material-icons">person_add</span>
-                        <p>Nenhum integrante adicionado Ã  escala ainda. Clique no "+" acima para escolher.</p>
+                        <p>Nenhum integrante adicionado à escala ainda. Clique no "+" acima para escolher.</p>
                     </div>
                 </div>
             </div>
@@ -92,50 +92,54 @@
 
         <p class="response">{{ response }}</p>
         
-        <!-- SUB-TELA: Escolher MÃºsica -->
-        <searchMusic v-show="showSearchMusic" @select="selectMusic($event)" @close="showSearchMusic = false" />
+        <!-- SUB-TELA: Escolher Música -->
+        <Transition name="route">
+            <searchMusic v-if="showSearchMusic" @select="selectMusic($event)" @close="showSearchMusic = false" />
+        </Transition>
 
         <!-- SUB-TELA: Escolher Membros da Igreja -->
-        <div class="member-picker-overlay" v-if="showSearchMember">
-            <div class="preview-buttons">
-                <button type="button" class="btn" @click="closeSearchMember()">Voltar</button>
-                <button type="button" class="btn primary" @click="confirmSelectedMembers()">Confirmar Escala ({{ tempSelectedMembers.length }})</button>
-            </div>
-            <div class="search-member-box-large">
-                <span class="material-icons">search</span>
-                <input type="text" v-model="memberSearchQuery" placeholder="Filtrar integrantes pelo nome...">
-            </div>
-            <div class="member-selection-list">
-                <div 
-                    class="selectable-member-card" 
-                    v-for="(member, index) in filteredChurchMembers" 
-                    :key="index"
-                    @click="toggleTempMemberSelect(member)"
-                    :class="{ 'selected': isTempMemberSelected(member) }"
-                >
-                    <img :src="member.imagem_usuario || default_avatar" class="member-avatar" alt="Avatar">
-                    <div class="member-info">
-                        <h6>{{ member.nome_usuario }}</h6>
-                        <!-- Caso esteja selecionado, exibe seletor de funÃ§Ã£o inline -->
-                        <div class="role-selector-inline" v-if="isTempMemberSelected(member)" @click.stop>
-                            <label>FunÃ§Ã£o:</label>
-                            <select :value="getTempMemberFunctionId(member)" @change="setTempMemberFunction(member, $event.target.value)">
-                                <option v-for="fun in churchFunctions" :key="fun.id_funcao" :value="fun.id_funcao">
-                                    {{ fun.nome_funcao }}
-                                </option>
-                            </select>
+        <Transition name="route">
+            <div class="member-picker-overlay" v-if="showSearchMember">
+                <div class="preview-buttons">
+                    <button type="button" class="btn" @click="closeSearchMember()">Voltar</button>
+                    <button type="button" class="btn primary" @click="confirmSelectedMembers()">Confirmar Escala ({{ tempSelectedMembers.length }})</button>
+                </div>
+                <div class="search-member-box-large">
+                    <span class="material-icons">search</span>
+                    <input type="text" v-model="memberSearchQuery" placeholder="Filtrar integrantes pelo nome...">
+                </div>
+                <div class="member-selection-list">
+                    <div 
+                        class="selectable-member-card" 
+                        v-for="(member, index) in filteredChurchMembers" 
+                        :key="index"
+                        @click="toggleTempMemberSelect(member)"
+                        :class="{ 'selected': isTempMemberSelected(member) }"
+                    >
+                        <img :src="member.imagem_usuario || default_avatar" class="member-avatar" alt="Avatar">
+                        <div class="member-info">
+                            <h6>{{ member.nome_usuario }}</h6>
+                            <!-- Caso esteja selecionado, exibe seletor de função inline -->
+                            <div class="role-selector-inline" v-if="isTempMemberSelected(member)" @click.stop>
+                                <label>Função:</label>
+                                <select :value="getTempMemberFunctionId(member)" @change="setTempMemberFunction(member, $event.target.value)">
+                                    <option v-for="fun in churchFunctions" :key="fun.id_funcao" :value="fun.id_funcao">
+                                        {{ fun.nome_funcao }}
+                                    </option>
+                                </select>
+                            </div>
+                            <p v-else class="member-desc">{{ member.descricao_usuario || 'Integrante' }}</p>
                         </div>
-                        <p v-else class="member-desc">{{ member.descricao_usuario || 'Integrante' }}</p>
+                        <span class="material-icons select-badge">
+                            {{ isTempMemberSelected(member) ? 'check_circle' : 'radio_button_unchecked' }}
+                        </span>
                     </div>
-                    <span class="material-icons select-badge">
-                        {{ isTempMemberSelected(member) ? 'check_circle' : 'radio_button_unchecked' }}
-                    </span>
-                </div>
-                <div class="empty-members" v-if="filteredChurchMembers.length === 0">
-                    <p>Nenhum integrante encontrado</p>
+                    <div class="empty-members" v-if="filteredChurchMembers.length === 0">
+                        <p>Nenhum integrante encontrado</p>
+                    </div>
                 </div>
             </div>
-        </div>
+        </Transition>
     </div>
 </template>
 
@@ -193,7 +197,7 @@ export default {
             }
 
             if (this.event_selected_musics.length == 0) {
-                this.showResponse("Nenhuma mÃºsica selecionada", ".response", "error");
+                this.showResponse("Nenhuma música selecionada", ".response", "error");
                 return;
             }
 
@@ -203,7 +207,7 @@ export default {
             }, {});
 
             if (data.event_name.trim() == "") {
-                this.showResponse("Nome invÃ¡lido", ".response", "error");
+                this.showResponse("Nome inválido", ".response", "error");
                 return;
             }
 
@@ -224,7 +228,7 @@ export default {
         },
         openSearchMember: function () {
             this.memberSearchQuery = "";
-            // Clona a lista atual para a lista temporÃ¡ria
+            // Clona a lista atual para a lista temporária
             this.tempSelectedMembers = JSON.parse(JSON.stringify(this.event_selected_members));
             this.showSearchMember = true;
         },
@@ -324,7 +328,7 @@ export default {
     color: var(--secondary-blue-soft);
 }
 
-/* --- CABEÃ‡ALHOS INTERNOS --- */
+/* --- CABEÇALHOS INTERNOS --- */
 .section-header-inline {
     display: flex;
     justify-content: space-between;
@@ -373,7 +377,7 @@ export default {
     box-shadow: 0 0 10px rgba(56, 182, 255, 0.3);
 }
 
-/* --- REPERTÃ“RIO (MÃšSICAS) --- */
+/* --- REPERTÓRIO (MÚSICAS) --- */
 .music-list-modal {
     display: flex;
     flex-direction: column;

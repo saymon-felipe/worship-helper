@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div class="music-detail-container">
         <!-- Header -->
         <div class="music-detail-header-card">
@@ -61,12 +61,14 @@
         </div>
 
         <!-- Modal de Confirmação de Exclusão -->
-        <modal v-if="showDeleteModal" title="Excluir Música" @closeModal="showDeleteModal = false" class="modal" @cancelEvent="showDeleteModal = false" button2Title="Não, cancelar" buttonTitle="Sim, excluir" @submitEvent="deleteMusic()">
-            <div class="confirm-delete-box">
-                <p class="warning-text">Tem certeza que deseja excluir esta música permanentemente?</p>
-                <p>Todos os comentários, cifras e dados vinculados a <strong>{{ music.name }}</strong> serão excluídos e não poderão ser recuperados.</p>
-            </div>
-        </modal>
+        <Transition name="modal-fade">
+            <modal v-if="showDeleteModal" title="Excluir Música" @closeModal="showDeleteModal = false" class="modal" @cancelEvent="showDeleteModal = false" button2Title="Não, cancelar" buttonTitle="Sim, excluir" @submitEvent="deleteMusic()">
+                <div class="confirm-delete-box">
+                    <p class="warning-text">Tem certeza que deseja excluir esta música permanentemente?</p>
+                    <p>Todos os comentários, cifras e dados vinculados a <strong>{{ music.name }}</strong> serão excluídos e não poderão ser recuperados.</p>
+                </div>
+            </modal>
+        </Transition>
     </div>
 </template>
 

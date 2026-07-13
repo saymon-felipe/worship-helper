@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div class="register-church-container">
         <div class="registered-churches">
             <h3>Igrejas cadastradas</h3>
@@ -34,46 +34,48 @@
             </div>
         </div>
 
-        <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="handleModalSubmit()" @cancelEvent="closeModal()">
-            <registerChurchModalContent v-if="registerChurch" @success="closeModal(); listAllChurches();" />
-            <viewChurchModalContent v-if="viewChurch" :church="selectedChurchData" />
-            
-            <!-- Modal de Edição -->
-            <div v-if="editChurch" class="edit-church-form">
-                <div class="input-group">
-                    <label for="edit-church-name">Nome da Igreja</label>
-                    <input type="text" id="edit-church-name" v-model="selectedChurchData.nome_igreja" placeholder="Ex: Comunidade Evangéllica..." required>
-                </div>
+        <Transition name="modal-fade">
+            <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="handleModalSubmit()" @cancelEvent="closeModal()">
+                <registerChurchModalContent v-if="registerChurch" @success="closeModal(); listAllChurches();" />
+                <viewChurchModalContent v-if="viewChurch" :church="selectedChurchData" />
                 
-                <div class="input-group edit-church-image-section">
-                    <label>Imagem da Igreja</label>
-                    <div class="edit-image-container">
-                        <img :src="previewPhoto == '' ? (selectedChurchData.imagem_igreja || default_church_image) : previewPhoto" class="church-edit-avatar" alt="Avatar da igreja">
-                        <div class="image-actions">
-                            <label for="edit-photo-input" class="btn secondary upload-btn-edit">
-                                <span class="material-icons">photo_camera</span>
-                                <span>Substituir imagem</span>
-                            </label>
-                            <input type="file" name="photo" id="edit-photo-input" @change.prevent="preSendPhoto($event)" style="display: none;" title="Formatos PNG ou JPG">
-                            <span class="file-name-label" v-if="fileName">{{ fileName }}</span>
+                <!-- Modal de Edição -->
+                <div v-if="editChurch" class="edit-church-form">
+                    <div class="input-group">
+                        <label for="edit-church-name">Nome da Igreja</label>
+                        <input type="text" id="edit-church-name" v-model="selectedChurchData.nome_igreja" placeholder="Ex: Comunidade Evangéllica..." required>
+                    </div>
+                    
+                    <div class="input-group edit-church-image-section">
+                        <label>Imagem da Igreja</label>
+                        <div class="edit-image-container">
+                            <img :src="previewPhoto == '' ? (selectedChurchData.imagem_igreja || default_church_image) : previewPhoto" class="church-edit-avatar" alt="Avatar da igreja">
+                            <div class="image-actions">
+                                <label for="edit-photo-input" class="btn secondary upload-btn-edit">
+                                    <span class="material-icons">photo_camera</span>
+                                    <span>Substituir imagem</span>
+                                </label>
+                                <input type="file" name="photo" id="edit-photo-input" @change.prevent="preSendPhoto($event)" style="display: none;" title="Formatos PNG ou JPG">
+                                <span class="file-name-label" v-if="fileName">{{ fileName }}</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Modal de Confirmação de Exclusão -->
-            <div v-if="confirmDeleteChurch" class="confirm-delete-box">
-                <p class="warning-text">🚨 Atenção! Essa ação é irreversível.</p>
-                <p>Excluir a igreja <strong>"{{ selectedChurchData.nome_igreja }}"</strong> apagará permanentemente:</p>
-                <ul class="delete-items-list">
-                    <li>Todos os integrantes e suas funções</li>
-                    <li>Todas as músicas e tons cadastrados</li>
-                    <li>Toda a escala de cultos e eventos agendados</li>
-                    <li>Todos os avisos e comentários</li>
-                </ul>
-                <p>Confirma que deseja prosseguir com a exclusão?</p>
-            </div>
-        </modal>
+                <!-- Modal de Confirmação de Exclusão -->
+                <div v-if="confirmDeleteChurch" class="confirm-delete-box">
+                    <p class="warning-text">🚨 Atenção! Essa ação é irreversível.</p>
+                    <p>Excluir a igreja <strong>"{{ selectedChurchData.nome_igreja }}"</strong> apagará permanentemente:</p>
+                    <ul class="delete-items-list">
+                        <li>Todos os integrantes e suas funções</li>
+                        <li>Todas as músicas e tons cadastrados</li>
+                        <li>Toda a escala de cultos e eventos agendados</li>
+                        <li>Todos os avisos e comentários</li>
+                    </ul>
+                    <p>Confirma que deseja prosseguir com a exclusão?</p>
+                </div>
+            </modal>
+        </Transition>
         
         <imageCropModal v-if="cropModalOpen" :imageSrc="cropImageSrc" @close="cropModalOpen = false" @confirm="onCropConfirm" />
     </div>

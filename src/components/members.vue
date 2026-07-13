@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div class="members-page-container">
         <div class="members-header">
             <div class="header-titles">
@@ -94,18 +94,22 @@
 
         <div class="member-more-actions-wrapper" v-if="showMemberMoreActions" v-on:click="closeMemberMoreActions()"></div>
 
-        <modal v-if="showModal && canManageChurch" :title="modalTitle" @closeModal="close_modal()" class="modal" @cancelEvent="cancelChanges()" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm()">
-            <inviteMemberModalContent v-if="inviteMember" @success="handleInviteSuccess()" />
-            <addTagModalContent v-if="addTag" :member="selected_member" @success="handleMembersChanged()" />
-            <addFunctionModalContent v-if="addOccupation" :member="selected_member" @success="handleMembersChanged()" />
-            <removeMemberModalContent v-if="removeMember" :member="selected_member" @success="handleMembersChanged()" />
-            <modal v-if="showConfirmDeleteInvite && canManageChurch" title="Excluir Convite" @closeModal="showConfirmDeleteInvite = false" class="modal" @cancelEvent="showConfirmDeleteInvite = false" button2Title="Não, cancelar" buttonTitle="Sim, excluir" @submitEvent="submitDeleteInvite()">
-                <div class="confirm-delete-box">
-                    <p class="warning-text">Tem certeza que deseja excluir este convite?</p>
-                    <p>O convite enviado para o e-mail <strong>{{ selectedInviteToDelete?.email_usuario }}</strong> será invalidado.</p>
-                </div>
+        <Transition name="modal-fade">
+            <modal v-if="showModal && canManageChurch" :title="modalTitle" @closeModal="close_modal()" class="modal" @cancelEvent="cancelChanges()" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm()">
+                <inviteMemberModalContent v-if="inviteMember" @success="handleInviteSuccess()" />
+                <addTagModalContent v-if="addTag" :member="selected_member" @success="handleMembersChanged()" />
+                <addFunctionModalContent v-if="addOccupation" :member="selected_member" @success="handleMembersChanged()" />
+                <removeMemberModalContent v-if="removeMember" :member="selected_member" @success="handleMembersChanged()" />
+                <Transition name="modal-fade">
+                    <modal v-if="showConfirmDeleteInvite && canManageChurch" title="Excluir Convite" @closeModal="showConfirmDeleteInvite = false" class="modal" @cancelEvent="showConfirmDeleteInvite = false" button2Title="Não, cancelar" buttonTitle="Sim, excluir" @submitEvent="submitDeleteInvite()">
+                        <div class="confirm-delete-box">
+                            <p class="warning-text">Tem certeza que deseja excluir este convite?</p>
+                            <p>O convite enviado para o e-mail <strong>{{ selectedInviteToDelete?.email_usuario }}</strong> será invalidado.</p>
+                        </div>
+                    </modal>
+                </Transition>
             </modal>
-        </modal>
+        </Transition>
     </div>
 </template>
 

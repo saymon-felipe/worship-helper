@@ -17,27 +17,13 @@
     </div>
 </template>
 <script>
-import $ from 'jquery';
-
 /* eslint-disable vue/multi-word-component-names */
 export default {
     name: "modal",
     props: ['title', 'buttonTitle', 'button2Title'],
     methods: {
         closeModal: function () {
-            let modalContainer = $(".modal-container");
-            let overlay = $(".modal-overlay");
-            modalContainer.css("transform", "translateY(80vh)");
-            overlay.css("opacity", 0);
-            setTimeout(() => {
-                this.$emit("closeModal");
-            }, 400);
-        },
-        showModal: function () {
-            let modalContainer = $(".modal-container");
-            let overlay = $(".modal-overlay");
-            modalContainer.css("transform", "translateY(0)");
-            overlay.css("opacity", 0.5);
+            this.$emit("closeModal");
         },
         emitSubmitEvent: function () {
             this.$emit("submitEvent");
@@ -45,30 +31,31 @@ export default {
         emitCancelEvent: function () {
             this.$emit("cancelEvent");
         }
-    },
-    mounted: function () {
-        setTimeout(() => {
-            this.showModal();
-        }, 10);
     }
 }
 </script>
 <style scoped>
 .modal-wrapper {
-    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 1000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
 }
 
 .modal-overlay {
-    z-index: 1;
-    position: fixed;
+    position: absolute;
     width: 100%;
     height: 100%;
     top: 0;
     left: 0;
-    background: black;
-    opacity: 0;
+    background: rgba(0, 0, 0, 0.6);
     cursor: pointer;
-    transition: opacity 0.4s ease;
+    z-index: 1;
 }
 
 .modal-container {
@@ -82,9 +69,8 @@ export default {
     border-radius: 20px 20px 0 0;
     color: var(--neutral-white);
     padding: 1rem;
-    margin: auto;
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-    transform: translateY(80vh);
+    display: flex;
+    flex-direction: column;
 }
 
 .modal-header {
@@ -92,31 +78,32 @@ export default {
     align-items: center;
     justify-content: center;
     position: relative;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-    .modal-header span {
-        position: absolute;
-        left: 0;
-        font-size: 30px;
-        cursor: pointer;
-    }
+.modal-header span {
+    position: absolute;
+    left: 0;
+    font-size: 30px;
+    cursor: pointer;
+}
 
 .modal-body {
     overflow-y: auto;
-    min-height: calc(100% - 95px);
+    flex: 1;
+    padding: 1rem 0;
+    scrollbar-width: thin;
 }
 
 .modal-footer {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    padding: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
     display: flex;
     justify-content: center;
 }
 
-    .modal-footer button:nth-child(2) {
-        margin-left: 12px;
-    }
+.modal-footer button:nth-child(2) {
+    margin-left: 12px;
+}
 </style>

@@ -6,7 +6,7 @@
                     <span>{{ item.nome }}</span>
                     <span class="material-icons" v-on:click.stop="removeItem(item)">close</span>
                 </div>
-                <span class="placeholder" v-if="selectedItems.length === 0">Selecione ate {{ maxlength }} tags</span>
+                <span class="placeholder" v-if="selectedItems.length === 0">Selecione até {{ maxlength }} tags</span>
             </div>
             <span class="material-icons select-arrow">expand_more</span>
         </div>
@@ -204,4 +204,3 @@ export default {
     transform: rotate(180deg);
 }
 </style>
-

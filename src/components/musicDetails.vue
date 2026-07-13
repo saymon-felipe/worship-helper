@@ -10,18 +10,21 @@
             </button>
             <div class="input-group">
                 <label for="tone">Tom da música</label>
-                <musicToneSelect @select="musicTone = $event" :musicid="music.id"></musicToneSelect>
+                <musicToneSelect @select="musicTone = $event" :musicid="music.id" ref="toneSelect"></musicToneSelect>
             </div>
             <div class="youtube-video" v-if="displayMusic.video_id">
                 <iframe id="ytplayer" width="100%" height="100%" :src="'https://www.youtube.com/embed/' + displayMusic.video_id" frameborder="0" allowfullscreen />
             </div>
             <div class="music-cipher" v-if="showCipherContainer">
-                <button class="btn" v-on:click="closeCipherContainer()">Voltar</button>
+                <div class="preview-buttons">
+                    <button class="btn" v-on:click="closeCipherContainer()">Voltar</button>
+                    <button class="btn primary" v-on:click="selectTransposedTone()" v-if="!loadingCipher">Selecionar Cifra neste Tom</button>
+                </div>
                 <div class="cipher-loading" v-if="loadingCipher">
                     <span class="material-icons rotating">sync</span>
                     <span>Carregando cifra</span>
                 </div>
-                <cipherViewer v-else :cipherText="displayMusic.cipher_text" :title="displayMusic.cipher_title || displayMusic.name" :artist="displayMusic.artist" :originalTone="displayMusic.tom"></cipherViewer>
+                <cipherViewer ref="cipherViewer" v-else :cipherText="displayMusic.cipher_text" :title="displayMusic.cipher_title || displayMusic.name" :artist="displayMusic.artist" :originalTone="displayMusic.tom"></cipherViewer>
             </div>
         </div>
         <p class="response">{{ response }}</p>

@@ -4,7 +4,10 @@
             <img :src="igreja.imagem_igreja" class="avatar-p">
             <div class="church-informations">
                 <h5>{{ igreja.nome_igreja }}</h5>
-                <p class="font-size-3">{{ returnMembersText(igreja.quantidade_membros) }}</p>
+                <p>
+                    <span class="material-icons" style="font-size: 16px;">people</span>
+                    <span>{{ returnMembersText(igreja.quantidade_membros) }}</span>
+                </p>
             </div>
         </div>
         <div class="configuration-header">

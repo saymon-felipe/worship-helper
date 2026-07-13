@@ -20,11 +20,7 @@
                             <span>Alterar perfil</span>
                         </router-link>
                     </li>
-                    <li v-on:click="goToAdmin()" v-if="haveAppPermission">
-                        <span class="material-icons">admin_panel_settings</span>
-                        <span>Admin</span>
-                    </li>
-                    <li v-on:click="logout()">
+                    <li v-on:click="logout()" class="menu-action">
                         <span class="material-icons logout-icon">power_settings_new</span>
                         <span>Sair</span>
                     </li>
@@ -131,21 +127,22 @@ export default {
 
 .menu-items-container {
     position: absolute;
-    background: var(--primary-bg-light);
-    border: 1px solid var(--card-border);
+    background: rgba(30, 27, 65, 0.95);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     top: calc(100% + 12px);
     right: 0;
-    width: 190px;
+    width: 200px;
     opacity: 0;
     transform: translateY(-10px);
     pointer-events: none;
-    transition: all var(--transition-fast);
+    transition: all var(--transition-fast) cubic-bezier(0.16, 1, 0.3, 1);
     list-style-type: none;
     margin: 0;
     padding: 6px;
     border-radius: var(--radius-md);
     z-index: 102;
-    box-shadow: var(--card-shadow);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .menu-items-container.active {
@@ -157,27 +154,40 @@ export default {
 .menu-items-container li {
     border-radius: var(--radius-sm);
     overflow: hidden;
-    transition: background var(--transition-fast);
+    transition: background var(--transition-fast), transform var(--transition-fast);
 }
 
 .menu-items-container li:hover {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.06);
+    transform: translateX(2px);
 }
 
-.menu-items-container li a, .menu-items-container li {
+.menu-items-container li a, .menu-items-container li.menu-action {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 12px;
+    gap: 12px;
+    padding: 10px 14px;
     cursor: pointer;
-    color: var(--neutral-white) !important;
+    color: var(--neutral-gray-high) !important;
     font-size: var(--font-size-4);
+    font-weight: 500;
     width: 100%;
+    transition: color var(--transition-fast);
+    text-decoration: none;
+}
+
+.menu-items-container li:hover a, .menu-items-container li.menu-action:hover {
+    color: var(--neutral-white) !important;
 }
 
 .menu-items-container li span.material-icons {
     font-size: 18px;
     color: var(--secondary-blue-soft);
+    transition: transform var(--transition-fast);
+}
+
+.menu-items-container li:hover span.material-icons {
+    transform: scale(1.1);
 }
 
 .menu-items-container li span.logout-icon {

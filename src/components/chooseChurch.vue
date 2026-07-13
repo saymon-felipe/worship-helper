@@ -49,7 +49,7 @@
             </div>
         </div>
 
-        <div class="background-button" v-if="haveAppPermission">
+        <div class="background-button" v-if="haveAppPermission" :class="{ 'above-footer': hasActiveChurch }">
             <button class="btn primary register-church" v-on:click="goToRegisterChurchPage()">
                 <span class="material-icons">church</span>
                 <span>Igrejas cadastradas</span>
@@ -58,6 +58,10 @@
     </div>
 </template>
 <script>
+import moment from 'moment';
+import 'moment/locale/pt-br';
+moment.locale('pt-br');
+
 import { globalMethods } from '../js/globalMethods';
 import api from '../config/api';
 
@@ -68,6 +72,11 @@ export default {
         return {
             lista_igrejas: [],
             churchInviteList: {}
+        }
+    },
+    computed: {
+        hasActiveChurch: function () {
+            return this.getCurrentChurchId() != null;
         }
     },
     methods: {
@@ -226,38 +235,66 @@ h3 {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 38px;
-    height: 38px;
+    width: 40px;
+    height: 40px;
     border-radius: var(--radius-pill);
-    background: rgba(255, 255, 255, 0.05);
-    transition: background var(--transition-fast), transform var(--transition-fast);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    color: var(--neutral-gray-medium);
+    transition: all var(--transition-fast);
 }
 
 .church-card:hover .login-action {
-    background: var(--primary-primary-blue-high-2);
+    background: rgba(56, 182, 255, 0.12);
+    border-color: rgba(56, 182, 255, 0.3);
+    color: var(--secondary-blue-soft);
     transform: scale(1.08);
 }
 
 .login-icon {
     font-size: 20px;
-    color: var(--neutral-white);
 }
 
 /* Estilos de Convites */
+.my-invites {
+    margin-top: 3rem;
+    margin-bottom: 2.5rem;
+    padding: 16px;
+    border: 1px solid rgba(56, 182, 255, 0.15);
+    border-radius: var(--radius-lg);
+    background: rgba(56, 182, 255, 0.03);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+}
+
+.my-invites h3 {
+    border-left-color: var(--secondary-blue-soft);
+    margin-bottom: 1.2rem;
+}
+
 .invite-card {
+    background: rgba(18, 16, 41, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    backdrop-filter: blur(10px);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
     display: flex;
     align-items: center;
-    padding: 16px;
+    transition: transform var(--transition-fast), border-color var(--transition-fast);
+}
+
+.invite-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(56, 182, 255, 0.25);
 }
 
 .invite-actions {
     display: flex;
-    gap: 8px;
+    gap: 10px;
 }
 
 .action-btn {
-    width: 40px;
-    height: 40px;
+    width: 38px;
+    height: 38px;
     border-radius: var(--radius-pill);
     border: none;
     display: flex;
@@ -265,20 +302,38 @@ h3 {
     justify-content: center;
     cursor: pointer;
     color: var(--neutral-white);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    transition: transform var(--transition-fast), opacity var(--transition-fast);
+    transition: transform var(--transition-fast), background-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.action-btn:hover {
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .action-btn:active {
-    transform: scale(0.9);
+    transform: scale(0.95);
 }
 
 .accept-btn {
-    background: linear-gradient(135deg, var(--others-green) 0%, #2fa757 100%);
+    background: rgba(47, 167, 87, 0.15);
+    border: 1px solid rgba(47, 167, 87, 0.3);
+    color: #2fa757;
+}
+
+.accept-btn:hover {
+    background: #2fa757;
+    color: var(--neutral-white);
 }
 
 .deny-btn {
-    background: linear-gradient(135deg, var(--others-red) 0%, #c43b3b 100%);
+    background: rgba(196, 59, 59, 0.15);
+    border: 1px solid rgba(196, 59, 59, 0.3);
+    color: #c43b3b;
+}
+
+.deny-btn:hover {
+    background: #c43b3b;
+    color: var(--neutral-white);
 }
 
 .action-btn span {
@@ -295,5 +350,24 @@ h3 {
     .church-details h5 {
         font-size: var(--font-size-3);
     }
+}
+
+.background-button {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 98;
+    width: 90%;
+    max-width: 500px;
+    display: flex;
+    justify-content: center;
+    background: transparent;
+    padding: 0;
+    transition: bottom var(--transition-normal);
+}
+
+.background-button.above-footer {
+    bottom: 95px;
 }
 </style>

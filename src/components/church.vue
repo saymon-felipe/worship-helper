@@ -21,8 +21,11 @@
             </button>
 
             <div class="event-list-header">
-                <h3>Próximos Eventos</h3>
-                <p class="subtitle">Acompanhe as escalas e programações agendadas</p>
+                <span class="material-icons header-icon-title">calendar_today</span>
+                <div class="header-text-title">
+                    <h3>Próximos Eventos</h3>
+                    <p class="subtitle">Acompanhe as escalas e programações agendadas</p>
+                </div>
             </div>
             <div class="event-list-content">
                 <eventComponent :event="event" v-for="(event, index) in eventos" :key="index" />
@@ -188,18 +191,40 @@ export default {
     color: var(--secondary-blue-soft);
 }
 
-h3 {
-    font-size: var(--font-size-h3);
-    font-weight: 700;
-    margin-bottom: 4px;
-    border-left: 4px solid var(--secondary-blue-soft);
-    padding-left: 10px;
+.event-list-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+    margin-top: 1rem;
 }
 
-.subtitle {
-    font-size: var(--font-size-4);
+.header-icon-title {
+    font-size: 20px;
+    color: var(--secondary-blue-soft);
+    background: rgba(56, 182, 255, 0.08);
+    padding: 8px;
+    border-radius: var(--radius-md);
+    flex-shrink: 0;
+}
+
+.header-text-title {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.header-text-title h3 {
+    margin: 0;
+    font-size: var(--font-size-h3);
+    font-weight: 700;
+    color: var(--neutral-white);
+}
+
+.header-text-title p.subtitle {
+    margin: 0;
+    font-size: var(--font-size-5);
     color: var(--neutral-gray-medium);
-    margin-left: 14px;
 }
 
 .event-list-content {

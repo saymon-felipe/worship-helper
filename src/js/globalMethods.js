@@ -1,6 +1,8 @@
 import $ from 'jquery';
 import api from '../config/api';
 import moment from 'moment';
+import 'moment/locale/pt-br';
+moment.locale('pt-br');
 
 export const globalMethods = {
     methods: {

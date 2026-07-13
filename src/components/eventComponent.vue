@@ -3,7 +3,7 @@
         <div class="event-card-header">
             <div class="event-meta">
                 <span class="date-badge" :class="{ 'badge-urgent': urgent_event }">
-                    <span class="material-icons-outlined badge-icon">schedule</span>
+                    <span class="material-icons badge-icon">schedule</span>
                     <span>{{ event_close }} {{ returnCloseText() }}</span>
                 </span>
                 <span class="material-icons pulse-bell pulse" :class="urgent_event ?'danger' : 'warning'">notifications</span>
@@ -39,6 +39,8 @@
 <script>
 import { globalMethods } from '../js/globalMethods';
 import moment from 'moment';
+import 'moment/locale/pt-br';
+moment.locale('pt-br');
 
 export default {
     name: "eventComponent",
@@ -102,15 +104,15 @@ export default {
 }
 
 .event-card-container:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
     border-color: rgba(255, 255, 255, 0.15);
-    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
 }
 
 .event-card-header {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
 }
 
 .event-meta {
@@ -121,19 +123,23 @@ export default {
 }
 
 .date-badge {
-    background-color: var(--secondary-blue-soft-2);
+    background-color: rgba(56, 182, 255, 0.1);
+    border: 1px solid rgba(56, 182, 255, 0.2);
     color: var(--secondary-blue-soft);
-    font-size: var(--font-size-5);
-    font-weight: 600;
-    padding: 3px 10px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 10px;
     border-radius: var(--radius-pill);
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .badge-urgent {
-    background-color: var(--red-high);
+    background-color: rgba(241, 76, 76, 0.1);
+    border-color: rgba(241, 76, 76, 0.25);
     color: var(--others-red);
 }
 
@@ -142,27 +148,28 @@ export default {
 }
 
 .pulse-bell {
-    font-size: 20px;
+    font-size: 18px;
 }
 
 .event-title {
-    font-size: var(--font-size-h4);
+    font-size: 1.15rem;
     font-weight: 700;
     margin: 0;
     color: var(--neutral-white);
-    line-height: 1.3;
+    line-height: 1.35;
+    letter-spacing: -0.3px;
 }
 
 .event-time {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: var(--font-size-4);
+    font-size: var(--font-size-5);
     color: var(--neutral-gray-medium);
 }
 
 .time-icon {
-    font-size: 16px;
+    font-size: 15px;
     color: var(--secondary-blue-soft);
 }
 
@@ -170,7 +177,7 @@ export default {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
     padding-top: 12px;
 }
 
@@ -180,17 +187,30 @@ export default {
     gap: 12px;
 }
 
+.creator-tag {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--neutral-gray-high);
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
 .music-count-badge {
     display: flex;
     align-items: center;
     gap: 6px;
     font-size: var(--font-size-5);
-    color: var(--neutral-gray-medium);
+    color: var(--neutral-gray-high);
+    font-weight: 600;
 }
 
 .music-badge-icon {
-    font-size: 18px;
-    color: var(--others-yellow);
+    font-size: 16px;
+    color: var(--secondary-blue-soft);
 }
 
 .members-stack {
@@ -199,14 +219,35 @@ export default {
 }
 
 .members-stack .avatar-pp {
-    width: 34px;
-    height: 34px;
-    border: 2.5px solid var(--primary-bg-light);
+    width: 28px;
+    height: 28px;
+    border: 2px solid #201d3a;
+    border-radius: var(--radius-pill);
+    margin-right: -8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    transition: all var(--transition-fast);
+    object-fit: cover;
+}
+
+.members-stack .avatar-pp:hover {
+    transform: translateY(-2px);
+    z-index: 10;
 }
 
 .members-stack .avatar-information {
-    background: var(--primary-primary-blue-high);
+    background: var(--primary-primary-blue-high-2);
     font-size: 10px;
+    font-weight: 700;
+    color: var(--neutral-white);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border: 2px solid #201d3a;
+    border-radius: var(--radius-pill);
+    margin-right: -8px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
 }
 
 @media (max-width: 480px) {

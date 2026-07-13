@@ -9,7 +9,7 @@
                 <button type="button" class="icon-button" v-on:click="transpose(-1)" title="Descer meio tom">
                     <span class="material-icons">remove</span>
                 </button>
-                <span>{{ transposeLabel }}</span>
+                <span class="transpose-label">{{ transposeLabel }}</span>
                 <button type="button" class="icon-button" v-on:click="transpose(1)" title="Subir meio tom">
                     <span class="material-icons">add</span>
                 </button>
@@ -28,6 +28,7 @@
         </div>
     </div>
 </template>
+
 <script>
 const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 const FLATS = {
@@ -60,7 +61,7 @@ function isChordToken(token) {
 
 export default {
     name: "cipherViewer",
-    props: ["cipherText", "title", "artist"],
+    props: ["cipherText", "title", "artist", "originalTone"],
     data() {
         return {
             transposeSteps: 0
@@ -68,18 +69,42 @@ export default {
     },
     computed: {
         transposeLabel: function () {
+            const tone = this.resolvedOriginalTone;
             if (this.transposeSteps === 0) {
+                if (tone) {
+                    return `${tone} - Tom original`;
+                }
                 return "Tom original";
             }
 
-            return this.transposeSteps > 0 ?`+${this.transposeSteps}` : `${this.transposeSteps}`;
+            const label = this.transposeSteps > 0 ? `+${this.transposeSteps}` : `${this.transposeSteps}`;
+            
+            if (tone) {
+                let cleanNote = tone.trim();
+                const match = cleanNote.match(/^([A-G](?:#|b)?)/);
+                if (match) {
+                    const root = match[1];
+                    const suffix = cleanNote.slice(root.length);
+                    const transposedRoot = transposeNote(root, this.transposeSteps);
+                    return `${transposedRoot}${suffix} - ${label}`;
+                }
+            }
+
+            return label;
+        },
+        resolvedOriginalTone: function () {
+            if (this.originalTone) {
+                return this.originalTone;
+            }
+            return this.detectOriginalTone(this.cipherText);
         },
         renderedLines: function () {
-            return String(this.cipherText || "").split("\n").map((line) => {
+            const optimizedText = this.optimizeTabs(this.cipherText);
+            return String(optimizedText || "").split("\n").map((line) => {
                 const isChordLine = this.isChordLine(line);
 
                 return {
-                    text: isChordLine ?this.transposeLine(line) : line,
+                    text: isChordLine ? this.transposeLine(line) : line,
                     isChordLine
                 };
             });
@@ -121,18 +146,94 @@ export default {
             }
 
             return line.replace(/\S+/g, (token) => this.transposeChord(token));
+        },
+        optimizeTabs: function (cipherText) {
+            if (!cipherText) return "";
+
+            const lines = cipherText.split("\n");
+            const isTab = lines.map(line => {
+                const trimmed = line.trim();
+                if (!trimmed) return false;
+                // Identifica linhas típicas de tablatura (iniciando com nota e barra vertical ou apenas traços longos)
+                return /^[A-G|a-g]?\|?[-0-9p~h/\\|x()b]{5,}/.test(trimmed) && trimmed.includes("-");
+            });
+
+            let i = 0;
+            while (i < lines.length) {
+                if (isTab[i]) {
+                    let start = i;
+                    while (i < lines.length && isTab[i]) {
+                        i++;
+                    }
+                    let end = i;
+
+                    // Acha o último índice que de fato contém notas ou informações úteis em todas as linhas do bloco
+                    let maxContentIndex = 0;
+                    for (let j = start; j < end; j++) {
+                        const line = lines[j];
+                        let lastIdx = line.length - 1;
+                        while (lastIdx >= 0) {
+                            const char = line[lastIdx];
+                            if (char !== '-' && char !== '|' && char !== ' ' && char !== '\r') {
+                                break;
+                            }
+                            lastIdx--;
+                        }
+                        if (lastIdx > maxContentIndex) {
+                            maxContentIndex = lastIdx;
+                        }
+                    }
+
+                    // Define o tamanho final baseado no índice de conteúdo mais à direita + preenchimento
+                    let targetLength = Math.max(maxContentIndex + 4, 38);
+
+                    for (let j = start; j < end; j++) {
+                        let line = lines[j];
+                        if (line.length > targetLength) {
+                            lines[j] = line.slice(0, targetLength);
+                        } else if (line.length < targetLength) {
+                            lines[j] = line.padEnd(targetLength, "-");
+                        }
+                    }
+                } else {
+                    i++;
+                }
+            }
+
+            return lines.join("\n");
+        },
+        detectOriginalTone: function (text) {
+            if (!text) return "";
+            const lines = String(text).split("\n");
+            for (const line of lines) {
+                if (this.isChordLine(line)) {
+                    const tokens = line.trim().split(/\s+/).filter(Boolean);
+                    if (tokens.length > 0) {
+                        const cleanChord = tokens[0].replace(/[()[\],]/g, "");
+                        const match = cleanChord.match(/^([A-G](?:#|b)?m?)/);
+                        if (match) {
+                            return match[1];
+                        }
+                    }
+                }
+            }
+            return "";
         }
     }
 }
 </script>
+
 <style scoped>
 .cipher-viewer {
     height: 100%;
     min-height: 0;
+    min-width: 0;
+    width: 100%;
     display: flex;
     flex-direction: column;
     background: var(--primary-bg);
     color: var(--neutral-white);
+    overflow: hidden;
 }
 
 .cipher-toolbar {
@@ -157,13 +258,17 @@ export default {
 
 .transpose-controls {
     display: grid;
-    grid-template-columns: 34px minmax(88px, auto) 34px;
+    grid-template-columns: 34px minmax(100px, auto) 34px;
     align-items: center;
     gap: 8px;
     color: var(--neutral-gray-high);
     font-size: var(--font-size-5);
     font-weight: 700;
     white-space: nowrap;
+}
+
+.transpose-label {
+    text-align: center;
 }
 
 .icon-button {
@@ -177,6 +282,12 @@ export default {
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.icon-button:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: var(--secondary-blue-soft);
 }
 
 .icon-button span {
@@ -186,6 +297,8 @@ export default {
 .cipher-content {
     flex: 1;
     min-height: 0;
+    min-width: 0;
+    width: 100%;
     overflow: auto;
     padding: 16px;
 }
@@ -194,7 +307,7 @@ export default {
     margin: 0;
     white-space: pre;
     font-family: Consolas, "Courier New", monospace;
-    font-size: 14px;
+    font-size: 13.5px;
     line-height: 1.65;
     color: var(--neutral-gray-high-2);
 }
@@ -238,4 +351,3 @@ export default {
     }
 }
 </style>
-

@@ -26,14 +26,18 @@ export default {
     methods: {
         closeModal: function () {
             let modalContainer = $(".modal-container");
+            let overlay = $(".modal-overlay");
             modalContainer.css("transform", "translateY(80vh)");
+            overlay.css("opacity", 0);
             setTimeout(() => {
                 this.$emit("closeModal");
             }, 400);
         },
         showModal: function () {
             let modalContainer = $(".modal-container");
+            let overlay = $(".modal-overlay");
             modalContainer.css("transform", "translateY(0)");
+            overlay.css("opacity", 0.5);
         },
         emitSubmitEvent: function () {
             this.$emit("submitEvent");
@@ -62,8 +66,9 @@ export default {
     top: 0;
     left: 0;
     background: black;
-    opacity: 0.3;
+    opacity: 0;
     cursor: pointer;
+    transition: opacity 0.4s ease;
 }
 
 .modal-container {
@@ -78,7 +83,7 @@ export default {
     color: var(--neutral-white);
     padding: 1rem;
     margin: auto;
-    transition: all 0.4s;
+    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     transform: translateY(80vh);
 }
 

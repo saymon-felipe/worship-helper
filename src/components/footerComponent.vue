@@ -1,21 +1,17 @@
 <template>
     <footer v-if="current_church.id_igreja != null">
         <div class="nav-container">
-            <div class="menu-option" v-on:click="returnToHome()" :class="{ 'active-option': isHomeActive }">
+            <div class="menu-option" v-on:click="navigate('/home/church/' + current_church.id_igreja)" :class="{ 'active-option': isHomeActive }">
                 <span class="material-icons">home</span>
                 <p>Início</p>
             </div>
-            <div class="menu-option">
-                <router-link :to="'/home/manage-church/' + current_church.id_igreja + '/musics'" active-class="active-option" class="nav-link">
-                    <span class="material-icons">queue_music</span>
-                    <p>Músicas</p>
-                </router-link>
+            <div class="menu-option" v-on:click="navigate('/home/manage-church/' + current_church.id_igreja + '/musics')" :class="{ 'active-option': isMusicsActive }">
+                <span class="material-icons">queue_music</span>
+                <p>Músicas</p>
             </div>
-            <div class="menu-option">
-                <router-link :to="'/home/manage-church/' + current_church.id_igreja" active-class="active-option" class="nav-link">
-                    <span class="material-icons">home_work</span>
-                    <p>{{ returnLabelAdmin() }}</p>
-                </router-link>
+            <div class="menu-option" v-on:click="navigate('/home/manage-church/' + current_church.id_igreja)" :class="{ 'active-option': isPanelActive }">
+                <span class="material-icons">home_work</span>
+                <p>{{ returnLabelAdmin() }}</p>
             </div>
         </div>
     </footer>
@@ -36,20 +32,35 @@ export default {
     },
     computed: {
         isHomeActive() {
+            if (this.$route.path === '/home' || this.$route.path === '/register-church') return false;
             return this.$route.path === '/home/church/' + this.current_church.id_igreja || 
                    this.$route.path.startsWith('/home/event/');
+        },
+        isMusicsActive() {
+            if (this.$route.path === '/home' || this.$route.path === '/register-church') return false;
+            return this.$route.path === '/home/manage-church/' + this.current_church.id_igreja + '/musics';
+        },
+        isPanelActive() {
+            if (this.$route.path === '/home' || this.$route.path === '/register-church') return false;
+            return this.$route.path === '/home/manage-church/' + this.current_church.id_igreja;
         }
     },
     methods: {
-        returnToHome: function () {
-            let self = this;
-            self.$router.push("/home/church/" + self.current_church.id_igreja);
-        },
         returnLabelAdmin: function () {
             if (this.current_church.administrador == 1) {
                 return "Painel";
             }
             return "Visualizar";
+        },
+        navigate: function (path) {
+            if (this.$route.path === '/home') {
+                return;
+            }
+            if (this.current_church.id_igreja == null) {
+                this.$router.push('/home');
+                return;
+            }
+            this.$router.push(path);
         },
         watchChurchInSessionStorage: function () {
             setInterval(() => {

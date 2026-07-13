@@ -61,6 +61,18 @@ export default {
             this.selectedTone = tone;
             this.$emit("select", this.selectedTone);
             this.showSelect = false;
+        },
+        selectToneByName: function (toneName) {
+            if (!toneName) return false;
+            const clean = toneName.trim().replace("♭", "b");
+            const found = this.allTones.find(t => t.nome.toLowerCase() === clean.toLowerCase()) || 
+                          this.churchTones.find(t => t.nome.toLowerCase() === clean.toLowerCase());
+            
+            if (found) {
+                this.selectItem(found);
+                return true;
+            }
+            return false;
         }
     },
     mounted: function () {

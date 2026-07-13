@@ -1,26 +1,57 @@
-<template>
+﻿<template>
     <div class="members-page-container">
-        <!-- Header -->
         <div class="members-header">
             <div class="header-titles">
                 <h3>Membros da Igreja</h3>
-                <p class="subtitle">{{ returnMembersText(copy_members.length) }} cadastrados</p>
+                <p class="subtitle">{{ membersSubtitle }}</p>
             </div>
-            <button class="add-member-btn" v-on:click="addMember()" v-if="haveAdminPermission" title="Convidar novo membro">
+            <button class="add-member-btn" v-on:click="addMember()" v-if="canManageChurch" title="Convidar novo membro">
                 <span class="material-icons">person_add</span>
             </button>
         </div>
 
-        <!-- Search Bar -->
         <div class="member-search-container">
             <span class="material-icons search-bar-icon">search</span>
             <input type="text" name="search_member" id="search-member" v-model="findUsers" placeholder="Buscar membros pelo nome...">
         </div>
 
-        <!-- Members List -->
+        <section class="pending-invites-section" v-if="canManageChurch && pendingInvitesList.length > 0">
+            <div class="pending-invites-header">
+                <div>
+                    <h4>Convites pendentes</h4>
+                    <p>{{ pendingInvitesList.length }} aguardando resposta</p>
+                </div>
+                <span class="pending-count">{{ pendingInvitesList.length }}</span>
+            </div>
+
+            <div class="pending-invites-list">
+                <article class="pending-invite-card" v-for="invite in pendingInvitesList" v-bind:key="invite.id">
+                    <div class="pending-invite-avatar">
+                        <img v-if="invite.imagem_usuario" :src="invite.imagem_usuario" :alt="invite.nome_usuario || invite.email_usuario">
+                        <span v-else class="material-icons">mail</span>
+                    </div>
+
+                    <div class="pending-invite-content">
+                        <div class="pending-invite-main">
+                            <h5>{{ invite.nome_usuario || invite.email_usuario }}</h5>
+                            <p>{{ invite.email_usuario || "Usuário cadastrado no app" }}</p>
+                        </div>
+                        <div class="pending-invite-meta">
+                            <span>{{ invite.cadastrado ? "Usuário cadastrado" : "Aguardando cadastro" }}</span>
+                            <span v-if="invite.data_criacao">{{ relativeTime(invite.data_criacao) }}</span>
+                        </div>
+                    </div>
+
+                    <button class="delete-invite-btn" type="button" v-on:click="deleteInvite(invite)" title="Cancelar convite">
+                        <span class="material-icons">delete</span>
+                    </button>
+                </article>
+            </div>
+        </section>
+
         <div class="members-list-grid">
-            <div class="member-card" :id="'member-' + member.id_usuario" v-for="(member, index) in copy_members" v-bind:key="index">
-                <img :src="member.imagem_usuario" class="member-avatar" :alt="member.nome_usuario">
+            <div class="member-card" :id="'member-' + member.id_usuario" v-for="(member, index) in membersList" v-bind:key="member.id_usuario || index">
+                <img :src="member.imagem_usuario || default_avatar" class="member-avatar" :alt="member.nome_usuario || 'Membro'">
                 <div class="member-info-content">
                     <div class="member-details">
                         <h6 class="member-name">{{ member.nome_usuario }}</h6>
@@ -31,13 +62,12 @@
                             <span class="member-tag-chip">{{ member.tag_usuario[0].nome_tag }}</span>
                         </div>
                     </div>
-                    <button class="more-actions-btn" v-on:click.stop="openMemberMoreActions(member.id_usuario)" v-if="haveAdminPermission" title="Opções do membro">
+                    <button class="more-actions-btn" v-on:click.stop="openMemberMoreActions(member.id_usuario)" v-if="canManageChurch" title="Opções do membro">
                         <span class="material-icons">more_vert</span>
                     </button>
                 </div>
 
-                <!-- Dropdown actions list -->
-                <div class="member-more-actions" v-if="haveAdminPermission">
+                <div class="member-more-actions" v-if="canManageChurch">
                     <ul>
                         <li v-on:click="addTagFunction(member)">
                             <span class="material-icons action-icon">local_offer</span>
@@ -55,7 +85,7 @@
                 </div>
             </div>
 
-            <div class="church-empty" v-if="copy_members.length <= 0">
+            <div class="church-empty" v-if="!loadingMembers && membersList.length <= 0">
                 <span class="material-icons empty-icon">group_off</span>
                 <h5>Nenhum membro encontrado</h5>
                 <p>Tente buscar por um nome diferente ou convide novos membros para a sua igreja.</p>
@@ -64,17 +94,24 @@
 
         <div class="member-more-actions-wrapper" v-if="showMemberMoreActions" v-on:click="closeMemberMoreActions()"></div>
 
-        <!-- Dialog modal drawer -->
-        <modal v-if="showModal && haveAdminPermission" :title="modalTitle" @closeModal="close_modal()" class="modal" @cancelEvent="cancelChanges()" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm()">
-            <inviteMemberModalContent v-if="inviteMember" @success="closeModal()" />
-            <addTagModalContent v-if="addTag" :member="selected_member" @success="closeModal(); fillCopyUsers();" /> 
-            <addFunctionModalContent v-if="addOccupation" :member="selected_member" @success="closeModal(); fillCopyUsers();" /> 
-            <removeMemberModalContent v-if="removeMember" :member="selected_member" @success="closeModal()" />
+        <modal v-if="showModal && canManageChurch" :title="modalTitle" @closeModal="close_modal()" class="modal" @cancelEvent="cancelChanges()" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm()">
+            <inviteMemberModalContent v-if="inviteMember" @success="handleInviteSuccess()" />
+            <addTagModalContent v-if="addTag" :member="selected_member" @success="handleMembersChanged()" />
+            <addFunctionModalContent v-if="addOccupation" :member="selected_member" @success="handleMembersChanged()" />
+            <removeMemberModalContent v-if="removeMember" :member="selected_member" @success="handleMembersChanged()" />
+            <modal v-if="showConfirmDeleteInvite && canManageChurch" title="Excluir Convite" @closeModal="showConfirmDeleteInvite = false" class="modal" @cancelEvent="showConfirmDeleteInvite = false" button2Title="Não, cancelar" buttonTitle="Sim, excluir" @submitEvent="submitDeleteInvite()">
+                <div class="confirm-delete-box">
+                    <p class="warning-text">Tem certeza que deseja excluir este convite?</p>
+                    <p>O convite enviado para o e-mail <strong>{{ selectedInviteToDelete?.email_usuario }}</strong> será invalidado.</p>
+                </div>
+            </modal>
         </modal>
     </div>
 </template>
+
 <script>
 import { globalMethods } from '../js/globalMethods';
+import api from '../config/api';
 import modal from "./modal.vue";
 import inviteMemberModalContent from "./inviteMemberModalContent.vue";
 import addTagModalContent from "./addTagModalContent.vue";
@@ -93,7 +130,26 @@ export default {
             idUsuarioInChange: null,
             selected_member: {},
             findUsers: "",
-            copy_members: []
+            copy_members: [],
+            pendingInvites: [],
+            canManageChurch: false,
+            loadingMembers: false,
+            default_avatar: api.defaults.baseURL + "/public/user-default-image.png",
+            showConfirmDeleteInvite: false,
+            selectedInviteToDelete: null
+        }
+    },
+    computed: {
+        membersList: function () {
+            return Array.isArray(this.copy_members) ? this.copy_members : [];
+        },
+        pendingInvitesList: function () {
+            return Array.isArray(this.pendingInvites) ? this.pendingInvites : [];
+        },
+        membersSubtitle: function () {
+            const count = this.membersList.length;
+            const suffix = count === 1 ? "cadastrado" : "cadastrados";
+            return `${this.returnMembersText(count)} ${suffix}`;
         }
     },
     components: {
@@ -104,17 +160,21 @@ export default {
         removeMemberModalContent
     },
     methods: {
+        getSourceMembers: function () {
+            return this.igreja && Array.isArray(this.igreja.membros) ? this.igreja.membros : [];
+        },
         filterMembers: function () {
-            if (this.findUsers.trim().length == 0) {
-                this.copy_members = this.igreja.membros;
+            const members = this.getSourceMembers();
+            const search = this.findUsers.trim().toLowerCase();
+
+            if (search.length == 0) {
+                this.copy_members = members;
                 return;
             }
 
-            this.copy_members = this.igreja.membros.filter((membro) => {
-                if (membro.nome_usuario.toLowerCase().indexOf(this.findUsers.toLowerCase()) != -1) {
-                    return membro;
-                }
-            })
+            this.copy_members = members.filter((membro) => {
+                return String(membro.nome_usuario || "").toLowerCase().indexOf(search) != -1;
+            });
         },
         resetVariables: function (string) {
             this.inviteMember = false;
@@ -156,7 +216,7 @@ export default {
             this.showModal = true;
             this.modalTitle = "Atribuir tag";
             this.modalButtonTitle = "Salvar";
-            this.modalButton2Title = "";
+            this.modalButton2Title = "Cancelar";
             this.selected_member = member;
             this.resetVariables("addTag");
         },
@@ -166,7 +226,7 @@ export default {
             this.showModal = true;
             this.modalTitle = "Atribuir função";
             this.modalButtonTitle = "Salvar";
-            this.modalButton2Title = "";
+            this.modalButton2Title = "Cancelar";
             this.selected_member = member;
             this.resetVariables("addOccupation");
         },
@@ -178,7 +238,93 @@ export default {
             this.resetVariables("invite");
         },
         fillCopyUsers: function () {
-            this.copy_members = this.igreja.membros;
+            this.copy_members = this.getSourceMembers();
+        },
+        openMemberMoreActions: function (member_id) {
+            this.closeMemberMoreActions();
+            this.idUsuarioInChange = member_id;
+            $("#member-" + member_id + " .member-more-actions").css("display", "block");
+            setTimeout(() => {
+                $("#member-" + member_id + " .member-more-actions").css("opacity", "1");
+                this.showMemberMoreActions = true;
+            }, 50);
+        },
+        closeMemberMoreActions: function () {
+            $(".member-more-actions").css("opacity", "0");
+            $(".member-more-actions").css("display", "none");
+            this.showMemberMoreActions = false;
+        },
+        loadChurchMembers: function () {
+            const churchId = this.getCurrentChurchId();
+
+            if (!churchId) {
+                this.fillCopyUsers();
+                return Promise.resolve();
+            }
+
+            this.loadingMembers = true;
+            this.canManageChurch = this.haveAdminPermission;
+
+            return api.post("/igreja/retorna-membros", { id_igreja: churchId })
+                .then((response) => {
+                    if (response.data && response.data.returnObj) {
+                        this.copy_members = response.data.returnObj;
+                    }
+                    return api.post("/igreja/retorna-convites-pendentes", { id_igreja: churchId })
+                        .then((response) => {
+                            this.pendingInvites = response.data.returnObj || [];
+                        })
+                        .catch(() => {
+                            this.pendingInvites = [];
+                        });
+                })
+                .catch((err) => {
+                    console.error(err);
+                })
+                .finally(() => {
+                    this.loadingMembers = false;
+                });
+        },
+        returnPendingInvites: function () {
+            const churchId = this.getCurrentChurchId();
+            if (!churchId) return;
+            return api.post("/igreja/retorna-convites-pendentes", { id_igreja: churchId })
+                .then((response) => {
+                    this.pendingInvites = response.data.returnObj || [];
+                })
+                .catch(() => {
+                    this.pendingInvites = [];
+                });
+        },
+        deleteInvite: function (invite) {
+            this.selectedInviteToDelete = invite;
+            this.showConfirmDeleteInvite = true;
+        },
+        submitDeleteInvite: function () {
+            const churchId = this.getCurrentChurchId();
+            const invite = this.selectedInviteToDelete;
+
+            if (!churchId || !invite || !invite.id) {
+                return;
+            }
+
+            api.post("/igreja/deletar-convite", {
+                id_igreja: churchId,
+                id_convite: invite.id
+            }).then(() => {
+                this.showConfirmDeleteInvite = false;
+                this.selectedInviteToDelete = null;
+                this.returnPendingInvites();
+            });
+        },
+        handleInviteSuccess: function () {
+            this.closeModal();
+            this.returnPendingInvites();
+        },
+        handleMembersChanged: function () {
+            this.closeModal();
+            this.loadChurchMembers();
+            this.returnPendingInvites();
         }
     },
     watch: {
@@ -188,9 +334,11 @@ export default {
     },
     mounted: function () {
         this.fillCopyUsers();
+        this.loadChurchMembers();
     }
-}
+};
 </script>
+
 <style scoped>
 .members-page-container {
     padding-bottom: 7rem;
@@ -242,14 +390,13 @@ h3 {
     transform: scale(0.95);
 }
 
-/* Search input styling */
 .member-search-container {
     position: relative;
     margin-bottom: 1.5rem;
 }
 
 #search-member {
-    padding-left: 46px; /* Abre espaço para o ícone */
+    padding-left: 46px;
 }
 
 .search-bar-icon {
@@ -262,7 +409,138 @@ h3 {
     font-size: 20px;
 }
 
-/* Grid of members cards */
+.pending-invites-section {
+    margin-bottom: 1.5rem;
+    padding: 14px;
+    border: 1px solid rgba(56, 182, 255, 0.16);
+    border-radius: var(--radius-md);
+    background: rgba(56, 182, 255, 0.04);
+}
+
+.pending-invites-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.pending-invites-header h4 {
+    margin: 0 0 3px;
+    color: var(--neutral-white);
+    font-size: var(--font-size-3);
+    font-weight: 700;
+}
+
+.pending-invites-header p {
+    margin: 0;
+    color: var(--neutral-gray-medium);
+    font-size: var(--font-size-4);
+}
+
+.pending-count {
+    min-width: 30px;
+    height: 30px;
+    padding: 0 9px;
+    border-radius: var(--radius-pill);
+    background: var(--secondary-blue-soft-2);
+    color: var(--secondary-blue-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--font-size-4);
+    font-weight: 700;
+}
+
+.pending-invites-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.pending-invite-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    padding: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.pending-invite-avatar {
+    width: 42px;
+    height: 42px;
+    border-radius: var(--radius-pill);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: rgba(56, 182, 255, 0.12);
+    color: var(--secondary-blue-soft);
+}
+
+.pending-invite-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.pending-invite-content {
+    min-width: 0;
+    flex: 1;
+}
+
+.pending-invite-main h5 {
+    margin: 0 0 2px;
+    color: var(--neutral-white);
+    font-size: var(--font-size-4);
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pending-invite-main p {
+    margin: 0;
+    color: var(--neutral-gray-medium);
+    font-size: var(--font-size-5);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pending-invite-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--neutral-gray-medium);
+}
+
+.delete-invite-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: rgba(241, 76, 76, 0.1);
+    color: var(--others-red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.delete-invite-btn:hover {
+    background: rgba(241, 76, 76, 0.18);
+    transform: scale(1.04);
+}
+
 .members-list-grid {
     display: flex;
     flex-direction: column;
@@ -360,7 +638,6 @@ h3 {
     color: var(--neutral-white);
 }
 
-/* Redesign drop down menu */
 .member-more-actions {
     position: absolute;
     right: 3rem;
@@ -440,5 +717,28 @@ h3 {
         width: 40px;
         height: 40px;
     }
+
+    .pending-invite-card {
+        align-items: flex-start;
+    }
+}
+
+.confirm-delete-box {
+    padding: 10px 0;
+    font-size: var(--font-size-4);
+    line-height: 1.5;
+    color: var(--neutral-white);
+}
+
+.confirm-delete-box .warning-text {
+    color: var(--others-red);
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.confirm-delete-box .helper-text {
+    margin-top: 10px;
+    font-size: var(--font-size-5);
+    color: var(--neutral-gray-medium);
 }
 </style>

@@ -1,7 +1,7 @@
 <template>
     <div class="select-tones">
         <div class="select-input" v-on:click="showSelect = !showSelect">
-            <div class="selected-item" :class="selectedTone.id == 0 ? 'select-tone' : ''" :style="'opacity: ' + selectedTone.id != undefined ? '1' : '0'">
+            <div class="selected-item" :class="selectedTone.id == 0 ?'select-tone' : ''" :style="'opacity: ' + selectedTone.id != undefined ?'1' : '0'">
                 <span>{{ selectedTone.nome }}</span>
             </div>
             <span class="material-icons">expand_more</span>

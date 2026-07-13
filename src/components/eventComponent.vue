@@ -1,35 +1,37 @@
 <template>
-    <div class="event-container" v-on:click="goToEvent(event.id_evento)">
-        <div class="event-header">
-            <div class="event-informations">
-                {{ event_close }} {{ returnCloseText() }}
-                <h3>{{ event.nome_evento }}</h3>
-                <h4>{{ moment.parseZone(event.data_inicio_evento).format("dddd DD/MM/yyyy HH:mm") }}</h4>
+    <div class="event-card-container" v-on:click="goToEvent(event.id_evento)">
+        <div class="event-card-header">
+            <div class="event-meta">
+                <span class="date-badge" :class="{ 'badge-urgent': urgent_event }">
+                    <span class="material-icons-outlined badge-icon">schedule</span>
+                    <span>{{ event_close }} {{ returnCloseText() }}</span>
+                </span>
+                <span class="material-icons pulse-bell pulse" :class="urgent_event ?'danger' : 'warning'">notifications</span>
             </div>
-            <div class="event-icons">
-                <span class="material-icons warning" style="display: none;" v-if="!event.user_voted">error</span>
-                <span class="material-icons success" style="display: none;" v-if="event.user_voted">check_circle</span>
-                <span class="material-icons pulse" :class="urgent_event ? 'danger' : 'warning'">notifications</span>
+            <h4 class="event-title">{{ event.nome_evento }}</h4>
+            <div class="event-time">
+                <span class="material-icons time-icon">today</span>
+                <span>{{ formatEventDate(event.data_inicio_evento) }}</span>
             </div>
         </div>
-        <div class="event-footer">
-            <div class="event-informations">
-                <div class="creator-tag">
+        <div class="event-card-footer">
+            <div class="footer-left">
+                <div class="creator-tag" v-if="event.criador_tag">
                     {{ event.criador_tag }}
                 </div>
-                <div class="music-quantity">
-                    <span class="material-icons">playlist_play</span>
+                <div class="music-count-badge">
+                    <span class="material-icons music-badge-icon">library_music</span>
                     <p>{{ returnMusicText(event.quantidade_musicas) }}</p>
                 </div>
             </div>
-            <div class="members-list contract-avatar">
-                <div class="member" v-for="(member, index) in event.membros_evento" :key="index">
-                    <img :src="member.imagem_usuario" class="avatar-pp border-img" v-on:mouseenter="pushAvatars(member.id_usuario)" v-on:mouseleave="restoreAvatars(member.id_usuario)" :id="'member-' + member.id_usuario" v-if="index < 4">
+            <div class="members-stack contract-avatar">
+                <template v-for="(member, index) in event.membros_evento" :key="index">
+                    <img :src="member.imagem_usuario" class="avatar-pp border-img" v-on:mouseenter="pushAvatars(member.id_usuario)" v-on:mouseleave="restoreAvatars(member.id_usuario)" :id="'member-' + member.id_usuario" v-if="index < 4" :alt="member.nome_usuario">
                     <div class="avatar-pp avatar-information" v-if="index == 5">
                         <span class="material-icons">add</span>
-                        {{ event.quantidade_membros - index }}
+                        <span>{{ event.quantidade_membros - index }}</span>
                     </div>
-                </div>
+                </template>
             </div>
         </div>
     </div>
@@ -68,9 +70,14 @@ export default {
             let dateDiff = startDate.diff(this.current_date, 'days');
 
             if (dateDiff < 5) {
-                this.event_close = "Evento próximo - ";
+                this.event_close = "Próximo - ";
                 this.urgent_event = true;
             }
+        },
+        formatEventDate: function (date) {
+            // Capitalizar primeiro caractere do dia da semana retornado pelo moment
+            let rawDate = moment.parseZone(date).format("dddd, DD/MM/YYYY [às] HH:mm");
+            return rawDate.charAt(0).toUpperCase() + rawDate.slice(1);
         }
     },
     mounted: function () {
@@ -79,55 +86,146 @@ export default {
 }
 </script>
 <style scoped>
-.event-container {
-    background: var(--secondary-secondary-blue-high-2);
-    border-radius: 10px;
-    padding: 10px;
-    margin: 1rem 0;
-}
-
-.event-icons {
-    margin-left: 1rem;
+.event-card-container {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin: 12px 0;
+    box-shadow: var(--card-shadow);
+    backdrop-filter: var(--glass-blur);
+    cursor: pointer;
+    transition: transform var(--transition-fast), border-color var(--transition-fast), box-shadow var(--transition-fast);
     display: flex;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 14px;
 }
 
-    .event-icons span {
-        margin: 10px;
+.event-card-container:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+}
+
+.event-card-header {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.event-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.date-badge {
+    background-color: var(--secondary-blue-soft-2);
+    color: var(--secondary-blue-soft);
+    font-size: var(--font-size-5);
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: var(--radius-pill);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.badge-urgent {
+    background-color: var(--red-high);
+    color: var(--others-red);
+}
+
+.badge-icon {
+    font-size: 14px;
+}
+
+.pulse-bell {
+    font-size: 20px;
+}
+
+.event-title {
+    font-size: var(--font-size-h4);
+    font-weight: 700;
+    margin: 0;
+    color: var(--neutral-white);
+    line-height: 1.3;
+}
+
+.event-time {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: var(--font-size-4);
+    color: var(--neutral-gray-medium);
+}
+
+.time-icon {
+    font-size: 16px;
+    color: var(--secondary-blue-soft);
+}
+
+.event-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding-top: 12px;
+}
+
+.footer-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.music-count-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--font-size-5);
+    color: var(--neutral-gray-medium);
+}
+
+.music-badge-icon {
+    font-size: 18px;
+    color: var(--others-yellow);
+}
+
+.members-stack {
+    display: flex;
+    align-items: center;
+}
+
+.members-stack .avatar-pp {
+    width: 34px;
+    height: 34px;
+    border: 2.5px solid var(--primary-bg-light);
+}
+
+.members-stack .avatar-information {
+    background: var(--primary-primary-blue-high);
+    font-size: 10px;
+}
+
+@media (max-width: 480px) {
+    .event-card-container {
+        padding: 14px;
     }
-
-.event-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    white-space: nowrap;
-}
-
-.event-footer {
-    margin-top: 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.creator-tag {
-    background: rgba(255, 255, 255, 0.26);
-    border-radius: 10px;
-    width: fit-content;
-    padding: 0 10px;
-}
-
-.music-quantity, .event-footer .event-informations {
-    display: flex;
-    align-items: center;
-}
-
-.event-footer .event-informations .creator-tag {
-    margin-right: 1rem;
-}
-
-.members-list {
-    display: flex;
-    align-items: center;
+    
+    .event-title {
+        font-size: var(--font-size-3);
+    }
+    
+    .footer-left {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+    }
+    
+    .event-card-footer {
+        padding-top: 10px;
+    }
 }
 </style>

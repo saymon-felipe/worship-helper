@@ -36,8 +36,8 @@ export default {
             }
 
             api.post("/igreja/remover-membro", data)
-                .then(function (response) {
-                    this.$emit("success", true);
+                .then(function () {
+                    self.$emit("success", true);
                 })
                 .catch(function (error) {
                     self.showResponse(error.response.data, ".response", "error");

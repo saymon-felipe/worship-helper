@@ -17,7 +17,7 @@
             <musicComponent v-for="(music, index) in musics" :key="index" :music="music"></musicComponent>
         </div>
         <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm(); returnMusics();">
-            <createMusicModalContent @success="closeModal()" />
+            <createMusicModalContent @success="closeModal(); returnMusics();" />
         </modal>
     </div>
 </template>
@@ -43,7 +43,7 @@ export default {
         createMusic: function () {
             this.showModal = true;
             this.modalTitle = "Adicionar música";
-            this.modalButtonTitle = "Adicionar música";
+            this.modalButtonTitle = "";
         },
         returnMusics: function () {
             let self = this;

@@ -1,7 +1,7 @@
 <template>
     <div>
         <div class="loading" v-if="$globalState.loadingApp">
-            <lottie-player id="loading-system" background="transparent" speed="1" loop autoplay></lottie-player>
+            <lottie-player id="loading-system" background="transparent" speed="1" loop autoplay @rendered="onPlayerRendered"></lottie-player>
         </div>
         <div class="app-container" v-else>
             <headerComponent />
@@ -29,6 +29,11 @@ export default {
         footerComponent
     },
     methods: {
+        onPlayerRendered: function (event) {
+            if (event && event.target) {
+                event.target.load(loadingJson);
+            }
+        },
         initSystemRequests: function () {
             let self = this;
 
@@ -38,13 +43,6 @@ export default {
         }
     },
     mounted: function () {
-        const player = document.querySelector("lottie-player");
-        player.addEventListener("rendered", () => {
-            player.load(
-                loadingJson
-            );
-        });
-
         let self = this;
         
         this.checkIfUserIsAuthenticated().then(() => {
@@ -62,7 +60,10 @@ export default {
 <style scoped>
 .main-container {
     flex: 1;
-    max-height: calc(100vh - 170px);
+    max-height: calc(100vh - 150px); /* Ajuste dinâmico para header e footer modernizados */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .inner-container {
@@ -70,11 +71,12 @@ export default {
     max-width: 900px;
     height: 100%;
     margin: auto;
-    padding: 1rem;
+    padding: 1.2rem;
     overflow-x: hidden;
     overflow-y: auto;
     position: relative;
-    padding-bottom: 5rem;
+    padding-bottom: 6rem; /* Garante que o conteúdo não fique sob o menu flutuante inferior */
+    scrollbar-width: thin;
 }
 
 .app-container {
@@ -83,5 +85,6 @@ export default {
     height: 100vh;
     min-height: 100vh;
     overflow: hidden;
+    animation: fadeIn var(--transition-normal);
 }
 </style>

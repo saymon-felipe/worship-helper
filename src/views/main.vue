@@ -7,6 +7,7 @@
 import siteTemplate from "../templates/siteTemplate.vue";
 import { globalMethods } from '../js/globalMethods';
 
+/* eslint-disable vue/multi-word-component-names, vue/no-reserved-component-names */
 export default {
     name: "main",
     mixins: [globalMethods],

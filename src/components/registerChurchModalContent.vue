@@ -14,7 +14,7 @@
             <input type="submit" id="submit-informations-form" style="display: none;">
         </form>
         <div class="input-group church-image">
-            <img :src="previewPhoto == '' ? default_church_image : previewPhoto">
+            <img :src="previewPhoto == '' ?default_church_image : previewPhoto">
             <div class="image-informations">
                 <form class="send-photo" method="post" enctype="multipart/form-data" @submit.prevent="uploadPhoto(formData)">
                     <div class="input-file-custom">

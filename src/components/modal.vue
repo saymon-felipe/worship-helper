@@ -19,6 +19,7 @@
 <script>
 import $ from 'jquery';
 
+/* eslint-disable vue/multi-word-component-names */
 export default {
     name: "modal",
     props: ['title', 'buttonTitle', 'button2Title'],

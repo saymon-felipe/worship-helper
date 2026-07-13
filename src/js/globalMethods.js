@@ -31,7 +31,7 @@ export const globalMethods = {
             }
 
             let church = this.getCurrentChurchInLocalStorage();
-            return church ? church.id_igreja : null;
+            return church ?church.id_igreja : null;
         },
         setJwtInLocalStorage: function (jwt) {
             localStorage.setItem("wh_jwt", jwt);
@@ -272,3 +272,4 @@ export const globalMethods = {
         this.$root.igreja = this.igreja;
     }
 }
+

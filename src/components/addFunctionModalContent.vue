@@ -63,7 +63,7 @@ export default {
             })
 
             data.id_usuario = id_usuario;
-            data.id_igreja = this.igreja.id_igreja;
+            data.id_igreja = this.getCurrentChurchId();
             data.new_functions = checkedInputs;
 
             api.post("/usuario/altera-funcoes", data).then(function () {
@@ -73,7 +73,7 @@ export default {
         returnOccupations: function () {
             let self = this;
             let data = {
-                id_igreja: this.igreja.id_igreja
+                id_igreja: this.getCurrentChurchId()
             }
 
             api.post("/igreja/retorna-funcoes", data)

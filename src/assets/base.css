@@ -877,3 +877,19 @@ label {
   width: 120px;
   height: 120px;
 }
+
+/* Transições de rotas */
+.route-enter-active,
+.route-leave-active {
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.route-enter-from {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+.route-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}

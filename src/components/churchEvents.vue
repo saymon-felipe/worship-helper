@@ -1,10 +1,13 @@
 <template>
     <div class="church-events">
-        <div class="church-profile">
-            <img :src="igreja.imagem_igreja" class="avatar-p">
+        <div class="church-profile" v-if="igreja.id_igreja && igreja.id_igreja == getCurrentChurchId()">
+            <img :src="igreja.imagem_igreja || default_church_image" class="avatar-p">
             <div class="church-informations">
                 <h5>{{ igreja.nome_igreja }}</h5>
-                <p class="font-size-3">{{ returnMembersText(igreja.quantidade_membros) }}</p>
+                <p v-if="igreja.quantidade_membros !== undefined && igreja.quantidade_membros !== null">
+                    <span class="material-icons" style="font-size: 16px;">people</span>
+                    <span>{{ returnMembersText(igreja.quantidade_membros) }}</span>
+                </p>
             </div>
         </div>
         <div class="church-events">

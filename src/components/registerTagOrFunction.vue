@@ -16,7 +16,7 @@ import $ from 'jquery';
 
 export default {
     name: "returnTagOrFunction",
-    props: ["type"],
+    props: ["type", "churchId"],
     mixins: [globalMethods],
     data() {
         return {
@@ -31,7 +31,14 @@ export default {
                 return obj;
             }, {});
 
-            data["id_igreja"] = self.igreja.id_igreja;
+            const resolvedChurchId = Number(self.churchId ?? self.getCurrentChurchId());
+
+            if (!Number.isInteger(resolvedChurchId) || resolvedChurchId <= 0) {
+                self.$emit("error", "Nao foi possivel identificar a igreja atual. Recarregue a pagina e tente novamente.");
+                return;
+            }
+
+            data["id_igreja"] = resolvedChurchId;
 
             let path = "criar-funcao";
 
@@ -42,7 +49,10 @@ export default {
             api.post("/igreja/" + path, data).then(function () {
                 $("#entity").val("");
                 self.$emit("success", true);
-            })
+            }).catch(function (error) {
+                const errorMessage = error?.response?.data?.error || error?.response?.data?.message || "Erro ao cadastrar.";
+                self.$emit("error", errorMessage);
+            });
         }
     },
     mounted: function () {

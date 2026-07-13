@@ -1,4 +1,4 @@
-﻿<template>
+<template>
     <div class="create-event-modal-content inner-modal-container">
         <form id="new-event-form" @submit.prevent="createEvent()">
             <!-- Linha 1: Nome e Data -->
@@ -209,7 +209,7 @@ export default {
 
             data["event_members"] = this.event_selected_members;
             data["event_musics"] = this.event_selected_musics;
-            data["id_igreja"] = this.igreja.id_igreja;
+            data["id_igreja"] = this.getCurrentChurchId();
 
             api.post("/igreja/cadastrar-evento", data)
             .then(function () {
@@ -269,7 +269,7 @@ export default {
         },
         loadChurchFunctions: function () {
             let self = this;
-            let churchId = self.igreja.id_igreja || self.getCurrentChurchId();
+            let churchId = self.getCurrentChurchId();
             if (!churchId) return;
 
             api.post("/igreja/retorna-funcoes", { id_igreja: churchId })

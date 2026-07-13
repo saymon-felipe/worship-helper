@@ -65,7 +65,7 @@ function getCurrentChurchId() {
         churchId = storedChurch ? storedChurch.id_igreja : undefined;
     }
 
-    return churchId;
+    return churchId != undefined && !isNaN(churchId) ? parseInt(churchId, 10) : undefined;
 }
 
 function getMyChurch() {

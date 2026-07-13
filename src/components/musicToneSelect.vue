@@ -48,7 +48,7 @@ export default {
             let self = this;
 
             let data = {
-                id_igreja: this.igreja.id_igreja
+                id_igreja: this.getCurrentChurchId()
             }
 
             api.post("/igreja/tons_de_musica/" + this.musicid, data)

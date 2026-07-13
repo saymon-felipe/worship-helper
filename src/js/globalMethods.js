@@ -29,16 +29,16 @@ export const globalMethods = {
             return JSON.parse(sessionStorage.getItem("current_church"));
         },
         getCurrentChurchId: function () {
+            let id = null;
             if (this.igreja && this.igreja.id_igreja != null) {
-                return this.igreja.id_igreja;
+                id = this.igreja.id_igreja;
+            } else if (this.$route && this.$route.params && this.$route.params.id_igreja != null) {
+                id = this.$route.params.id_igreja;
+            } else {
+                let church = this.getCurrentChurchInLocalStorage();
+                id = church ? church.id_igreja : null;
             }
-
-            if (this.$route && this.$route.params && this.$route.params.id_igreja != null) {
-                return this.$route.params.id_igreja;
-            }
-
-            let church = this.getCurrentChurchInLocalStorage();
-            return church ? church.id_igreja : null;
+            return id != null && !isNaN(id) ? parseInt(id, 10) : null;
         },
         setJwtInLocalStorage: function (jwt) {
             appStore.setToken(jwt);
@@ -147,6 +147,9 @@ export const globalMethods = {
             return returnText;
         },
         returnMembersText: function (count) {
+            if (count === null || count === undefined) {
+                return "";
+            }
             let membersText = "membro";
             if (count > 1) {
                 membersText = "membros";

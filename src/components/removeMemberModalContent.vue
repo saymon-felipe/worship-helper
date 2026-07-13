@@ -32,7 +32,7 @@ export default {
             let self = this;
             let data = {
                 id_usuario: self.member.id_usuario,
-                id_igreja: self.igreja.id_igreja
+                id_igreja: self.getCurrentChurchId()
             }
 
             api.post("/igreja/remover-membro", data)

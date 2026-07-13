@@ -116,6 +116,7 @@
 <script>
 import { globalMethods } from '../js/globalMethods';
 import api from '../config/api';
+import $ from 'jquery';
 import modal from "./modal.vue";
 import inviteMemberModalContent from "./inviteMemberModalContent.vue";
 import addTagModalContent from "./addTagModalContent.vue";

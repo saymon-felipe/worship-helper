@@ -1,86 +1,137 @@
-import { createApp, reactive } from 'vue';
+import { createApp } from 'vue';
 import App from './App.vue';
 import router from './router';
 import api from './config/api';
 import { moment, momentTimezone } from './config/moment';
+import { appStore } from './store/appStore';
 
 const app = createApp(App);
 
-app.config.globalProperties.igreja = {
+const emptyChurch = {
     imagem_igreja: "",
     nome_igreja: ""
-}
+};
 
-app.config.globalProperties.haveAdminPermission = false;
-app.config.globalProperties.is_member = false;
-app.config.globalProperties.haveAppPermission = false;
+Object.defineProperty(app.config.globalProperties, "igreja", {
+    get() {
+        return appStore.state.church || emptyChurch;
+    },
+    set(value) {
+        appStore.setChurch(value);
+    }
+});
+
+Object.defineProperty(app.config.globalProperties, "haveAdminPermission", {
+    get() {
+        return appStore.state.churchPermission.administrador;
+    },
+    set(value) {
+        appStore.setChurchPermission({
+            ...appStore.state.churchPermission,
+            administrador: value
+        });
+    }
+});
+
+Object.defineProperty(app.config.globalProperties, "is_member", {
+    get() {
+        return appStore.state.churchPermission.apenas_membro;
+    },
+    set(value) {
+        appStore.setChurchPermission({
+            ...appStore.state.churchPermission,
+            apenas_membro: value
+        });
+    }
+});
+
+Object.defineProperty(app.config.globalProperties, "haveAppPermission", {
+    get() {
+        return appStore.state.auth.isAppAdmin;
+    },
+    set() {}
+});
+
+app.config.globalProperties.$appStore = appStore.state;
+app.config.globalProperties.$globalState = appStore.state;
 app.config.globalProperties.moment = moment;
 app.config.globalProperties.momentTimezone = momentTimezone;
 
-app.config.globalProperties.$globalState = reactive({
-    loadingApp: true
-});
+function getCurrentChurchId() {
+    let churchId = app.config.globalProperties.$route.params.id_igreja;
+
+    if (churchId == undefined) {
+        const storedChurch = JSON.parse(sessionStorage.getItem("current_church"));
+        churchId = storedChurch ? storedChurch.id_igreja : undefined;
+    }
+
+    return churchId;
+}
 
 function getMyChurch() {
-    let church_id = app.config.globalProperties.$route.params.id_igreja;
+    const churchId = getCurrentChurchId();
 
-    if (church_id == undefined) {
-        church_id = JSON.parse(sessionStorage.getItem("current_church")).id_igreja;
+    if (churchId == undefined) {
+        appStore.state.loadingApp = false;
+        return;
     }
 
-    let data = {
-        id_igreja: church_id
+    if (appStore.state.church && appStore.state.church.id_igreja == churchId) {
+        appStore.state.loadingApp = false;
+        return;
     }
 
-    api.post("/igreja/retorna-igreja", data)
+    api.post("/igreja/retorna-igreja", { id_igreja: churchId })
         .then(function (response) {
-            app.config.globalProperties.igreja = response.data.returnObj;
-            app.config.globalProperties.$globalState.loadingApp = false;
+            appStore.setChurch(response.data.returnObj);
+            appStore.state.loadingApp = false;
         })
         .catch(function (error) {
-            console.log(error)
-        })
+            console.log(error);
+            appStore.state.loadingApp = false;
+        });
 }
 
 app.config.globalProperties.getMyChurch = getMyChurch;
 
 function checkPermission() {
-    if (window.location.pathname != "/home") { //Se entrar aqui está na raiz
-        let church_id = app.config.globalProperties.$route.params.id_igreja;
-        let localStorageChurch = JSON.parse(sessionStorage.getItem("current_church"));
-
-        if (church_id == undefined) {
-            church_id = localStorageChurch != undefined ? localStorageChurch.id_igreja : undefined;
-        }
-        
-        if (church_id == undefined) return;
-
-        let data = {
-            id_igreja: church_id
-        }
-    
-        api.post("/igreja/permissao", data)
-            .then(function (response) {
-                app.config.globalProperties.haveAdminPermission = response.data.returnObj.administrador;
-                app.config.globalProperties.is_member = response.data.returnObj.apenas_membro;
-                
-                getMyChurch();
-            })
-    } else {
-        app.config.globalProperties.$globalState.loadingApp = false;
+    if (window.location.pathname == "/home") {
+        appStore.state.loadingApp = false;
+        return;
     }
+
+    const churchId = getCurrentChurchId();
+    const storedChurch = JSON.parse(sessionStorage.getItem("current_church"));
+
+    if (churchId == undefined) {
+        appStore.state.loadingApp = false;
+        return;
+    }
+
+    if (storedChurch && storedChurch.id_igreja == churchId && storedChurch.administrador != null) {
+        appStore.setChurchPermission({
+            administrador: storedChurch.administrador == 1 || storedChurch.administrador === true,
+            apenas_membro: storedChurch.administrador != 1 && storedChurch.administrador !== true
+        });
+        getMyChurch();
+        return;
+    }
+
+    api.post("/igreja/permissao", { id_igreja: churchId })
+        .then(function (response) {
+            appStore.setChurchPermission(response.data.returnObj);
+            getMyChurch();
+        })
+        .catch(function (error) {
+            console.log(error);
+            appStore.state.loadingApp = false;
+        });
 }
 
 app.config.globalProperties.checkPermission = checkPermission;
 
 function checkAppPermission() {
-    api.post("/usuario/app_administrator")
-        .then(function () {
-            app.config.globalProperties.haveAppPermission = true;
-        })
-        .catch(function () {
-            app.config.globalProperties.haveAppPermission = false;
-        })
+    return appStore.state.auth.isAppAdmin;
 }
 
 app.config.globalProperties.checkAppPermission = checkAppPermission;
@@ -88,4 +139,3 @@ app.config.globalProperties.checkAppPermission = checkAppPermission;
 app.use(router);
 
 app.mount('#app');
-

@@ -1,5 +1,6 @@
 import $ from 'jquery';
 import api from '../config/api';
+import { appStore } from '../store/appStore';
 import moment from 'moment';
 import 'moment/locale/pt-br';
 moment.locale('pt-br');
@@ -13,15 +14,19 @@ export const globalMethods = {
                 imagem_igreja: object.imagem_igreja,
                 quantidade_membros: object.quantidade_membros,
                 administrador: object.administrador
-            }
+            };
 
             sessionStorage.setItem("current_church", JSON.stringify(obj));
+            appStore.setChurch(obj);
+            appStore.setChurchPermission({
+                administrador: obj.administrador == 1 || obj.administrador === true,
+                apenas_membro: obj.administrador != 1 && obj.administrador !== true
+            });
 
             this.checkPermission();
         },
         getCurrentChurchInLocalStorage: function () {
-            let church = JSON.parse(sessionStorage.getItem("current_church"));
-            return church;
+            return JSON.parse(sessionStorage.getItem("current_church"));
         },
         getCurrentChurchId: function () {
             if (this.igreja && this.igreja.id_igreja != null) {
@@ -33,29 +38,25 @@ export const globalMethods = {
             }
 
             let church = this.getCurrentChurchInLocalStorage();
-            return church ?church.id_igreja : null;
+            return church ? church.id_igreja : null;
         },
         setJwtInLocalStorage: function (jwt) {
-            localStorage.setItem("wh_jwt", jwt);
+            appStore.setToken(jwt);
             this.checkAndSetJwt();
         },
-        checkAndSetJwt: function() {
-            let interval = setInterval(() => {
-                let jwt = this.getJwtFromLocalStorage();
+        checkAndSetJwt: function () {
+            let jwt = this.getJwtFromLocalStorage();
 
-                if (jwt != null) {
-                    api.defaults.headers.common['Authorization'] = `Bearer ${jwt}`;
-                    this.$root.jwtLoaded = true;
-                    clearInterval(interval);
-                }
-            }, 100)
+            if (jwt != null) {
+                api.defaults.headers.common['Authorization'] = `Bearer ${jwt}`;
+                this.$root.jwtLoaded = true;
+            }
         },
         removeJwtFromLocalStorage: function () {
-            localStorage.removeItem("wh_jwt");
+            appStore.clearAuth();
         },
         getJwtFromLocalStorage: function () {
-            let jwt = localStorage.getItem("wh_jwt");
-            return jwt;
+            return appStore.state.auth.token || localStorage.getItem("wh_jwt");
         },
         resetResponseClass: function (object) {
             if (object.hasClass("success")) {
@@ -66,36 +67,36 @@ export const globalMethods = {
             }
         },
         logoutUser: function () {
-            let self = this;
-
-            self.removeJwtFromLocalStorage();
-            self.$router.push("/login");
+            this.removeJwtFromLocalStorage();
+            this.$router.push("/login");
         },
         checkIfUserIsAuthenticated: function () {
-            return new Promise((resolve) => {
+            return new Promise((resolve, reject) => {
                 let self = this;
                 let pathName = window.location.href;
-                let jwt = "Bearer " + self.getJwtFromLocalStorage();
+                let jwt = self.getJwtFromLocalStorage();
 
-                if (jwt == "Bearer null") {
+                if (!appStore.isTokenValid(jwt)) {
+                    appStore.clearAuth();
                     if (pathName.indexOf("/home") != -1) {
                         self.$router.push("/login");
-                        return;
                     }
-                } else {
-                    let data = {
-                        token: jwt
-                    }
-                    
-                    api.post("/usuario/check_jwt", data, {
-                        headers: {
-                            'Authorization': jwt
-                        }
-                    }) // Se ja estiver logado no sistema e acessar a página de login, é checkado a valia do token JWT e então redirecionado para a index.
-                    .then(function (res) { 
-                        self.setJwtInLocalStorage(res.data.returnObj.newToken); // Setando o novo jwt que foi resetado
+                    resolve();
+                    return;
+                }
 
-                        if (pathName.indexOf("/login") != -1) { // Se o usuário estiver logado e entrar em login, o mesmo é logado novamente e direcionado para a index.
+                api.defaults.headers.common['Authorization'] = `Bearer ${jwt}`;
+                self.$root.jwtLoaded = true;
+
+                const refreshPromise = appStore.state.auth.refreshed
+                    ? Promise.resolve()
+                    : api.post("/usuario/refresh_jwt").then(function (res) {
+                        self.setJwtInLocalStorage(res.data.returnObj.newToken);
+                    });
+
+                refreshPromise
+                    .then(function () {
+                        if (pathName.indexOf("/login") != -1) {
                             let loginForm = $("#login-form");
                             loginForm.find("input").attr("disabled", "disabled");
                             loginForm.find("button").attr("disabled", "disabled").addClass("btn-loading");
@@ -106,24 +107,26 @@ export const globalMethods = {
                         }
                         resolve();
                     })
-                    .catch(function () { // Caso contrário ele é deslogado e enviado para login.
+                    .catch(function (error) {
                         self.logoutUser();
-                        return;
-                    })
-                    .then(function () { // Chamada recursiva da função se o usuario estiver na home
-                        if (pathName.indexOf("/home") != -1) {
-                            setTimeout(self.checkIfUserIsAuthenticated, 10 * 1000);
-                        }
-                    })
-                }
-            })
+                        reject(error);
+                    });
+            });
         },
         reload: function () {
             location.reload();
         },
-        requireUser: async function() { // Função retorna o usuário pelo id.
-            let self = this;
-            self.user = await api.get("/usuario/return_user").then(res => res.data.returnObj);
+        requireUser: async function (force = false) {
+            if (!force && appStore.state.user) {
+                this.user = appStore.state.user;
+                return this.user;
+            }
+
+            this.user = await api.get("/usuario/return_user").then((res) => {
+                appStore.setUser(res.data.returnObj);
+                return appStore.state.user;
+            });
+            return this.user;
         },
         pushAvatars: function (target_id) {
             let target = $("#member-" + target_id);
@@ -158,16 +161,15 @@ export const globalMethods = {
             element.show();
             setTimeout(() => {
                 element.css("opacity", 1);
-            }, 1)
+            }, 1);
 
             setTimeout(() => {
                 element.css("opacity", 0);
-            }, 5 * 1000)
+            }, 5 * 1000);
         },
         close_modal: function () {
-            let self = this;
-            self.showModal = false;
-            self.modalTitle = "";
+            this.showModal = false;
+            this.modalTitle = "";
         },
         closeModal: function () {
             let modalContainer = $(".modal-container");
@@ -179,19 +181,15 @@ export const globalMethods = {
             }, 400);
         },
         submitForm: function () {
-            $("#submit-informations-form").click(); 
+            $("#submit-informations-form").click();
         },
         select_user: function (event) {
-            let self = this;
-            
-            self.selected_member = event;
+            this.selected_member = event;
             $("#adm-id").attr("placeholder", "");
         },
         select_function: function (event) {
-            let self = this;
-
-            self.selected_function = event;
-            self.searchParam = "";
+            this.selected_function = event;
+            this.searchParam = "";
         },
         openMemberMoreActions: function (element_id) {
             let element = $("#member-" + element_id + " .member-more-actions");
@@ -209,7 +207,7 @@ export const globalMethods = {
                 setTimeout(() => {
                     element.style.display = "none";
                 }, 400);
-            })
+            });
         },
         restoreInputLabel: function (element_id, text) {
             $(element_id).attr("placeholder", text);
@@ -232,11 +230,9 @@ export const globalMethods = {
             this.selected_member.nome_usuario = "";
         },
         listAllChurches: function () {
-            let self = this;
-
-            api.get("/igreja/listar-igrejas").then(function (response) {
-                self.igrejas = response.data.returnObj;
-            })
+            api.get("/igreja/listar-igrejas").then((response) => {
+                this.igrejas = response.data.returnObj;
+            });
         },
         showModalFunction: function (showModal, modalTitle, modalButtonTitle, modalButton2Title) {
             this.showModal = showModal;
@@ -245,18 +241,15 @@ export const globalMethods = {
             this.modalButton2Title = modalButton2Title;
         },
         relativeTime: function (timeString) {
-            const relativeTime = moment(timeString).fromNow();
-            return relativeTime;
+            return moment(timeString).fromNow();
         },
         fillSearchParam: function (event) {
-            let value = $(event.target).val();
-            
-            this.searchParam = value;
+            this.searchParam = $(event.target).val();
         }
     },
     data() {
         return {
-            user: {},
+            user: appStore.state.user || {},
             default_church_image: api.defaults.baseURL + "/public/church-default-image.jpg",
             current_date: moment(),
             loading: true,
@@ -268,10 +261,9 @@ export const globalMethods = {
             modalButton2Title: "",
             showMemberMoreActions: false,
             response: ""
-        }
+        };
     },
     mounted: function () {
         this.$root.igreja = this.igreja;
     }
-}
-
+};

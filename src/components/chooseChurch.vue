@@ -64,6 +64,7 @@ moment.locale('pt-br');
 
 import { globalMethods } from '../js/globalMethods';
 import api from '../config/api';
+import { appStore } from '../store/appStore';
 
 export default {
     name: "chooseChurch",
@@ -80,25 +81,40 @@ export default {
         }
     },
     methods: {
-        getMyChurchs: function () {
+        getMyChurchs: function (force = false) {
             let self = this;
+
+            if (!force && appStore.state.myChurches) {
+                self.lista_igrejas = appStore.state.myChurches;
+                return;
+            }
 
             api.post("/usuario/minhas-igrejas")
                 .then(function (response) {
-                    self.lista_igrejas = response.data.returnObj;
+                    appStore.setMyChurches(response.data.returnObj);
+                    self.lista_igrejas = appStore.state.myChurches;
                 })
                 .catch(function (error) {
                     console.log(error)
                 })
         },
-        getChurchInvitesList: function (reload_churches = false) {
+        getChurchInvitesList: function (reload_churches = false, force = false) {
             let self = this;
+
+            if (!force && appStore.state.churchInvites) {
+                self.churchInviteList = appStore.state.churchInvites;
+                if (reload_churches) {
+                    self.getMyChurchs();
+                }
+                return;
+            }
 
             api.get("/usuario/retorna-convites")
                 .then(function (response) {
-                    self.churchInviteList = response.data.returnObj;
+                    appStore.setChurchInvites(response.data.returnObj);
+                    self.churchInviteList = appStore.state.churchInvites;
                     if (reload_churches) {
-                        self.getMyChurchs();
+                        self.getMyChurchs(force);
                     }
                 })
                 .catch(function (error) {
@@ -113,7 +129,7 @@ export default {
 
             api.post("/usuario/aceita-convite", data)
                 .then(function () {
-                    self.returnInformations();
+                    self.reloadInformations();
                 })
                 .catch(function (error) {
                     console.log(error);
@@ -127,7 +143,7 @@ export default {
 
             api.post("/usuario/rejeita-convite", data)
                 .then(function () {
-                    self.returnInformations();
+                    self.reloadInformations();
                 })
                 .catch(function (error) {
                     console.log(error);
@@ -139,6 +155,12 @@ export default {
         returnInformations: function () {
             this.getMyChurchs();
             this.getChurchInvitesList();
+        },
+        reloadInformations: function () {
+            appStore.state.myChurches = null;
+            appStore.state.churchInvites = null;
+            this.getMyChurchs(true);
+            this.getChurchInvitesList(false, true);
         }
     },
     mounted: function () {

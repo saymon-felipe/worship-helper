@@ -9,6 +9,8 @@ const state = reactive({
     },
     user: null,
     church: null,
+    myChurches: null,
+    churchInvites: null,
     churchPermission: {
         administrador: false,
         apenas_membro: false
@@ -58,6 +60,12 @@ function preloadChurchImages(church) {
     const members = Array.isArray(church.membros) ? church.membros : [];
     members.forEach((member) => preloadImage(member.imagem_usuario));
 }
+function preloadChurchListImages(churches) {
+    if (!Array.isArray(churches)) {
+        return;
+    }
+    churches.forEach((church) => preloadChurchImages(church));
+}
 function preloadUserImages(user) {
     if (!user) {
         return;
@@ -79,6 +87,8 @@ function clearAuth() {
     setToken(null);
     state.user = null;
     state.church = null;
+    state.myChurches = null;
+    state.churchInvites = null;
     state.churchPermission = {
         administrador: false,
         apenas_membro: false
@@ -91,6 +101,14 @@ function setUser(user) {
 function setChurch(church) {
     state.church = church || null;
     preloadChurchImages(state.church);
+}
+function setMyChurches(churches) {
+    state.myChurches = Array.isArray(churches) ? churches : [];
+    preloadChurchListImages(state.myChurches);
+}
+function setChurchInvites(invites) {
+    state.churchInvites = Array.isArray(invites) ? invites : [];
+    preloadChurchListImages(state.churchInvites);
 }
 function setChurchPermission(permission) {
     state.churchPermission = {
@@ -108,8 +126,11 @@ export const appStore = {
     clearAuth,
     setUser,
     setChurch,
+    setMyChurches,
+    setChurchInvites,
     setChurchPermission,
     preloadImage,
     preloadChurchImages,
+    preloadChurchListImages,
     preloadUserImages
 };

@@ -48,6 +48,7 @@
 import { globalMethods } from '../js/globalMethods';
 import commentsComponent from "./commentsComponent.vue";
 import api from '../config/api';
+import { appStore } from '../store/appStore';
 
 export default {
     name: "manageChurch",
@@ -64,14 +65,25 @@ export default {
 
             if (currentChurch && currentChurch.id_igreja == churchId) {
                 this.canManageChurch = currentChurch.administrador == 1 || currentChurch.administrador === true;
+                appStore.setChurchPermission({
+                    administrador: this.canManageChurch,
+                    apenas_membro: !this.canManageChurch
+                });
+                return;
             }
 
             if (!churchId) {
                 return;
             }
 
+            if (appStore.state.church && appStore.state.church.id_igreja == churchId) {
+                this.canManageChurch = appStore.state.churchPermission.administrador;
+                return;
+            }
+
             api.post("/igreja/permissao", { id_igreja: churchId })
                 .then((response) => {
+                    appStore.setChurchPermission(response.data.returnObj);
                     this.canManageChurch = response.data.returnObj.administrador == 1 || response.data.returnObj.administrador === true;
                 })
                 .catch((error) => {

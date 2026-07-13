@@ -69,7 +69,7 @@ export default {
             
             api.patch("/usuario/update_image", formData)
             .then(function () { 
-                self.requireUser();
+                self.requireUser(true);
                 self.response = "";
             })
             .catch(function (error) {
@@ -99,7 +99,7 @@ export default {
             
             api.patch("/usuario/remove_image", data)
             .then(function(){
-                self.requireUser();
+                self.requireUser(true);
             })
         },
         submitImage: function () {
@@ -124,6 +124,7 @@ export default {
             api.post("/usuario/update_bio", data)
             .then(function (response) {
                 self.descricao_usuario = value;
+                self.user.descricao_usuario = value;
                 let responseElement = $(".response-message");
                 self.response = response.data.message;
                 responseElement.addClass("success").css("opacity", 1);

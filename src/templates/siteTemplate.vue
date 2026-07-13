@@ -37,7 +37,6 @@ export default {
         initSystemRequests: function () {
             let self = this;
 
-            self.checkAppPermission();
             self.checkPermission();
             self.requireUser();
         }
@@ -46,13 +45,9 @@ export default {
         let self = this;
         
         this.checkIfUserIsAuthenticated().then(() => {
-            let interval = setInterval(() => {
-                if (self.$root.jwtLoaded) {
-                    clearInterval(interval);
-
-                    self.initSystemRequests();
-                }
-            })
+            if (self.$root.jwtLoaded) {
+                self.initSystemRequests();
+            }
         }).catch(() => {})
     }
 }

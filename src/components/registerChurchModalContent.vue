@@ -6,10 +6,14 @@
                 <input type="text" placeholder="Insira o nome da igreja" name="nome_igreja" id="church-name" required />
             </div>
             <div class="input-group">
-                <label for="adm-id">Administrador</label>
-                <input type="text" placeholder="Insira o nome do administrador" name="usuario_administrador" id="adm-id" @input="fillSearchParam($event)" />
-                <selectedMember :selected_member="selected_member" @removeUser="restoreInputLabel('#adm-id', 'Insira o nome do administrador')" />
-                <autoComplete :search="searchParam" v-if="searchParam != ''" @selectUser="select_user($event)"></autoComplete>
+                <label for="adm-id" v-if="selected_member.id_usuario == null">Administrador</label>
+                <label v-else>Administrador selecionado</label>
+                
+                <div class="input-badge-wrapper" style="position: relative; width: 100%;">
+                    <input v-if="selected_member.id_usuario == null" type="text" placeholder="Insira o nome do administrador" name="usuario_administrador" id="adm-id" @input="fillSearchParam($event)" />
+                    <selectedMember v-else :selected_member="selected_member" @removeUser="restoreInputLabel('#adm-id', 'Insira o nome do administrador')" />
+                    <autoComplete :search="searchParam" v-if="searchParam != ''" @selectUser="select_user($event)"></autoComplete>
+                </div>
             </div>
             <input type="submit" id="submit-informations-form" style="display: none;">
         </form>
@@ -200,5 +204,35 @@ export default {
 
 #photo {
     display: none;
+}
+
+.input-badge-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 42px;
+    padding: 2px 8px;
+    background: rgba(24, 21, 56, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-md);
+    box-sizing: border-box;
+    transition: all var(--transition-fast);
+}
+
+.input-badge-wrapper:focus-within {
+    border-color: var(--secondary-blue-soft);
+    box-shadow: var(--glow-shadow);
+}
+
+.inline-badge-input {
+    flex: 1;
+    height: 36px !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 8px !important;
+    color: var(--neutral-white);
+    outline: none;
+    box-shadow: none !important;
 }
 </style>

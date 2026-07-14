@@ -13,7 +13,8 @@ const state = reactive({
     churchInvites: null,
     churchPermission: {
         administrador: false,
-        apenas_membro: false
+        apenas_membro: false,
+        permissions: []
     },
     loadingApp: true,
     imageCache: new Map()
@@ -91,7 +92,8 @@ function clearAuth() {
     state.churchInvites = null;
     state.churchPermission = {
         administrador: false,
-        apenas_membro: false
+        apenas_membro: false,
+        permissions: []
     };
 }
 function setUser(user) {
@@ -113,7 +115,8 @@ function setChurchInvites(invites) {
 function setChurchPermission(permission) {
     state.churchPermission = {
         administrador: Boolean(permission && permission.administrador),
-        apenas_membro: Boolean(permission && permission.apenas_membro)
+        apenas_membro: Boolean(permission && permission.apenas_membro),
+        permissions: Array.isArray(permission && permission.permissions) ? permission.permissions : []
     };
 }
 setToken(state.auth.token, false);

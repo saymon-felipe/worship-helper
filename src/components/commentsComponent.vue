@@ -8,26 +8,61 @@
                         <img :src="warning.criador.imagem_usuario || default_avatar" class="avatar-pp">
                     </div>
                     <div class="warning-informations">
-                        <div class="user-informations">
-                            <h6 class="font-size-3">{{ warning.criador.nome_usuario }}</h6>
-                            <p class="warning-date">{{ returnRelativeData(warning.data_criacao) }}</p>
+                        <div class="warning-header-wrapper">
+                            <div class="user-informations">
+                                <h6 class="font-size-3">{{ warning.criador.nome_usuario }}</h6>
+                                <p class="warning-date">{{ returnRelativeData(warning.data_criacao) }}</p>
+                            </div>
+                            <div class="comment-menu-container" v-if="canEdit(warning) || canDelete(warning)">
+                                <button type="button" class="btn-icon-only menu-trigger" @click="toggleDropdown(warning.id_aviso)" title="Mais ações">
+                                    <span class="material-icons">more_vert</span>
+                                </button>
+                                <div class="dropdown-overlay" v-if="activeDropdownId === warning.id_aviso" @click="activeDropdownId = null"></div>
+                                <Transition name="fade-in">
+                                    <div class="comment-dropdown-menu" v-if="activeDropdownId === warning.id_aviso">
+                                        <button type="button" class="dropdown-item" v-if="canEdit(warning)" @click="startEditWarning(warning); activeDropdownId = null;">
+                                            <span class="material-icons">edit</span>
+                                            <span>Editar</span>
+                                        </button>
+                                        <button type="button" class="dropdown-item danger" v-if="canDelete(warning)" @click="askDeleteWarning(warning); activeDropdownId = null;">
+                                            <span class="material-icons">delete</span>
+                                            <span>Excluir</span>
+                                        </button>
+                                    </div>
+                                </Transition>
+                            </div>
                         </div>
-                        <p class="warning-message">{{ warning.mensagem }}</p>
-                        <div class="warning-actions">
-                            <button type="button" v-on:click="likeWarning(warning.id_aviso, warning.usuario_atual_curtiu)" class="btn primary-alt btn-small like-warning-button" :class="warning.usuario_atual_curtiu ? 'primary' : ''">
-                                <span class="material-icons">thumb_up_off_alt</span>
-                                <span>{{ warning.quantidade_curtidas }}</span>
-                            </button>
-                            <button type="button" class="btn btn-small btn-reply" v-on:click="toggleReply(warning.id_aviso)">
-                                <span class="material-icons">reply</span>
-                                <span>Responder</span>
-                            </button>
+                        
+                        <!-- Edição Inline do Comentário Pai -->
+                        <div class="edit-comment-inline-form" v-if="editingWarningId === warning.id_aviso">
+                            <form @submit.prevent="updateWarning()">
+                                <div class="reply-input-container">
+                                    <input type="text" v-model="editingWarningText" placeholder="Edite seu comentário..." maxlength="100" class="reply-input" ref="editInput" required>
+                                    <div class="reply-actions-row">
+                                        <button type="button" class="btn btn-small btn-text" @click="cancelEditWarning()">Cancelar</button>
+                                        <button type="submit" class="btn btn-small primary">Salvar</button>
+                                    </div>
+                                </div>
+                            </form>
                         </div>
+                        <template v-else>
+                            <p class="warning-message">{{ warning.mensagem }}</p>
+                            <div class="warning-actions">
+                                <button type="button" v-on:click="likeWarning(warning.id_aviso, warning.usuario_atual_curtiu)" class="btn primary-alt btn-small like-warning-button" :class="warning.usuario_atual_curtiu ? 'primary' : ''">
+                                    <span class="material-icons">thumb_up_off_alt</span>
+                                    <span>{{ warning.quantidade_curtidas }}</span>
+                                </button>
+                                <button type="button" class="btn btn-small btn-reply" v-if="canCreate" v-on:click="toggleReply(warning.id_aviso)">
+                                    <span class="material-icons">reply</span>
+                                    <span>Responder</span>
+                                </button>
+                            </div>
+                        </template>
                     </div>
                 </div>
 
                 <!-- Input de Resposta Inline -->
-                <div class="reply-input-box" v-if="activeReplyId === warning.id_aviso">
+                <div class="reply-input-box" v-if="canCreate && activeReplyId === warning.id_aviso">
                     <form @submit.prevent="createNewWarning(warning.id_aviso)">
                         <div class="reply-input-container">
                             <input type="text" v-model="replyText" placeholder="Escreva uma resposta..." maxlength="100" class="reply-input" ref="replyInput" required>
@@ -46,52 +81,118 @@
                             <img :src="reply.criador.imagem_usuario || default_avatar" class="avatar-pp">
                         </div>
                         <div class="warning-informations">
-                            <div class="user-informations">
-                                <h6 class="font-size-3">{{ reply.criador.nome_usuario }}</h6>
-                                <p class="warning-date">{{ returnRelativeData(reply.data_criacao) }}</p>
+                            <div class="warning-header-wrapper">
+                                <div class="user-informations">
+                                    <h6 class="font-size-3">{{ reply.criador.nome_usuario }}</h6>
+                                    <p class="warning-date">{{ returnRelativeData(reply.data_criacao) }}</p>
+                                </div>
+                                <div class="comment-menu-container" v-if="canEdit(reply) || canDelete(reply)">
+                                    <button type="button" class="btn-icon-only menu-trigger" @click="toggleDropdown(reply.id_aviso)" title="Mais ações">
+                                        <span class="material-icons">more_vert</span>
+                                    </button>
+                                    <div class="dropdown-overlay" v-if="activeDropdownId === reply.id_aviso" @click="activeDropdownId = null"></div>
+                                    <Transition name="fade-in">
+                                        <div class="comment-dropdown-menu" v-if="activeDropdownId === reply.id_aviso">
+                                            <button type="button" class="dropdown-item" v-if="canEdit(reply)" @click="startEditWarning(reply); activeDropdownId = null;">
+                                                <span class="material-icons">edit</span>
+                                                <span>Editar</span>
+                                            </button>
+                                            <button type="button" class="dropdown-item danger" v-if="canDelete(reply)" @click="askDeleteWarning(reply); activeDropdownId = null;">
+                                                <span class="material-icons">delete</span>
+                                                <span>Excluir</span>
+                                            </button>
+                                        </div>
+                                    </Transition>
+                                </div>
                             </div>
-                            <p class="warning-message">{{ reply.mensagem }}</p>
-                            <div class="warning-actions">
-                                <button type="button" v-on:click="likeWarning(reply.id_aviso, reply.usuario_atual_curtiu)" class="btn primary-alt btn-small like-warning-button" :class="reply.usuario_atual_curtiu ? 'primary' : ''">
-                                    <span class="material-icons">thumb_up_off_alt</span>
-                                    <span>{{ reply.quantidade_curtidas }}</span>
-                                </button>
+                            
+                            <!-- Edição Inline do Comentário Filho (Resposta) -->
+                            <div class="edit-comment-inline-form" v-if="editingWarningId === reply.id_aviso">
+                                <form @submit.prevent="updateWarning()">
+                                    <div class="reply-input-container">
+                                        <input type="text" v-model="editingWarningText" placeholder="Edite sua resposta..." maxlength="100" class="reply-input" required>
+                                        <div class="reply-actions-row">
+                                            <button type="button" class="btn btn-small btn-text" @click="cancelEditWarning()">Cancelar</button>
+                                            <button type="submit" class="btn btn-small primary">Salvar</button>
+                                        </div>
+                                    </div>
+                                </form>
                             </div>
+                            <template v-else>
+                                <p class="warning-message">{{ reply.mensagem }}</p>
+                                <div class="warning-actions">
+                                    <button type="button" v-on:click="likeWarning(reply.id_aviso, reply.usuario_atual_curtiu)" class="btn primary-alt btn-small like-warning-button" :class="reply.usuario_atual_curtiu ? 'primary' : ''">
+                                        <span class="material-icons">thumb_up_off_alt</span>
+                                        <span>{{ reply.quantidade_curtidas }}</span>
+                                    </button>
+                                </div>
+                            </template>
                         </div>
                     </div>
                 </div>
             </div>
+            
+            <div class="warnings-empty-state" v-if="groupedWarnings.length === 0">
+                <span class="material-icons empty-icon">campaign</span>
+                <h5>Nenhum aviso publicado</h5>
+                <p>Acompanhe os comunicados importantes por aqui.</p>
+            </div>
         </div>
 
         <!-- Criar Aviso/Comentário Principal -->
-        <div class="create-warning" v-if="type === 'musica' || haveAdminPermission">
+        <div class="create-warning" v-if="canCreate">
             <div class="personalized-input">
                 <form action="sendWarning" @submit.prevent="createNewWarning(null)">
-                    <input type="text" name="warning" :placeholder="type == 'aviso' ? 'Publique um aviso...' : type == 'musica' ? 'Publique um comentário...' : ''" id="send-warning" maxlength="100" required autocomplete="off">
+                    <input type="text" name="warning" :placeholder="inputPlaceholder" id="send-warning" maxlength="100" required autocomplete="off">
                     <button type="submit" class="material-icons btn-empty" id="send-warning-button">send</button>
                 </form>
             </div>
         </div>
+        <Transition name="modal-fade">
+            <modal
+                v-if="showDeleteWarningModal"
+                title="Excluir aviso"
+                @closeModal="showDeleteWarningModal = false"
+                class="modal"
+                @cancelEvent="showDeleteWarningModal = false"
+                button2Title="Não, cancelar"
+                buttonTitle="Sim, excluir"
+                @submitEvent="deleteWarning()"
+            >
+                <div class="confirm-delete-box">
+                    <p class="warning-text">Tem certeza que deseja excluir este aviso?</p>
+                    <p>Se ele tiver respostas, elas também serão removidas.</p>
+                </div>
+            </modal>
+        </Transition>
     </div>
 </template>
 <script>
 import { globalMethods } from '../js/globalMethods';
 import $ from 'jquery';
 import api from '../config/api';
+import modal from "./modal.vue";
 
 export default {
     name: "commentsComponent",
     mixins: [globalMethods],
-    props: ["type", "id_musica"],
+    props: ["type", "id_musica", "id_evento", "canCreateThread", "canManageThread"],
     data() {
         return {
             warnings: [],
             activeReplyId: null,
             replyText: "",
+            editingWarningId: null,
+            editingWarningText: "",
+            showDeleteWarningModal: false,
+            warningToDelete: null,
             default_avatar: api.defaults.baseURL + "/public/default-avatar.png",
             createPath: "",
             returnPath: "",
-            likePath: ""
+            likePath: "",
+            updatePath: "",
+            deletePath: "",
+            activeDropdownId: null
         }
     },
     computed: {
@@ -113,6 +214,26 @@ export default {
             // Ordena os pais do mais recente para o mais antigo
             parents.sort((a, b) => new Date(b.data_criacao) - new Date(a.data_criacao));
             return parents;
+        },
+        canCreate: function () {
+            if (this.type === "musica") {
+                return true;
+            }
+            if (this.type === "evento") {
+                return Boolean(this.canCreateThread);
+            }
+            return this.haveAdminPermission || Boolean(this.canCreateThread);
+        },
+        canEditWarning: function () {
+            return this.type === "aviso" && this.hasChurchPermission("warnings.edit");
+        },
+        canDeleteWarning: function () {
+            return this.type === "aviso" && this.hasChurchPermission("warnings.delete");
+        },
+        inputPlaceholder: function () {
+            if (this.type === "aviso") return "Publique um aviso...";
+            if (this.type === "evento") return "Publique um comentário no evento...";
+            return "Publique um comentário...";
         }
     },
     methods: {
@@ -121,10 +242,20 @@ export default {
                 this.createPath = "/igreja/publicar-aviso";
                 this.returnPath = "/igreja/retorna-avisos";
                 this.likePath = "/igreja/curtir-aviso";
+                this.updatePath = "/igreja/editar-aviso";
+                this.deletePath = "/igreja/deletar-aviso";
             } else if (this.type == "musica") {
                 this.createPath = "/musicas/comentarios/criar";
                 this.returnPath = "/musicas/comentarios/retorna";
                 this.likePath = "/musicas/comentarios/like";
+                this.updatePath = "/musicas/comentarios/editar";
+                this.deletePath = "/musicas/comentarios/deletar";
+            } else if (this.type == "evento") {
+                this.createPath = "/igreja/eventos/comentarios/criar";
+                this.returnPath = "/igreja/eventos/comentarios/retorna";
+                this.likePath = "/igreja/eventos/comentarios/like";
+                this.updatePath = "/igreja/eventos/comentarios/editar";
+                this.deletePath = "/igreja/eventos/comentarios/deletar";
             }
         },
         returnRelativeData: function (data) {
@@ -147,14 +278,15 @@ export default {
                 return;
             }
 
-            if (this.type == "aviso" && churchId == null) {
+            if ((this.type == "aviso" || this.type == "evento") && churchId == null) {
                 return;
             }
 
             let data = {
                 id_igreja: churchId,
                 mensagem: value,
-                id_musica: this.id_musica,
+                id_musica: this.id_musica ? Number(this.id_musica) : undefined,
+                id_evento: this.id_evento ? Number(this.id_evento) : undefined,
                 parent_id: parentId
             }
 
@@ -176,13 +308,14 @@ export default {
             let self = this;
             let churchId = this.getCurrentChurchId();
 
-            if (this.type == "aviso" && churchId == null) {
+            if ((this.type == "aviso" || this.type == "evento") && churchId == null) {
                 return;
             }
 
             let data = {
                 id_igreja: churchId,
-                id_musica: this.id_musica
+                id_musica: this.id_musica ? Number(this.id_musica) : undefined,
+                id_evento: this.id_evento ? Number(this.id_evento) : undefined
             }
 
             api.post(self.returnPath, data)
@@ -201,12 +334,13 @@ export default {
                 return;
             }
 
-            if (this.type == "aviso" && churchId == null) {
+            if ((this.type == "aviso" || this.type == "evento") && churchId == null) {
                 return;
             }
 
             let data = {
                 id_igreja: churchId,
+                id_evento: this.id_evento ? Number(this.id_evento) : undefined,
                 id_aviso: warning_id,
                 confirmacao: true
             }
@@ -220,6 +354,9 @@ export default {
                 })
         },
         toggleReply: function (warning_id) {
+            if (!this.canCreate) {
+                return;
+            }
             this.activeReplyId = this.activeReplyId === warning_id ? null : warning_id;
             this.replyText = "";
             if (this.activeReplyId) {
@@ -229,11 +366,121 @@ export default {
                     }
                 });
             }
+        },
+        toggleDropdown: function (id_aviso) {
+            if (this.activeDropdownId === id_aviso) {
+                this.activeDropdownId = null;
+            } else {
+                this.activeDropdownId = id_aviso;
+            }
+        },
+        startEditWarning: function (warning) {
+            this.editingWarningId = warning.id_aviso;
+            this.editingWarningText = warning.mensagem;
+        },
+        cancelEditWarning: function () {
+            this.editingWarningId = null;
+            this.editingWarningText = "";
+        },
+        canEdit: function (warning) {
+            if (!warning || !warning.criador) {
+                return false;
+            }
+            const isOwner = this.user && Number(this.user.id_usuario) === Number(warning.criador.id_usuario);
+            if (isOwner) {
+                return true;
+            }
+            return this.type === "aviso" && this.hasChurchPermission("warnings.edit");
+        },
+        canDelete: function (warning) {
+            if (!warning || !warning.criador) {
+                return false;
+            }
+            const isOwner = this.user && Number(this.user.id_usuario) === Number(warning.criador.id_usuario);
+            if (isOwner) {
+                return true;
+            }
+            return this.type === "aviso" && this.hasChurchPermission("warnings.delete");
+        },
+        updateWarning: function () {
+            if (!this.editingWarningId || !this.editingWarningText.trim()) {
+                return;
+            }
+            const churchId = this.getCurrentChurchId();
+
+            let payload = {};
+            if (this.type === "aviso") {
+                if (!churchId) return;
+                payload = {
+                    id_igreja: Number(churchId),
+                    id_aviso: Number(this.editingWarningId),
+                    mensagem: this.editingWarningText
+                };
+            } else if (this.type === "evento") {
+                if (!churchId) return;
+                payload = {
+                    id_igreja: Number(churchId),
+                    id_comentario: Number(this.editingWarningId),
+                    mensagem: this.editingWarningText
+                };
+            } else if (this.type === "musica") {
+                payload = {
+                    id_comentario: Number(this.editingWarningId),
+                    mensagem: this.editingWarningText
+                };
+            }
+
+            api.post(this.updatePath, payload).then(() => {
+                this.cancelEditWarning();
+                this.returnWarnings();
+            }).catch((error) => {
+                console.log(error);
+            });
+        },
+        askDeleteWarning: function (warning) {
+            this.warningToDelete = warning;
+            this.showDeleteWarningModal = true;
+        },
+        deleteWarning: function () {
+            if (!this.warningToDelete) {
+                return;
+            }
+            const churchId = this.getCurrentChurchId();
+
+            let payload = {};
+            if (this.type === "aviso") {
+                if (!churchId) return;
+                payload = {
+                    id_igreja: Number(churchId),
+                    id_aviso: Number(this.warningToDelete.id_aviso)
+                };
+            } else if (this.type === "evento") {
+                if (!churchId) return;
+                payload = {
+                    id_igreja: Number(churchId),
+                    id_comentario: Number(this.warningToDelete.id_aviso)
+                };
+            } else if (this.type === "musica") {
+                payload = {
+                    id_comentario: Number(this.warningToDelete.id_aviso)
+                };
+            }
+
+            api.post(this.deletePath, payload).then(() => {
+                this.showDeleteWarningModal = false;
+                this.warningToDelete = null;
+                this.returnWarnings();
+            }).catch((error) => {
+                console.log(error);
+            });
         }
     },
     mounted: function () {
         this.fillVariables();
         this.returnWarnings();
+    },
+    components: {
+        modal
     }
 }
 </script>
@@ -325,7 +572,7 @@ export default {
 }
 
 .like-warning-button.primary {
-  background: var(--secondary-blue-soft);
+  background: var(--primary-primary-blue-high);
   color: var(--primary-bg);
 }
 
@@ -347,6 +594,12 @@ export default {
   border-color: rgba(56, 182, 255, 0.2);
 }
 
+.btn-danger-action:hover {
+  background: rgba(241, 76, 76, 0.12);
+  color: var(--others-red);
+  border-color: rgba(241, 76, 76, 0.2);
+}
+
 /* --- REPLY INPUT --- */
 .reply-input-box {
   margin-left: 3rem;
@@ -354,6 +607,23 @@ export default {
   border: 1px solid rgba(255, 255, 255, 0.04);
   border-radius: var(--radius-sm);
   padding: 10px;
+}
+
+.edit-comment-inline-form {
+  margin-top: 0.25rem;
+  margin-bottom: 0.5rem;
+  width: 100%;
+}
+
+.confirm-delete-box {
+  text-align: center;
+  padding: 1rem;
+  color: var(--neutral-gray-high);
+}
+
+.confirm-delete-box .warning-text {
+  color: var(--others-red);
+  font-weight: 700;
 }
 
 .reply-input-container {
@@ -470,5 +740,132 @@ export default {
   .reply-input-box {
     margin-left: 1.5rem;
   }
+}
+
+/* --- DROPDOWN AÇÕES DE COMENTÁRIOS --- */
+.warning-header-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  width: 100%;
+}
+
+.comment-menu-container {
+  position: relative;
+  display: inline-block;
+}
+
+.btn-icon-only.menu-trigger {
+  background: transparent;
+  border: none;
+  color: var(--neutral-gray-low);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: var(--radius-pill);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.btn-icon-only.menu-trigger:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--neutral-white);
+}
+
+.dropdown-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 998;
+}
+
+.comment-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  background: rgba(24, 21, 56, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-md);
+  padding: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 110px;
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  color: var(--neutral-gray-high);
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-5);
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+  transition: all var(--transition-fast);
+}
+
+.dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--neutral-white);
+}
+
+.dropdown-item.danger {
+  color: var(--others-red);
+}
+
+.dropdown-item.danger:hover {
+  background: rgba(241, 76, 76, 0.1);
+  color: var(--others-red);
+}
+
+/* Transição de fade-in rápida */
+.fade-in-enter-active, .fade-in-leave-active {
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+}
+.fade-in-enter-from, .fade-in-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+.warnings-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: var(--neutral-gray-medium);
+}
+
+.warnings-empty-state .empty-icon {
+  font-size: 48px;
+  color: rgba(255, 255, 255, 0.12);
+  margin-bottom: 0.75rem;
+}
+
+.warnings-empty-state h5 {
+  margin: 0 0 0.5rem;
+  color: var(--neutral-white);
+  font-size: var(--font-size-3);
+  font-weight: 600;
+}
+
+.warnings-empty-state p {
+  margin: 0;
+  font-size: var(--font-size-4);
+  line-height: 1.4;
+  max-width: 280px;
 }
 </style>

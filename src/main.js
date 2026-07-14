@@ -116,10 +116,11 @@ function checkPermission() {
         return;
     }
 
-    if (storedChurch && storedChurch.id_igreja == churchId && isCachedAdminPermission(storedChurch.administrador)) {
+    if (storedChurch && storedChurch.id_igreja == churchId && isCachedAdminPermission(storedChurch.administrador) && isAdminPermission(storedChurch.administrador)) {
         appStore.setChurchPermission({
             administrador: isAdminPermission(storedChurch.administrador),
-            apenas_membro: !isAdminPermission(storedChurch.administrador)
+            apenas_membro: !isAdminPermission(storedChurch.administrador),
+            permissions: []
         });
         getMyChurch();
         return;

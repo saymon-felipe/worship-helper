@@ -22,7 +22,7 @@
             </div>
         </div>
         <div class="create-event-button-container">
-            <button class="btn primary create-event" v-on:click="createEvent()">
+            <button class="btn primary create-event" v-on:click="createEvent()" v-if="canCreateEvent">
                 Novo Evento
                 <span class="material-icons">add</span>
             </button>
@@ -47,6 +47,11 @@ export default {
     data() {
         return {
             eventos: []
+        }
+    },
+    computed: {
+        canCreateEvent: function () {
+            return this.hasChurchPermission("events.create");
         }
     },
     methods: {
@@ -120,4 +125,3 @@ export default {
     overflow-y: auto;
 }
 </style>
-

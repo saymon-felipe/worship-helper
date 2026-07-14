@@ -3,9 +3,12 @@
         <form action="invite-member" @submit.prevent="inviteMember()">
             <div class="input-group">
                 <label for="invite-member-input">Usuário ou e-mail</label>
-                <input type="text" name="invite_member" id="invite-member-input" placeholder="Digite o nome ou e-mail do membro" v-model="searchParam" :disabled="sendingInvite">
-                <selectedMember :selected_member="selected_member" @removeUser="clearSelectedMember()" />
-                <autoComplete :search="searchParam" v-if="searchParam != '' && !sendingInvite" @selectUser="select_user($event)" @emptySearch="showAutocompleteError($event)"></autoComplete>
+                
+                <div class="input-badge-wrapper">
+                    <selectedMember v-if="selected_member.id_usuario != null" :selected_member="selected_member" @removeUser="clearSelectedMember()" />
+                    <input type="text" name="invite_member" id="invite-member-input" :placeholder="selected_member.id_usuario == null ? 'Digite o nome ou e-mail do membro' : ''" v-model="searchParam" :disabled="sendingInvite" :readonly="selected_member.id_usuario != null" class="inline-badge-input">
+                    <autoComplete :search="searchParam" v-if="searchParam != '' && !sendingInvite" @selectUser="select_user($event)" @emptySearch="showAutocompleteError($event)"></autoComplete>
+                </div>
                 <small class="invite-helper">Se a pessoa ainda não tiver conta, digite o e-mail para enviar o convite.</small>
             </div>
 
@@ -194,5 +197,35 @@ export default {
         opacity: 1;
         transform: translateY(0);
     }
+}
+
+.input-badge-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+    min-height: 42px;
+    padding: 2px 8px;
+    background: rgba(24, 21, 56, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-md);
+    box-sizing: border-box;
+    transition: all var(--transition-fast);
+}
+
+.input-badge-wrapper:focus-within {
+    border-color: var(--secondary-blue-soft);
+    box-shadow: var(--glow-shadow);
+}
+
+.inline-badge-input {
+    flex: 1;
+    height: 36px !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0 8px !important;
+    color: var(--neutral-white);
+    outline: none;
+    box-shadow: none !important;
 }
 </style>

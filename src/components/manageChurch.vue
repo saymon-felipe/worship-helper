@@ -21,7 +21,7 @@
                 <div class="church-action">
                     <router-link :to="'/home/manage-church/' + igreja.id_igreja + '/members'">
                         <span class="material-icons">group</span>
-                        <span>{{ canManageChurch ?"Gerenciar" : "Ver" }} membros</span>
+                        <span>{{ canManageMembers ?"Gerenciar" : "Ver" }} membros</span>
                     </router-link>
                 </div>
                 <div class="church-action">
@@ -30,7 +30,7 @@
                         <span>Calendário de cultos</span>
                     </router-link>
                 </div>
-                <div class="church-action" v-if="canManageChurch">
+                <div class="church-action" v-if="canConfigureChurch">
                     <router-link :to="'/home/manage-church/' + igreja.id_igreja + '/config'">
                         <span class="material-icons">settings</span>
                         <span>Configurações da igreja</span>
@@ -39,7 +39,7 @@
             </div>
             <div class="warnings">
                 <h5>Avisos</h5>
-                <commentsComponent type="aviso" :can-create-thread="canManageChurch"></commentsComponent>
+                <commentsComponent type="aviso" :can-create-thread="canCreateWarnings" :can-manage-thread="canManageWarnings"></commentsComponent>
             </div>
         </div>
     </div>
@@ -55,22 +55,35 @@ export default {
     mixins: [globalMethods],
     data() {
         return {
-            canManageChurch: false
+            canManageChurch: false,
+            canManageMembers: false,
+            canConfigureChurch: false,
+            canCreateWarnings: false,
+            canManageWarnings: false
         }
     },
     methods: {
+        updateActionPermissions: function () {
+            this.canManageChurch = this.haveAdminPermission || this.haveAppPermission;
+            this.canManageMembers = this.canManageChurch || this.hasChurchPermission("members.manage") || this.hasChurchPermission("members.invite") || this.hasChurchPermission("members.remove") || this.hasChurchPermission("members.roles") || this.hasChurchPermission("members.tags");
+            this.canConfigureChurch = this.canManageChurch || this.hasChurchPermission("members.roles") || this.hasChurchPermission("members.tags");
+            this.canCreateWarnings = this.canManageChurch || this.hasChurchPermission("warnings.create");
+            this.canManageWarnings = this.canManageChurch || this.hasChurchPermission("warnings.edit") || this.hasChurchPermission("warnings.delete");
+        },
         loadChurchPermission: function () {
             const churchId = this.getCurrentChurchId();
             const currentChurch = this.getCurrentChurchInLocalStorage();
             const cachedAdmin = currentChurch ? currentChurch.administrador : null;
             const hasCachedPermission = typeof cachedAdmin === "boolean" || cachedAdmin === 0 || cachedAdmin === 1 || cachedAdmin === "0" || cachedAdmin === "1";
 
-            if (currentChurch && currentChurch.id_igreja == churchId && hasCachedPermission) {
+            if (currentChurch && currentChurch.id_igreja == churchId && hasCachedPermission && (cachedAdmin === true || cachedAdmin === 1 || cachedAdmin === "1")) {
                 this.canManageChurch = cachedAdmin === true || cachedAdmin === 1 || cachedAdmin === "1";
                 appStore.setChurchPermission({
                     administrador: this.canManageChurch,
-                    apenas_membro: !this.canManageChurch
+                    apenas_membro: !this.canManageChurch,
+                    permissions: []
                 });
+                this.updateActionPermissions();
                 return;
             }
 
@@ -80,6 +93,7 @@ export default {
 
             if (appStore.state.church && appStore.state.church.id_igreja == churchId) {
                 this.canManageChurch = appStore.state.churchPermission.administrador;
+                this.updateActionPermissions();
                 return;
             }
 
@@ -87,6 +101,7 @@ export default {
                 .then((response) => {
                     appStore.setChurchPermission(response.data.returnObj);
                     this.canManageChurch = response.data.returnObj.administrador == 1 || response.data.returnObj.administrador === true;
+                    this.updateActionPermissions();
                 })
                 .catch((error) => {
                     console.log(error);

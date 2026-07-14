@@ -109,35 +109,63 @@ export default {
 </script>
 <style scoped>
 .auto-complete {
-    background: var(--secondary-secondary-blue-high-2);
-    padding: .1rem .5rem;
-    border-radius: 10px;
-    margin-top: 1rem;
+    background: var(--primary-primary-blue-medium);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-md);
+    padding: 6px;
     position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    z-index: 99;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(10px);
     display: none;
-    top: 5rem;
-    /*top: 100%;*/
-    z-index: 3;
+    box-sizing: border-box;
+    max-height: 220px;
+    overflow-y: auto;
 }
 
 .member {
     display: flex;
     align-items: center;
-    margin: .5rem 0;
+    gap: 12px;
+    padding: 8px 12px;
     cursor: pointer;
-    transition: all 0.4s;
-    padding: .5rem;
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast);
+    margin: 2px 0;
+    box-sizing: border-box;
 }
 
-    .member:hover {
-        background: var(--secondary-secondary-blue-medium);
-    }
+.member:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
 
-    .member img {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        margin-right: 1rem;
-        object-fit: cover;
-    }
+.member img {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 0;
+}
+
+.member-informations {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.member-informations h5 {
+    margin: 0;
+    font-size: var(--font-size-5);
+    font-weight: 600;
+    color: var(--neutral-white);
+}
+
+.member-informations p {
+    margin: 0;
+    font-size: 11px;
+    color: var(--neutral-gray-medium);
+}
 </style>

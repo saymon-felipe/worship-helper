@@ -8,14 +8,14 @@
                         <span class="material-icons">event</span>
                         <span>Nome do evento</span>
                     </label>
-                    <input type="text" name="event_name" placeholder="Ex. Santa Ceia, Culto de Jovens..." maxlength="15" required>
+                    <input type="text" name="event_name" v-model="eventForm.event_name" placeholder="Ex. Santa Ceia, Culto de Jovens..." maxlength="15" required>
                 </div>
                 <div class="input-group">
                     <label class="section-label">
                         <span class="material-icons">schedule</span>
                         <span>Dia e Horário</span>
                     </label>
-                    <input type="datetime-local" name="event_date" required>
+                    <input type="datetime-local" name="event_date" v-model="eventForm.event_date" required>
                 </div>
             </div>
 
@@ -41,7 +41,9 @@
                             </div>
                         </div>
                         <div class="music-right-side">
-                            <span class="tone-tag-badge" v-if="music.tone">{{ music.tone.nome }}</span>
+                            <button type="button" class="tone-tag-badge tone-button" v-if="music.tone" @click="editMusicTone(music)" title="Alterar tom">
+                                {{ music.tone.nome }}
+                            </button>
                             <button type="button" class="btn-remove-music" @click="removeMusic(music)" title="Remover música">
                                 <span class="material-icons">close</span>
                             </button>
@@ -96,6 +98,9 @@
         <Transition name="route">
             <searchMusic v-if="showSearchMusic" @select="selectMusic($event)" @close="showSearchMusic = false" />
         </Transition>
+        <Transition name="route">
+            <musicDetails v-if="toneEditMusic" :music="toneEditMusic" @select="updateMusicTone($event)" @close="toneEditMusic = null" />
+        </Transition>
 
         <!-- SUB-TELA: Escolher Membros da Igreja -->
         <Transition name="route">
@@ -146,16 +151,24 @@
 <script>
 import { globalMethods } from '../js/globalMethods';
 import searchMusic from "./searchMusic.vue";
+import musicDetails from "./musicDetails.vue";
 import api from '../config/api';
+import moment from 'moment';
 
 export default {
     name: "createEventModalContent",
     mixins: [globalMethods],
+    props: ["eventToEdit"],
     data() {
         return {
+            eventForm: {
+                event_name: "",
+                event_date: ""
+            },
             event_selected_members: [],
             event_selected_musics: [],
             showSearchMusic: false,
+            toneEditMusic: null,
             churchFunctions: [],
             memberSearchQuery: "",
             showSearchMember: false,
@@ -212,7 +225,11 @@ export default {
             data["event_musics"] = this.event_selected_musics;
             data["id_igreja"] = this.getCurrentChurchId();
 
-            api.post("/igreja/cadastrar-evento", data)
+            const path = this.isEditingEvent()
+                ? "/igreja/atualizar-evento/" + this.eventToEdit.id_evento
+                : "/igreja/cadastrar-evento";
+
+            api.post(path, data)
             .then(function () {
                 self.$emit("success");
             })
@@ -280,13 +297,59 @@ export default {
                 .catch(function (error) {
                     console.log(error);
                 });
+        },
+        isEditingEvent: function () {
+            return Boolean(this.eventToEdit && this.eventToEdit.id_evento);
+        },
+        editMusicTone: function (music) {
+            this.toneEditMusic = { ...music };
+        },
+        updateMusicTone: function (tone) {
+            const found = this.event_selected_musics.find((music) => music.id === this.toneEditMusic.id);
+            if (found) {
+                found.tone = tone;
+            }
+            this.toneEditMusic = null;
+        },
+        fillEventToEdit: function () {
+            if (!this.isEditingEvent()) {
+                return;
+            }
+
+            this.eventForm.event_name = this.eventToEdit.nome_evento || "";
+            this.eventForm.event_date = this.eventToEdit.data_inicio_evento
+                ? moment(this.eventToEdit.data_inicio_evento).format("YYYY-MM-DDTHH:mm")
+                : "";
+
+            const members = Array.isArray(this.eventToEdit.membros_evento) ? this.eventToEdit.membros_evento : [];
+            this.event_selected_members = members.map((member) => ({
+                id_usuario: member.id_usuario,
+                nome_usuario: member.nome_usuario,
+                imagem_usuario: member.imagem_usuario,
+                id_funcao: member.id_funcao,
+                nome_funcao: member.user_occupation
+            }));
+
+            const musics = Array.isArray(this.eventToEdit.musicas) ? this.eventToEdit.musicas : [];
+            this.event_selected_musics = musics.map((music) => ({
+                id: music.id_musica,
+                name: music.nome_musica,
+                artist: music.artista_musica,
+                image: music.imagem_musica,
+                tone: {
+                    id: music.id_tom,
+                    nome: music.tom
+                }
+            }));
         }
     },
     components: {
-        searchMusic
+        searchMusic,
+        musicDetails
     },
     mounted: function () {
         this.loadChurchFunctions();
+        this.fillEventToEdit();
     }
 }
 </script>
@@ -448,6 +511,10 @@ export default {
     font-weight: 700;
     padding: 2px 6px;
     border-radius: var(--radius-sm);
+}
+
+.tone-button {
+    cursor: pointer;
 }
 
 .btn-remove-music, .btn-remove-member {

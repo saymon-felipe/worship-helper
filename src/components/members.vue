@@ -95,8 +95,8 @@
         <div class="member-more-actions-wrapper" v-if="showMemberMoreActions" v-on:click="closeMemberMoreActions()"></div>
 
         <Transition name="modal-fade">
-            <modal v-if="showModal && canManageChurch" :title="modalTitle" @closeModal="close_modal()" class="modal" @cancelEvent="cancelChanges()" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm()">
-                <inviteMemberModalContent v-if="inviteMember" @success="handleInviteSuccess()" />
+            <modal v-if="showModal && canManageChurch" :title="modalTitle" @closeModal="close_modal()" class="modal" @cancelEvent="cancelChanges()" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm()" :disabled="isLoading">
+                <inviteMemberModalContent v-if="inviteMember" @success="handleInviteSuccess()" @loading="isLoading = $event" />
                 <addTagModalContent v-if="addTag" :member="selected_member" @success="handleMembersChanged()" />
                 <addFunctionModalContent v-if="addOccupation" :member="selected_member" @success="handleMembersChanged()" />
                 <removeMemberModalContent v-if="removeMember" :member="selected_member" @success="handleMembersChanged()" />
@@ -131,6 +131,7 @@ export default {
     data() {
         return {
             inviteMember: false,
+            isLoading: false,
             addTag: false,
             addOccupation: false,
             removeMember: false,
@@ -206,6 +207,11 @@ export default {
         cancelChanges: function () {
             this.idUsuarioInChange = null;
             this.closeModal();
+        },
+        close_modal: function () {
+            this.showModal = false;
+            this.modalTitle = "";
+            this.isLoading = false;
         },
         removeMemberFunction: function (member) {
             this.closeMemberMoreActions();

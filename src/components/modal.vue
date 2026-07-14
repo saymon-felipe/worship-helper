@@ -2,33 +2,36 @@
     <div class="modal-wrapper">
         <div class="modal-container">
             <div class="modal-header">
-                <span class="material-icons" v-on:click="closeModal()">chevron_left</span>
+                <span class="material-icons" v-on:click="!disabled && closeModal()">chevron_left</span>
                 <h4>{{ title }}</h4>
             </div>
             <div class="modal-body">
                 <slot />
             </div>
             <div class="modal-footer" v-if="buttonTitle != ''">
-                <button v-on:click="emitSubmitEvent()" class="btn primary">{{ buttonTitle }}</button>
-                <button v-on:click="emitCancelEvent()" class="btn secondary" v-if="button2Title != ''">{{ button2Title }}</button>
+                <button v-on:click="emitSubmitEvent()" class="btn primary" :disabled="disabled">{{ buttonTitle }}</button>
+                <button v-on:click="emitCancelEvent()" class="btn secondary" v-if="button2Title != ''" :disabled="disabled">{{ button2Title }}</button>
             </div>
         </div>
-        <div class="modal-overlay" v-on:click="closeModal()"></div>
+        <div class="modal-overlay" v-on:click="!disabled && closeModal()"></div>
     </div>
 </template>
 <script>
 /* eslint-disable vue/multi-word-component-names */
 export default {
     name: "modal",
-    props: ['title', 'buttonTitle', 'button2Title'],
+    props: ['title', 'buttonTitle', 'button2Title', 'disabled'],
     methods: {
         closeModal: function () {
+            if (this.disabled) return;
             this.$emit("closeModal");
         },
         emitSubmitEvent: function () {
+            if (this.disabled) return;
             this.$emit("submitEvent");
         },
         emitCancelEvent: function () {
+            if (this.disabled) return;
             this.$emit("cancelEvent");
         }
     }

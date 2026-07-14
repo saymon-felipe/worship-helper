@@ -19,6 +19,21 @@
                 </div>
                 <span class="material-icons banner-arrow">chevron_right</span>
             </button>
+            <button class="latest-warning-banner empty" v-else type="button" v-on:click="goToWarnings()">
+                <div class="banner-icon">
+                    <span class="material-icons">campaign</span>
+                </div>
+                <div class="banner-content">
+                    <div class="banner-meta">
+                        <span>Avisos</span>
+                    </div>
+                    <h4>Nenhum aviso recente</h4>
+                    <div class="banner-footer">
+                        <span>Clique para publicar ou visualizar os avisos da igreja</span>
+                    </div>
+                </div>
+                <span class="material-icons banner-arrow">chevron_right</span>
+            </button>
 
             <div class="event-list-header">
                 <span class="material-icons header-icon-title">calendar_today</span>
@@ -140,6 +155,25 @@ export default {
     text-align: left;
     cursor: pointer;
     box-shadow: var(--card-shadow);
+}
+
+.latest-warning-banner.empty {
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.01), rgba(255, 255, 255, 0.03));
+}
+
+.latest-warning-banner.empty .banner-icon {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--neutral-gray-medium);
+}
+
+.latest-warning-banner.empty .banner-meta span {
+    color: var(--neutral-gray-medium) !important;
+}
+
+.latest-warning-banner.empty h4 {
+    color: var(--neutral-white);
+    font-weight: 500;
 }
 
 .banner-icon {

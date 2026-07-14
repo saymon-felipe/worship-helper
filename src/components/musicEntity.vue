@@ -16,7 +16,7 @@
                     <span class="material-icons">menu_book</span>
                     <span>Visualizar Cifra</span>
                 </button>
-                <button class="btn secondary danger-btn btn-2 delete-btn" v-on:click="confirmDeleteMusic()" v-if="haveAppPermission">
+                <button class="btn secondary danger-btn btn-2 delete-btn" v-on:click="confirmDeleteMusic()" v-if="canDeleteMusic">
                     <span class="material-icons">delete</span>
                     <span>Excluir Música</span>
                 </button>
@@ -80,6 +80,11 @@ export default {
             showDeleteModal: false
         }
     },
+    computed: {
+        canDeleteMusic: function () {
+            return this.haveAppPermission || this.hasChurchPermission("music.delete");
+        }
+    },
     components: {
         musicComponent,
         commentsComponent,
@@ -121,7 +126,11 @@ export default {
         deleteMusic: function () {
             let self = this;
             this.showDeleteModal = false;
-            api.delete("/musicas/" + self.music.id)
+            api.delete("/musicas/" + self.music.id, {
+                data: {
+                    id_igreja: self.getCurrentChurchId()
+                }
+            })
                 .then(function () {
                     self.$router.go(-1);
                 })

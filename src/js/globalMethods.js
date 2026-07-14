@@ -5,6 +5,22 @@ import moment from 'moment';
 import 'moment/locale/pt-br';
 moment.locale('pt-br');
 
+const permissionParents = {
+    "members.invite": "members.manage",
+    "members.remove": "members.manage",
+    "members.roles": "members.manage",
+    "members.tags": "members.manage",
+    "events.create": "events.manage",
+    "events.edit": "events.manage",
+    "events.members": "events.manage",
+    "events.musics": "events.manage",
+    "music.create": "music.manage",
+    "music.delete": "music.manage",
+    "warnings.create": "warnings.manage",
+    "warnings.edit": "warnings.manage",
+    "warnings.delete": "warnings.manage"
+};
+
 export const globalMethods = {
     methods: {
         setCurrentChurchInLocalStorage: function (object) {
@@ -20,7 +36,8 @@ export const globalMethods = {
             appStore.setChurch(obj);
             appStore.setChurchPermission({
                 administrador: obj.administrador == 1 || obj.administrador === true,
-                apenas_membro: obj.administrador != 1 && obj.administrador !== true
+                apenas_membro: obj.administrador != 1 && obj.administrador !== true,
+                permissions: []
             });
 
             this.checkPermission();
@@ -125,6 +142,16 @@ export const globalMethods = {
                 appStore.setUser(res.data.returnObj);
                 return appStore.state.user;
             });
+        },
+        hasChurchPermission: function (permissionKey) {
+            const permission = appStore.state.churchPermission || {};
+            const permissions = Array.isArray(permission.permissions) ? permission.permissions : [];
+            const parent = permissionParents[permissionKey];
+            return Boolean(
+                this.haveAppPermission ||
+                permission.administrador ||
+                (permissions.includes(permissionKey) && (!parent || permissions.includes(parent)))
+            );
         },
         pushAvatars: function (target_id) {
             let target = $("#member-" + target_id);

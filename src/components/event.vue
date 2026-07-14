@@ -4,6 +4,10 @@
         <div class="event-hero-card">
             <div class="hero-top">
                 <h2>{{ event.nome_evento }}</h2>
+                <button type="button" class="btn secondary edit-event-button" v-if="canEditEvent" @click="openEditEvent()">
+                    <span class="material-icons">edit</span>
+                    <span>Editar evento</span>
+                </button>
                 <div class="event-meta-info" v-if="event.criador_tag">
                     <span class="creator-tag">{{ event.criador_tag }}</span>
                 </div>
@@ -76,6 +80,20 @@
                 </div>
             </div>
         </div>
+
+        <div class="event-section">
+            <h3>Comentários do Evento</h3>
+            <commentsComponent
+                type="evento"
+                :id_evento="event_id"
+                :can-create-thread="canCommentEvent"
+            />
+        </div>
+        <Transition name="modal-fade">
+            <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm();">
+                <createEventModalContent :eventToEdit="event" @success="closeModal(); getEvent();" />
+            </modal>
+        </Transition>
     </section>
 </template>
 <script>
@@ -83,6 +101,10 @@ import { globalMethods } from '../js/globalMethods';
 import api from '../config/api';
 import moment from 'moment';
 import 'moment/locale/pt-br';
+import commentsComponent from "./commentsComponent.vue";
+import createEventModalContent from "./createEventModalContent.vue";
+import modal from "./modal.vue";
+import { appStore } from '../store/appStore';
 moment.locale('pt-br');
 
 export default {
@@ -92,7 +114,30 @@ export default {
         return {
             event_id: null,
             event: {},
+            currentUser: null,
             default_music_image: api.defaults.baseURL + "/public/music-default-image.png" // Fallback seguro
+        }
+    },
+    computed: {
+        canCommentEvent: function () {
+            const userId = this.currentUser ? this.currentUser.id_usuario : null;
+            if (!userId || !this.event) {
+                return false;
+            }
+
+            if (this.event.id_criador == userId) {
+                return true;
+            }
+
+            const members = Array.isArray(this.event.membros_evento) ? this.event.membros_evento : [];
+            return members.some((member) => member.id_usuario == userId);
+        },
+        canEditEvent: function () {
+            const userId = this.currentUser ? this.currentUser.id_usuario : null;
+            return Boolean(
+                this.hasChurchPermission("events.edit") ||
+                (userId && this.event && this.event.id_criador == userId)
+            );
         }
     },
     methods: {
@@ -122,14 +167,29 @@ export default {
                 console.log(error);
             })
         },
+        openEditEvent: function () {
+            this.modalTitle = "Editar evento";
+            this.modalButtonTitle = "Salvar";
+            this.modalButton2Title = "";
+            this.showModal = true;
+        },
         formatEventDate: function (date) {
             let rawDate = moment.parseZone(date).format("dddd, DD/MM/YYYY [às] HH:mm");
             return rawDate.charAt(0).toUpperCase() + rawDate.slice(1);
         }
     },
     mounted: function () {
+        this.currentUser = appStore.state.user;
+        this.requireUser().then((user) => {
+            this.currentUser = user;
+        }).catch(() => {});
         this.getParam();
         this.getEvent();
+    },
+    components: {
+        commentsComponent,
+        createEventModalContent,
+        modal
     }
 }
 </script>
@@ -153,10 +213,40 @@ export default {
     gap: 20px;
 }
 
+.hero-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+    width: 100%;
+}
+
 .hero-top h2 {
     font-size: var(--font-size-h2);
     font-weight: 700;
-    margin-bottom: 8px;
+    margin: 0;
+    flex: 1 1 250px;
+}
+
+.edit-event-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    white-space: nowrap;
+    border-radius: var(--radius-pill);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--neutral-white);
+    transition: all var(--transition-fast);
+}
+
+.edit-event-button:hover {
+    background: var(--secondary-blue-soft);
+    border-color: var(--secondary-blue-soft);
+    color: var(--primary-bg);
+    box-shadow: 0 4px 12px rgba(56, 182, 255, 0.25);
 }
 
 .hero-details {

@@ -298,7 +298,8 @@ export default {
             try {
                 const response = await api.post("/musicas/procurar-cifra", {
                     name: this.form.name,
-                    artist: this.form.artist
+                    artist: this.form.artist,
+                    id_igreja: this.getCurrentChurchId()
                 });
                 this.cipherList = response.data.returnObj;
             } catch (error) {
@@ -321,7 +322,8 @@ export default {
             try {
                 const response = await api.post("/musicas/procurar", {
                     name: this.form.name,
-                    artist: this.form.artist
+                    artist: this.form.artist,
+                    id_igreja: this.getCurrentChurchId()
                 });
                 this.musicList = response.data.returnObj;
             } catch (error) {
@@ -345,6 +347,7 @@ export default {
             const data = {
                 name: this.form.name,
                 artist: this.form.artist,
+                id_igreja: this.getCurrentChurchId(),
                 video_url: this.selectedVideo.url,
                 cipher_url: this.selectedCipher.href,
                 cipher_title: this.selectedCipher.title,

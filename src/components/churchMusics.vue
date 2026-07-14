@@ -12,7 +12,7 @@
         </div>
         <div class="configuration-header">
             <h3>Acervo de músicas</h3>
-            <button class="create-new-tag" v-on:click="createMusic()" v-if="haveAppPermission">
+            <button class="create-new-tag" v-on:click="createMusic()" v-if="canCreateMusic">
                 <span class="material-icons">add</span>
             </button>
         </div>
@@ -39,6 +39,11 @@ export default {
     data() {
         return {
             musics: []
+        }
+    },
+    computed: {
+        canCreateMusic: function () {
+            return this.haveAppPermission || this.hasChurchPermission("music.create");
         }
     },
     methods: {

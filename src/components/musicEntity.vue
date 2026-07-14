@@ -46,18 +46,38 @@
         <!-- Comments Section -->
         <div class="music-comments-section" v-if="music.id != undefined">
             <h3>Comentários e Dicas</h3>
-            <commentsComponent type="musica" :id_musica="music.id"></commentsComponent>
+            <template v-if="hasEventContext">
+                <div class="comments-tabs">
+                    <button type="button" class="btn tab-button" :class="{ primary: activeCommentsTab === 'event' }" @click="activeCommentsTab = 'event'">
+                        Evento atual
+                    </button>
+                    <button type="button" class="btn tab-button" :class="{ primary: activeCommentsTab === 'music' }" @click="activeCommentsTab = 'music'">
+                        Música
+                    </button>
+                </div>
+                <commentsComponent
+                    v-if="activeCommentsTab === 'event'"
+                    type="musica_evento"
+                    :id_musica="music.id"
+                    :id_evento="event_id"
+                    :can-create-thread="canCommentEventMusic"
+                />
+                <commentsComponent v-if="activeCommentsTab === 'music'" type="musica" :id_musica="music.id"></commentsComponent>
+            </template>
+            <commentsComponent v-else type="musica" :id_musica="music.id"></commentsComponent>
         </div>
 
         <!-- Modal de Confirmação de Exclusão -->
-        <Transition name="modal-fade">
-            <modal v-if="showDeleteModal" title="Excluir Música" @closeModal="showDeleteModal = false" class="modal" @cancelEvent="showDeleteModal = false" button2Title="Não, cancelar" buttonTitle="Sim, excluir" @submitEvent="deleteMusic()">
-                <div class="confirm-delete-box">
-                    <p class="warning-text">Tem certeza que deseja excluir esta música permanentemente?</p>
-                    <p>Todos os comentários, cifras e dados vinculados a <strong>{{ music.name }}</strong> serão excluídos e não poderão ser recuperados.</p>
-                </div>
-            </modal>
-        </Transition>
+        <Teleport to="body">
+            <Transition name="modal-fade">
+                <modal v-if="showDeleteModal" title="Excluir Música" @closeModal="showDeleteModal = false" class="modal" @cancelEvent="showDeleteModal = false" button2Title="Não, cancelar" buttonTitle="Sim, excluir" @submitEvent="deleteMusic()">
+                    <div class="confirm-delete-box">
+                        <p class="warning-text">Tem certeza que deseja excluir esta música permanentemente?</p>
+                        <p>Todos os comentários, cifras e dados vinculados a <strong>{{ music.name }}</strong> serão excluídos e não poderão ser recuperados.</p>
+                    </div>
+                </modal>
+            </Transition>
+        </Teleport>
     </div>
 </template>
 
@@ -75,12 +95,35 @@ export default {
     data() {
         return {
             music: {},
+            currentEvent: {},
+            currentUser: null,
             showCipherContainer: false,
             event_id: 0,
+            activeCommentsTab: "event",
             showDeleteModal: false
         }
     },
     computed: {
+        hasEventContext: function () {
+            return Number(this.event_id) > 0;
+        },
+        canCommentEventMusic: function () {
+            if (!this.hasEventContext) {
+                return true;
+            }
+
+            const userId = this.currentUser ? this.currentUser.id_usuario : null;
+            if (!userId || !this.currentEvent) {
+                return false;
+            }
+
+            if (this.currentEvent.id_criador == userId) {
+                return true;
+            }
+
+            const members = Array.isArray(this.currentEvent.membros_evento) ? this.currentEvent.membros_evento : [];
+            return members.some((member) => member.id_usuario == userId);
+        },
         canDeleteMusic: function () {
             return this.haveAppPermission || this.hasChurchPermission("music.delete");
         }
@@ -105,6 +148,24 @@ export default {
                 .catch(function (error) {
                     console.log(error);
                 })
+        },
+        getCurrentEvent: function () {
+            if (!this.hasEventContext) {
+                return;
+            }
+
+            const churchId = this.getCurrentChurchId();
+            if (!churchId) {
+                return;
+            }
+
+            api.post("/igreja/retorna-evento/" + this.event_id, { id_igreja: churchId })
+                .then((response) => {
+                    this.currentEvent = response.data.returnObj || {};
+                })
+                .catch((error) => {
+                    console.log(error);
+                });
         },
         closeCipherContainer: function () {
             this.showCipherContainer = false;
@@ -142,7 +203,12 @@ export default {
     },
     mounted: function () {
         this.getParams();
+        this.currentUser = this.user;
+        this.requireUser().then((user) => {
+            this.currentUser = user;
+        }).catch(() => {});
         this.getMusic();
+        this.getCurrentEvent();
     }
 }
 </script>
@@ -362,6 +428,16 @@ export default {
     margin-bottom: 1rem;
     border-left: 4px solid var(--secondary-blue-soft);
     padding-left: 10px;
+}
+
+.comments-tabs {
+    display: flex;
+    gap: 10px;
+    margin: 1rem 0;
+}
+
+.tab-button {
+    flex: 1;
 }
 
 @media (max-width: 480px) {

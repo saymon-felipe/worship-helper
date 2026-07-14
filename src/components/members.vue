@@ -94,23 +94,27 @@
 
         <div class="member-more-actions-wrapper" v-if="showMemberMoreActions" v-on:click="closeMemberMoreActions()"></div>
 
-        <Transition name="modal-fade">
-            <modal v-if="showModal && canUseCurrentModal" :title="modalTitle" @closeModal="close_modal()" class="modal" @cancelEvent="cancelChanges()" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm()" :disabled="isLoading">
-                <inviteMemberModalContent v-if="inviteMember && canInviteMembers" @success="handleInviteSuccess()" @loading="isLoading = $event" />
-                <addTagModalContent v-if="addTag && canChangeMemberTags" :member="selected_member" @success="handleMembersChanged()" />
-                <addFunctionModalContent v-if="addOccupation && canChangeMemberRoles" :member="selected_member" @success="handleMembersChanged()" />
-                <removeMemberModalContent v-if="removeMember && canRemoveMembers" :member="selected_member" @success="handleMembersChanged()" />
-            </modal>
-        </Transition>
+        <Teleport to="body">
+            <Transition name="modal-fade">
+                <modal v-if="showModal && canUseCurrentModal" :title="modalTitle" @closeModal="close_modal()" class="modal" @cancelEvent="cancelChanges()" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm()" :disabled="isLoading">
+                    <inviteMemberModalContent v-if="inviteMember && canInviteMembers" @success="handleInviteSuccess()" @loading="isLoading = $event" />
+                    <addTagModalContent v-if="addTag && canChangeMemberTags" :member="selected_member" @success="handleMembersChanged()" />
+                    <addFunctionModalContent v-if="addOccupation && canChangeMemberRoles" :member="selected_member" @success="handleMembersChanged()" />
+                    <removeMemberModalContent v-if="removeMember && canRemoveMembers" :member="selected_member" @success="handleMembersChanged()" />
+                </modal>
+            </Transition>
+        </Teleport>
 
-        <Transition name="modal-fade">
-            <modal v-if="showConfirmDeleteInvite && canInviteMembers" title="Excluir Convite" @closeModal="showConfirmDeleteInvite = false" class="modal" @cancelEvent="showConfirmDeleteInvite = false" button2Title="Não, cancelar" buttonTitle="Sim, excluir" @submitEvent="submitDeleteInvite()">
-                <div class="confirm-delete-box">
-                    <p class="warning-text">Tem certeza que deseja excluir este convite?</p>
-                    <p>O convite enviado para o e-mail <strong>{{ selectedInviteToDelete?.email_usuario }}</strong> será invalidado.</p>
-                </div>
-            </modal>
-        </Transition>
+        <Teleport to="body">
+            <Transition name="modal-fade">
+                <modal v-if="showConfirmDeleteInvite && canInviteMembers" title="Excluir Convite" @closeModal="showConfirmDeleteInvite = false" class="modal" @cancelEvent="showConfirmDeleteInvite = false" button2Title="Não, cancelar" buttonTitle="Sim, excluir" @submitEvent="submitDeleteInvite()">
+                    <div class="confirm-delete-box">
+                        <p class="warning-text">Tem certeza que deseja excluir este convite?</p>
+                        <p>O convite enviado para o e-mail <strong>{{ selectedInviteToDelete?.email_usuario }}</strong> será invalidado.</p>
+                    </div>
+                </modal>
+            </Transition>
+        </Teleport>
     </div>
 </template>
 

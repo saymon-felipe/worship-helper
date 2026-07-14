@@ -117,18 +117,20 @@
             <p class="response">{{ response }}</p>
         </div>
 
-        <Transition name="modal-fade">
-            <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm(); returnPageInformations();">
-                <registerTagOrFunction
-                    :type="type"
-                    :churchId="resolvedChurchId"
-                    :permissionOptions="permissionOptions"
-                    :initialFunction="editingFunction"
-                    @success="closeModal(); returnPageInformations();"
-                    @error="handleRegisterError"
-                />
-            </modal>
-        </Transition>
+        <Teleport to="body">
+            <Transition name="modal-fade">
+                <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm(); returnPageInformations();">
+                    <registerTagOrFunction
+                        :type="type"
+                        :churchId="resolvedChurchId"
+                        :permissionOptions="permissionOptions"
+                        :initialFunction="editingFunction"
+                        @success="closeModal(); returnPageInformations();"
+                        @error="handleRegisterError"
+                    />
+                </modal>
+            </Transition>
+        </Teleport>
     </div>
 </template>
 

@@ -9,8 +9,8 @@
                 <slot />
             </div>
             <div class="modal-footer" v-if="buttonTitle != ''">
-                <button v-on:click="emitSubmitEvent()" class="btn primary" :disabled="disabled">{{ buttonTitle }}</button>
-                <button v-on:click="emitCancelEvent()" class="btn secondary" v-if="button2Title != ''" :disabled="disabled">{{ button2Title }}</button>
+                <button v-on:click="emitSubmitEvent()" class="btn" :disabled="disabled">{{ buttonTitle }}</button>
+                <button v-on:click="emitCancelEvent()" class="btn primary" v-if="button2Title != ''" :disabled="disabled">{{ button2Title }}</button>
             </div>
         </div>
         <div class="modal-overlay" v-on:click="!disabled && closeModal()"></div>

@@ -44,9 +44,11 @@
             <span class="response-message">{{ response }}</span>
         </div>
         
-        <Transition name="modal-fade">
-            <imageCropModal v-if="cropModalOpen" :imageSrc="cropImageSrc" @close="cropModalOpen = false" @confirm="onCropConfirm" />
-        </Transition>
+        <Teleport to="body">
+            <Transition name="modal-fade">
+                <imageCropModal v-if="cropModalOpen" :imageSrc="cropImageSrc" @close="cropModalOpen = false" @confirm="onCropConfirm" />
+            </Transition>
+        </Teleport>
     </section>
 </template>
 <script>

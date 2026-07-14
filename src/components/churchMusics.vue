@@ -86,11 +86,13 @@
             <p>Tente ajustar a busca ou limpar os filtros de tags selecionados.</p>
         </div>
 
-        <Transition name="modal-fade">
-            <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm(); returnMusics();">
-                <createMusicModalContent @success="closeModal(); returnMusics();" />
-            </modal>
-        </Transition>
+        <Teleport to="body">
+            <Transition name="modal-fade">
+                <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm(); returnMusics();">
+                    <createMusicModalContent @success="closeModal(); returnMusics();" />
+                </modal>
+            </Transition>
+        </Teleport>
     </div>
 </template>
 <script>

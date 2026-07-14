@@ -27,11 +27,13 @@
                 <span class="material-icons">add</span>
             </button>
         </div>
-        <Transition name="modal-fade">
-            <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm(); returnEvents();">
-                <createEventModalContent @church="igreja" @success="closeModal(); returnEvents();" />
-            </modal>
-        </Transition>
+        <Teleport to="body">
+            <Transition name="modal-fade">
+                <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm(); returnEvents();">
+                    <createEventModalContent @church="igreja" @success="closeModal(); returnEvents();" />
+                </modal>
+            </Transition>
+        </Teleport>
     </div>
 </template>
 <script>

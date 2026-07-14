@@ -143,28 +143,30 @@
             </div>
             
             <div class="warnings-empty-state" v-if="groupedWarnings.length === 0">
-                <span class="material-icons empty-icon">campaign</span>
-                <h5>Nenhum aviso publicado</h5>
-                <p>Acompanhe os comunicados importantes por aqui.</p>
+                <span class="material-icons empty-icon">{{ emptyStateIcon }}</span>
+                <h5>{{ emptyStateTitle }}</h5>
+                <p>{{ emptyStateDescription }}</p>
             </div>
         </div>
-        <Transition name="modal-fade">
-            <modal
-                v-if="showDeleteWarningModal"
-                title="Excluir aviso"
-                @closeModal="showDeleteWarningModal = false"
-                class="modal"
-                @cancelEvent="showDeleteWarningModal = false"
-                button2Title="Não, cancelar"
-                buttonTitle="Sim, excluir"
-                @submitEvent="deleteWarning()"
-            >
-                <div class="confirm-delete-box">
-                    <p class="warning-text">Tem certeza que deseja excluir este aviso?</p>
-                    <p>Se ele tiver respostas, elas também serão removidas.</p>
-                </div>
-            </modal>
-        </Transition>
+        <Teleport to="body">
+            <Transition name="modal-fade">
+                <modal
+                    v-if="showDeleteWarningModal"
+                    title="Excluir aviso"
+                    @closeModal="showDeleteWarningModal = false"
+                    class="modal"
+                    @cancelEvent="showDeleteWarningModal = false"
+                    button2Title="Não, cancelar"
+                    buttonTitle="Sim, excluir"
+                    @submitEvent="deleteWarning()"
+                >
+                    <div class="confirm-delete-box">
+                        <p class="warning-text">Tem certeza que deseja excluir este aviso?</p>
+                        <p>Se ele tiver respostas, elas também serão removidas.</p>
+                    </div>
+                </modal>
+            </Transition>
+        </Teleport>
     </div>
 </template>
 <script>
@@ -219,6 +221,9 @@ export default {
             if (this.type === "musica") {
                 return true;
             }
+            if (this.type === "musica_evento") {
+                return Boolean(this.canCreateThread);
+            }
             if (this.type === "evento") {
                 return Boolean(this.canCreateThread);
             }
@@ -232,8 +237,33 @@ export default {
         },
         inputPlaceholder: function () {
             if (this.type === "aviso") return "Publique um aviso...";
+            if (this.type === "musica_evento") return "Comente sobre esta música neste evento...";
             if (this.type === "evento") return "Publique um comentário no evento...";
             return "Publique um comentário...";
+        },
+        emptyStateIcon: function () {
+            if (this.type === "aviso") {
+                return "campaign";
+            }
+            return "chat_bubble_outline";
+        },
+        emptyStateTitle: function () {
+            if (this.type === "aviso") {
+                return "Nenhum aviso publicado";
+            }
+            return "Nenhum comentário ainda";
+        },
+        emptyStateDescription: function () {
+            if (this.type === "aviso") {
+                return "Acompanhe os comunicados importantes por aqui.";
+            }
+            if (this.type === "musica" || this.type === "musica_evento") {
+                return "Seja o primeiro a compartilhar dicas ou comentários sobre esta música.";
+            }
+            if (this.type === "evento") {
+                return "Compartilhe informações ou observações sobre este evento.";
+            }
+            return "Seja o primeiro a comentar!";
         }
     },
     methods: {
@@ -250,6 +280,12 @@ export default {
                 this.likePath = "/musicas/comentarios/like";
                 this.updatePath = "/musicas/comentarios/editar";
                 this.deletePath = "/musicas/comentarios/deletar";
+            } else if (this.type == "musica_evento") {
+                this.createPath = "/musicas/comentarios-evento/criar";
+                this.returnPath = "/musicas/comentarios-evento/retorna";
+                this.likePath = "/musicas/comentarios-evento/like";
+                this.updatePath = "/musicas/comentarios-evento/editar";
+                this.deletePath = "/musicas/comentarios-evento/deletar";
             } else if (this.type == "evento") {
                 this.createPath = "/igreja/eventos/comentarios/criar";
                 this.returnPath = "/igreja/eventos/comentarios/retorna";
@@ -278,7 +314,7 @@ export default {
                 return;
             }
 
-            if ((this.type == "aviso" || this.type == "evento") && churchId == null) {
+            if ((this.type == "aviso" || this.type == "evento" || this.type == "musica_evento") && churchId == null) {
                 return;
             }
 
@@ -311,7 +347,7 @@ export default {
             let self = this;
             let churchId = this.getCurrentChurchId();
 
-            if ((this.type == "aviso" || this.type == "evento") && churchId == null) {
+            if ((this.type == "aviso" || this.type == "evento" || this.type == "musica_evento") && churchId == null) {
                 return Promise.resolve();
             }
 
@@ -337,13 +373,14 @@ export default {
                 return;
             }
 
-            if ((this.type == "aviso" || this.type == "evento") && churchId == null) {
+            if ((this.type == "aviso" || this.type == "evento" || this.type == "musica_evento") && churchId == null) {
                 return;
             }
 
             let data = {
                 id_igreja: churchId,
                 id_evento: this.id_evento ? Number(this.id_evento) : undefined,
+                id_musica: this.id_musica ? Number(this.id_musica) : undefined,
                 id_aviso: warning_id,
                 confirmacao: true
             }
@@ -425,10 +462,12 @@ export default {
                     id_aviso: Number(this.editingWarningId),
                     mensagem: this.editingWarningText
                 };
-            } else if (this.type === "evento") {
+            } else if (this.type === "evento" || this.type === "musica_evento") {
                 if (!churchId) return;
                 payload = {
                     id_igreja: Number(churchId),
+                    id_evento: this.id_evento ? Number(this.id_evento) : undefined,
+                    id_musica: this.id_musica ? Number(this.id_musica) : undefined,
                     id_comentario: Number(this.editingWarningId),
                     mensagem: this.editingWarningText
                 };
@@ -463,10 +502,12 @@ export default {
                     id_igreja: Number(churchId),
                     id_aviso: Number(this.warningToDelete.id_aviso)
                 };
-            } else if (this.type === "evento") {
+            } else if (this.type === "evento" || this.type === "musica_evento") {
                 if (!churchId) return;
                 payload = {
                     id_igreja: Number(churchId),
+                    id_evento: this.id_evento ? Number(this.id_evento) : undefined,
+                    id_musica: this.id_musica ? Number(this.id_musica) : undefined,
                     id_comentario: Number(this.warningToDelete.id_aviso)
                 };
             } else if (this.type === "musica") {

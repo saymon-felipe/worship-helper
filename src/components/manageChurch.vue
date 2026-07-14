@@ -1,44 +1,90 @@
 <template>
     <div class="manage-church">
         <div class="manage-container">
-            <div class="church-profile" v-if="igreja.id_igreja && igreja.id_igreja == getCurrentChurchId()">
-                <img :src="igreja.imagem_igreja || default_church_image" class="avatar-p">
-                <div class="church-informations">
-                    <h5>{{ igreja.nome_igreja }}</h5>
-                    <p v-if="igreja.quantidade_membros !== undefined && igreja.quantidade_membros !== null">
-                        <span class="material-icons" style="font-size: 16px;">people</span>
-                        <span>{{ returnMembersText(igreja.quantidade_membros) }}</span>
-                    </p>
+            <!-- Church Profile Header Banner -->
+            <div class="church-profile-card" v-if="igreja.id_igreja && igreja.id_igreja == getCurrentChurchId()">
+                <div class="avatar-wrapper">
+                    <img :src="igreja.imagem_igreja || default_church_image" class="church-avatar-img">
+                </div>
+                <div class="church-info-details">
+                    <span class="church-label">Administração</span>
+                    <h5 class="church-name">{{ igreja.nome_igreja }}</h5>
+                    <div class="church-stats" v-if="igreja.quantidade_membros !== undefined && igreja.quantidade_membros !== null">
+                        <div class="members-pill">
+                            <span class="material-icons">people</span>
+                            <span>{{ returnMembersText(igreja.quantidade_membros) }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="church-actions-container">
-                <div class="church-action">
-                    <router-link :to="'/home/manage-church/' + igreja.id_igreja + '/musics'">
+
+            <!-- Actions Grid -->
+            <div class="actions-grid">
+                <!-- Music Library -->
+                <router-link :to="'/home/manage-church/' + igreja.id_igreja + '/musics'" class="church-action-card">
+                    <div class="card-icon-box icon-musics">
                         <span class="material-icons">playlist_play</span>
-                        <span>Acervo de músicas</span>
-                    </router-link>
-                </div>
-                <div class="church-action">
-                    <router-link :to="'/home/manage-church/' + igreja.id_igreja + '/members'">
+                    </div>
+                    <div class="card-info-content">
+                        <h6 class="card-title">Acervo de músicas</h6>
+                        <p class="card-description">Cifras, letras, tons e repertórios do ministério.</p>
+                    </div>
+                    <div class="card-arrow-action">
+                        <span class="material-icons">chevron_right</span>
+                    </div>
+                </router-link>
+
+                <!-- Members -->
+                <router-link :to="'/home/manage-church/' + igreja.id_igreja + '/members'" class="church-action-card">
+                    <div class="card-icon-box icon-members">
                         <span class="material-icons">group</span>
-                        <span>{{ canManageMembers ?"Gerenciar" : "Ver" }} membros</span>
-                    </router-link>
-                </div>
-                <div class="church-action">
-                    <router-link :to="'/home/manage-church/' + igreja.id_igreja + '/events'">
+                    </div>
+                    <div class="card-info-content">
+                        <h6 class="card-title">{{ canManageMembers ? "Gerenciar" : "Ver" }} membros</h6>
+                        <p class="card-description">Gerenciamento de integrantes, funções e permissões.</p>
+                    </div>
+                    <div class="card-arrow-action">
+                        <span class="material-icons">chevron_right</span>
+                    </div>
+                </router-link>
+
+                <!-- Calendar / Services -->
+                <router-link :to="'/home/manage-church/' + igreja.id_igreja + '/events'" class="church-action-card">
+                    <div class="card-icon-box icon-events">
                         <span class="material-icons">event</span>
-                        <span>Calendário de cultos</span>
-                    </router-link>
-                </div>
-                <div class="church-action" v-if="canConfigureChurch">
-                    <router-link :to="'/home/manage-church/' + igreja.id_igreja + '/config'">
+                    </div>
+                    <div class="card-info-content">
+                        <h6 class="card-title">Calendário de cultos</h6>
+                        <p class="card-description">Ensaios, escalas de cultos e eventos agendados.</p>
+                    </div>
+                    <div class="card-arrow-action">
+                        <span class="material-icons">chevron_right</span>
+                    </div>
+                </router-link>
+
+                <!-- Settings (Conditional) -->
+                <router-link v-if="canConfigureChurch" :to="'/home/manage-church/' + igreja.id_igreja + '/config'" class="church-action-card">
+                    <div class="card-icon-box icon-config">
                         <span class="material-icons">settings</span>
-                        <span>Configurações da igreja</span>
-                    </router-link>
-                </div>
+                    </div>
+                    <div class="card-info-content">
+                        <h6 class="card-title">Configurações da igreja</h6>
+                        <p class="card-description">Ajuste de funções, permissões gerais e tags de membros.</p>
+                    </div>
+                    <div class="card-arrow-action">
+                        <span class="material-icons">chevron_right</span>
+                    </div>
+                </router-link>
             </div>
-            <div class="warnings">
-                <h5>Avisos</h5>
+
+            <!-- Warnings/Announcements Card -->
+            <div class="warnings-card-wrapper">
+                <div class="warnings-header-box">
+                    <div class="warnings-icon-badge">
+                        <span class="material-icons">campaign</span>
+                    </div>
+                    <h5 class="warnings-title">Avisos e Comunicados</h5>
+                </div>
                 <commentsComponent type="aviso" :can-create-thread="canCreateWarnings" :can-manage-thread="canManageWarnings"></commentsComponent>
             </div>
         </div>
@@ -118,46 +164,324 @@ export default {
 }
 </script>
 <style scoped>
-.church-action {
-    background: var(--primary-primary-blue-medium);
+.manage-church {
+    padding-bottom: 2rem;
+    animation: fadeIn var(--transition-normal);
+}
+
+.manage-container {
     display: flex;
     flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* Profile Card Styling */
+.church-profile-card {
+    background: linear-gradient(135deg, rgba(24, 21, 56, 0.45), rgba(63, 57, 161, 0.12));
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    box-shadow: var(--card-shadow);
+    backdrop-filter: var(--glass-blur);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.church-profile-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 150px;
+    height: 150px;
+    background: radial-gradient(circle, rgba(56, 182, 255, 0.08) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.avatar-wrapper {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.church-avatar-img {
+    width: 80px;
+    height: 80px;
+    border-radius: var(--radius-pill);
+    object-fit: cover;
+    border: 3px solid var(--secondary-blue-soft);
+    box-shadow: 0 0 20px rgba(56, 182, 255, 0.25);
+    transition: transform var(--transition-fast);
+}
+
+.church-avatar-img:hover {
+    transform: scale(1.05);
+}
+
+.church-info-details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.church-label {
+    font-size: var(--font-size-6);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--secondary-blue-soft);
+    font-weight: 700;
+}
+
+.church-name {
+    margin: 0;
+    font-size: var(--font-size-2);
+    font-weight: 800;
+    color: var(--neutral-white);
+    letter-spacing: -0.5px;
+}
+
+.church-stats {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 2px;
+}
+
+.members-pill {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-pill);
+    padding: 4px 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: var(--font-size-5);
+    color: var(--neutral-gray-medium);
+    font-weight: 500;
+}
+
+.members-pill .material-icons {
+    font-size: 14px;
+    color: var(--secondary-blue-soft);
+}
+
+/* Actions Grid Layout */
+.actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+/* Premium Dashboard Card */
+.church-action-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    cursor: pointer;
+    text-decoration: none;
+    color: var(--neutral-white) !important;
+    transition: all var(--transition-fast);
+    box-shadow: var(--card-shadow);
+    backdrop-filter: var(--glass-blur);
+    position: relative;
+    overflow: hidden;
+}
+
+.church-action-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.02), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+}
+
+.church-action-card:hover::after {
+    transform: translateX(100%);
+}
+
+.church-action-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 12px 36px 0 rgba(0, 0, 0, 0.45);
+    background: rgba(24, 21, 56, 0.85);
+}
+
+/* Card Icon Box */
+.card-icon-box {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-md);
+    display: flex;
     align-items: center;
     justify-content: center;
-    width: 120px;
-    height: 120px;
-    border-radius: 10px;
-    cursor: pointer;
-    text-align: center;
-    margin: 1rem;
-    padding: 1rem;
+    flex-shrink: 0;
+    transition: transform var(--transition-fast);
 }
 
-    .church-action span:first-child {
-        font-size: var(--font-size-h2);
-    }
+.church-action-card:hover .card-icon-box {
+    transform: scale(1.1);
+}
 
-    .church-action a {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-    }
+/* Themed Icon Boxes */
+.icon-musics {
+    background: rgba(56, 182, 255, 0.1);
+    border: 1px solid rgba(56, 182, 255, 0.2);
+    color: var(--secondary-blue-soft);
+}
 
-.church-actions-container {
+.icon-members {
+    background: rgba(148, 196, 137, 0.1);
+    border: 1px solid rgba(148, 196, 137, 0.2);
+    color: var(--tertiary-tertiary-green-high);
+}
+
+.icon-events {
+    background: rgba(255, 200, 44, 0.1);
+    border: 1px solid rgba(255, 200, 44, 0.2);
+    color: var(--others-yellow);
+}
+
+.icon-config {
+    background: rgba(63, 57, 161, 0.15);
+    border: 1px solid rgba(63, 57, 161, 0.3);
+    color: var(--primary-primary-blue-high-2);
+}
+
+.card-icon-box .material-icons {
+    font-size: 26px;
+}
+
+/* Card Texts */
+.card-info-content {
+    flex-grow: 1;
     display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
+    flex-direction: column;
+    gap: 4px;
 }
 
-@media (max-width: 372px) {
-    .church-action {
-        width: 105px;
-        height: 105px;
-        margin: .5rem;
-    }
+.card-title {
+    font-size: var(--font-size-4);
+    font-weight: 700;
+    color: var(--neutral-white);
+    margin: 0;
+}
 
-        .church-action span:first-child {
-            font-size: var(--font-size-h4);
-        }
+.card-description {
+    font-size: var(--font-size-5);
+    color: var(--neutral-gray-medium);
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Card Arrow */
+.card-arrow-action {
+    color: var(--neutral-gray-low);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform var(--transition-fast), color var(--transition-fast);
+}
+
+.church-action-card:hover .card-arrow-action {
+    transform: translateX(4px);
+    color: var(--secondary-blue-soft);
+}
+
+.card-arrow-action .material-icons {
+    font-size: 20px;
+}
+
+/* Warnings Card Styling */
+.warnings-card-wrapper {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    box-shadow: var(--card-shadow);
+    backdrop-filter: var(--glass-blur);
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+
+.warnings-header-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding-bottom: 12px;
+}
+
+.warnings-icon-badge {
+    background: rgba(255, 200, 44, 0.1);
+    border: 1px solid rgba(255, 200, 44, 0.2);
+    color: var(--others-yellow);
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-pill);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.warnings-icon-badge .material-icons {
+    font-size: 20px;
+}
+
+.warnings-title {
+    font-size: var(--font-size-4);
+    font-weight: 800;
+    margin: 0;
+    color: var(--neutral-white);
+}
+
+/* Mobile optimizations */
+@media (max-width: 576px) {
+    .church-profile-card {
+        padding: 16px;
+        gap: 14px;
+    }
+    
+    .church-avatar-img {
+        width: 64px;
+        height: 64px;
+    }
+    
+    .church-name {
+        font-size: var(--font-size-3);
+    }
+    
+    .church-action-card {
+        padding: 16px;
+        gap: 12px;
+    }
+    
+    .card-icon-box {
+        width: 42px;
+        height: 42px;
+    }
+    
+    .card-icon-box .material-icons {
+        font-size: 22px;
+    }
+    
+    .card-title {
+        font-size: var(--font-size-h5);
+    }
+    
+    .card-description {
+        font-size: 11px;
+    }
+    
+    .warnings-card-wrapper {
+        padding: 16px;
+    }
 }
 </style>

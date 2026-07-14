@@ -1,5 +1,15 @@
 <template>
     <div class="warnings-wrapper">
+        <!-- Criar Aviso/Comentário Principal (Moved to top) -->
+        <div class="create-warning" v-if="canCreate">
+            <div class="personalized-input">
+                <form action="sendWarning" @submit.prevent="createNewWarning(null)">
+                    <input type="text" name="warning" :placeholder="inputPlaceholder" id="send-warning" maxlength="100" required autocomplete="off">
+                    <button type="submit" class="material-icons btn-empty" id="send-warning-button">send</button>
+                </form>
+            </div>
+        </div>
+
         <div class="warnings-list">
             <div class="warning-container" v-for="(warning, index) in groupedWarnings" v-bind:key="index">
                 <!-- Comentário/Aviso Pai -->
@@ -136,16 +146,6 @@
                 <span class="material-icons empty-icon">campaign</span>
                 <h5>Nenhum aviso publicado</h5>
                 <p>Acompanhe os comunicados importantes por aqui.</p>
-            </div>
-        </div>
-
-        <!-- Criar Aviso/Comentário Principal -->
-        <div class="create-warning" v-if="canCreate">
-            <div class="personalized-input">
-                <form action="sendWarning" @submit.prevent="createNewWarning(null)">
-                    <input type="text" name="warning" :placeholder="inputPlaceholder" id="send-warning" maxlength="100" required autocomplete="off">
-                    <button type="submit" class="material-icons btn-empty" id="send-warning-button">send</button>
-                </form>
             </div>
         </div>
         <Transition name="modal-fade">
@@ -295,10 +295,13 @@ export default {
                     if (parentId) {
                         self.replyText = "";
                         self.activeReplyId = null;
+                        self.returnWarnings().then(() => {
+                            self.scrollToBottom();
+                        });
                     } else {
                         $("#send-warning").val("");
+                        self.returnWarnings();
                     }
-                    self.returnWarnings();
                 })
                 .catch(function (error) {
                     console.log(error);
@@ -309,7 +312,7 @@ export default {
             let churchId = this.getCurrentChurchId();
 
             if ((this.type == "aviso" || this.type == "evento") && churchId == null) {
-                return;
+                return Promise.resolve();
             }
 
             let data = {
@@ -318,7 +321,7 @@ export default {
                 id_evento: this.id_evento ? Number(this.id_evento) : undefined
             }
 
-            api.post(self.returnPath, data)
+            return api.post(self.returnPath, data)
                 .then(function (response) {
                     self.warnings = response.data.returnObj || [];
                 })
@@ -479,6 +482,17 @@ export default {
             }).catch((error) => {
                 console.log(error);
             });
+        },
+        scrollToBottom: function () {
+            this.$nextTick(() => {
+                const container = document.querySelector('.inner-container');
+                if (container) {
+                    container.scrollTo({
+                        top: container.scrollHeight,
+                        behavior: 'smooth'
+                    });
+                }
+            });
         }
     },
     mounted: function () {
@@ -494,7 +508,7 @@ export default {
 .warnings-wrapper {
   margin-top: 1rem;
   color: var(--neutral-white);
-  padding-bottom: 7rem;
+  padding-bottom: 1rem;
   position: relative;
   display: flex;
   flex-direction: column;
@@ -695,7 +709,7 @@ export default {
 /* --- CRIAR AVISO PRINCIPAL --- */
 .create-warning {
   width: 100%;
-  margin-top: 1rem;
+  margin-bottom: 1.5rem;
 }
 
 .personalized-input {

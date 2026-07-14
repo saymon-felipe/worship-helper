@@ -180,16 +180,18 @@
         </form>
 
         <!-- Modal Superior Lightbox de Preview do YouTube -->
-        <div class="youtube-preview-modal-wrapper" v-if="modalPreviewVideoId" @click="closeModalPreview()">
-            <div class="youtube-preview-modal-content" @click.stop>
-                <button type="button" class="btn-close-preview-modal" @click="closeModalPreview()">
-                    <span class="material-icons">close</span>
-                </button>
-                <div class="iframe-modal-aspect">
-                    <iframe :src="'https://www.youtube.com/embed/' + modalPreviewVideoId + '?autoplay=1'" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        <Teleport to="body">
+            <div class="youtube-preview-modal-wrapper" v-if="modalPreviewVideoId" @click="closeModalPreview()">
+                <div class="youtube-preview-modal-content" @click.stop>
+                    <button type="button" class="btn-close-preview-modal" @click="closeModalPreview()">
+                        <span class="material-icons">close</span>
+                    </button>
+                    <div class="iframe-modal-aspect">
+                        <iframe :src="'https://www.youtube.com/embed/' + modalPreviewVideoId + '?autoplay=1'" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    </div>
                 </div>
             </div>
-        </div>
+        </Teleport>
     </div>
 </template>
 

@@ -5,7 +5,7 @@
                 <h3>Membros da Igreja</h3>
                 <p class="subtitle">{{ membersSubtitle }}</p>
             </div>
-            <button class="add-member-btn" v-on:click="addMember()" v-if="canManageChurch" title="Convidar novo membro">
+            <button class="add-member-btn" v-on:click="addMember()" v-if="canInviteMembers" title="Convidar novo membro">
                 <span class="material-icons">person_add</span>
             </button>
         </div>
@@ -15,7 +15,7 @@
             <input type="text" name="search_member" id="search-member" v-model="findUsers" placeholder="Buscar membros pelo nome...">
         </div>
 
-        <section class="pending-invites-section" v-if="canManageChurch && pendingInvitesList.length > 0">
+        <section class="pending-invites-section" v-if="canInviteMembers && pendingInvitesList.length > 0">
             <div class="pending-invites-header">
                 <div>
                     <h4>Convites pendentes</h4>
@@ -62,22 +62,22 @@
                             <span class="member-tag-chip">{{ member.tag_usuario[0].nome_tag }}</span>
                         </div>
                     </div>
-                    <button class="more-actions-btn" v-on:click.stop="openMemberMoreActions(member.id_usuario)" v-if="canManageChurch" title="Opções do membro">
+                    <button class="more-actions-btn" v-on:click.stop="openMemberMoreActions(member.id_usuario)" v-if="canOpenMemberActions" title="Opções do membro">
                         <span class="material-icons">more_vert</span>
                     </button>
                 </div>
 
-                <div class="member-more-actions" v-if="canManageChurch">
+                <div class="member-more-actions" v-if="canOpenMemberActions">
                     <ul>
-                        <li v-on:click="addTagFunction(member)">
+                        <li v-on:click="addTagFunction(member)" v-if="canChangeMemberTags">
                             <span class="material-icons action-icon">local_offer</span>
                             <span>Atribuir tag</span>
                         </li>
-                        <li v-on:click="addOccupationFunction(member)">
+                        <li v-on:click="addOccupationFunction(member)" v-if="canChangeMemberRoles">
                             <span class="material-icons action-icon">work_outline</span>
                             <span>Atribuir função</span>
                         </li>
-                        <li v-on:click="removeMemberFunction(member)" class="danger-action">
+                        <li v-on:click="removeMemberFunction(member)" class="danger-action" v-if="canRemoveMembers">
                             <span class="material-icons action-icon danger-icon">person_remove</span>
                             <span>Remover membro</span>
                         </li>
@@ -95,16 +95,16 @@
         <div class="member-more-actions-wrapper" v-if="showMemberMoreActions" v-on:click="closeMemberMoreActions()"></div>
 
         <Transition name="modal-fade">
-            <modal v-if="showModal && canManageChurch" :title="modalTitle" @closeModal="close_modal()" class="modal" @cancelEvent="cancelChanges()" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm()" :disabled="isLoading">
-                <inviteMemberModalContent v-if="inviteMember" @success="handleInviteSuccess()" @loading="isLoading = $event" />
-                <addTagModalContent v-if="addTag" :member="selected_member" @success="handleMembersChanged()" />
-                <addFunctionModalContent v-if="addOccupation" :member="selected_member" @success="handleMembersChanged()" />
-                <removeMemberModalContent v-if="removeMember" :member="selected_member" @success="handleMembersChanged()" />
+            <modal v-if="showModal && canUseCurrentModal" :title="modalTitle" @closeModal="close_modal()" class="modal" @cancelEvent="cancelChanges()" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm()" :disabled="isLoading">
+                <inviteMemberModalContent v-if="inviteMember && canInviteMembers" @success="handleInviteSuccess()" @loading="isLoading = $event" />
+                <addTagModalContent v-if="addTag && canChangeMemberTags" :member="selected_member" @success="handleMembersChanged()" />
+                <addFunctionModalContent v-if="addOccupation && canChangeMemberRoles" :member="selected_member" @success="handleMembersChanged()" />
+                <removeMemberModalContent v-if="removeMember && canRemoveMembers" :member="selected_member" @success="handleMembersChanged()" />
             </modal>
         </Transition>
 
         <Transition name="modal-fade">
-            <modal v-if="showConfirmDeleteInvite && canManageChurch" title="Excluir Convite" @closeModal="showConfirmDeleteInvite = false" class="modal" @cancelEvent="showConfirmDeleteInvite = false" button2Title="Não, cancelar" buttonTitle="Sim, excluir" @submitEvent="submitDeleteInvite()">
+            <modal v-if="showConfirmDeleteInvite && canInviteMembers" title="Excluir Convite" @closeModal="showConfirmDeleteInvite = false" class="modal" @cancelEvent="showConfirmDeleteInvite = false" button2Title="Não, cancelar" buttonTitle="Sim, excluir" @submitEvent="submitDeleteInvite()">
                 <div class="confirm-delete-box">
                     <p class="warning-text">Tem certeza que deseja excluir este convite?</p>
                     <p>O convite enviado para o e-mail <strong>{{ selectedInviteToDelete?.email_usuario }}</strong> será invalidado.</p>
@@ -141,6 +141,10 @@ export default {
             copy_members: [],
             pendingInvites: [],
             canManageChurch: false,
+            canInviteMembers: false,
+            canRemoveMembers: false,
+            canChangeMemberRoles: false,
+            canChangeMemberTags: false,
             loadingMembers: false,
             default_avatar: api.defaults.baseURL + "/public/user-default-image.png",
             showConfirmDeleteInvite: false,
@@ -158,6 +162,16 @@ export default {
             const count = this.membersList.length;
             const suffix = count === 1 ? "cadastrado" : "cadastrados";
             return `${this.returnMembersText(count)} ${suffix}`;
+        },
+        canOpenMemberActions: function () {
+            return this.canRemoveMembers || this.canChangeMemberRoles || this.canChangeMemberTags;
+        },
+        canUseCurrentModal: function () {
+            if (this.inviteMember) return this.canInviteMembers;
+            if (this.addTag) return this.canChangeMemberTags;
+            if (this.addOccupation) return this.canChangeMemberRoles;
+            if (this.removeMember) return this.canRemoveMembers;
+            return false;
         }
     },
     components: {
@@ -253,30 +267,43 @@ export default {
         fillCopyUsers: function () {
             this.copy_members = this.getSourceMembers();
         },
+        updateMemberPermissions: function () {
+            this.canManageChurch = this.haveAdminPermission || this.haveAppPermission || this.hasChurchPermission("members.manage");
+            this.canInviteMembers = this.haveAdminPermission || this.haveAppPermission || this.hasChurchPermission("members.invite");
+            this.canRemoveMembers = this.haveAdminPermission || this.haveAppPermission || this.hasChurchPermission("members.remove");
+            this.canChangeMemberRoles = this.haveAdminPermission || this.haveAppPermission || this.hasChurchPermission("members.roles");
+            this.canChangeMemberTags = this.haveAdminPermission || this.haveAppPermission || this.hasChurchPermission("members.tags");
+        },
         loadChurchPermission: function (churchId) {
             const currentChurch = this.getCurrentChurchInLocalStorage();
             const cachedAdmin = currentChurch ? currentChurch.administrador : null;
             const hasCachedPermission = typeof cachedAdmin === "boolean" || cachedAdmin === 0 || cachedAdmin === 1 || cachedAdmin === "0" || cachedAdmin === "1";
 
-            if (currentChurch && currentChurch.id_igreja == churchId && hasCachedPermission) {
+            if (currentChurch && currentChurch.id_igreja == churchId && hasCachedPermission && (cachedAdmin === true || cachedAdmin === 1 || cachedAdmin === "1")) {
                 this.canManageChurch = cachedAdmin === true || cachedAdmin === 1 || cachedAdmin === "1";
                 appStore.setChurchPermission({
                     administrador: this.canManageChurch,
-                    apenas_membro: !this.canManageChurch
+                    apenas_membro: !this.canManageChurch,
+                    permissions: []
                 });
+                this.updateMemberPermissions();
                 return Promise.resolve(this.canManageChurch);
             }
 
             return api.post("/igreja/permissao", { id_igreja: churchId })
                 .then((response) => {
                     const permission = response.data.returnObj || {};
-                    this.canManageChurch = permission.administrador == 1 || permission.administrador === true;
                     appStore.setChurchPermission(permission);
+                    this.updateMemberPermissions();
                     return this.canManageChurch;
                 })
                 .catch((error) => {
                     console.log(error);
                     this.canManageChurch = false;
+                    this.canInviteMembers = false;
+                    this.canRemoveMembers = false;
+                    this.canChangeMemberRoles = false;
+                    this.canChangeMemberTags = false;
                     return false;
                 });
         },
@@ -321,7 +348,7 @@ export default {
         },
         returnPendingInvites: function () {
             const churchId = this.getCurrentChurchId();
-            if (!churchId || !this.canManageChurch) {
+            if (!churchId || !this.canInviteMembers) {
                 this.pendingInvites = [];
                 return Promise.resolve();
             }

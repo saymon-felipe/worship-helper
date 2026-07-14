@@ -10,13 +10,12 @@
             </div>
             <span class="material-icons select-arrow">expand_more</span>
         </div>
-        <div class="select-list" v-if="showSelect" :style="menuStyle">
+        <div class="select-list" v-if="showSelect">
             <div class="option" v-for="(item, index) in items" :key="index" :value="item.id" v-on:click="selectItem(item)">
                 <span>{{ item.nome }}</span>
                 <span class="material-icons option-check" v-if="isSelected(item)">check</span>
             </div>
         </div>
-        <div class="select-wrapper" v-if="showSelect" v-on:click="closeSelect()"></div>
     </div>
 </template>
 <script>
@@ -26,32 +25,15 @@ export default {
     data() {
         return {
             selectedItems: [],
-            showSelect: false,
-            menuStyle: {}
+            showSelect: false
         }
     },
     methods: {
         isSelected: function (item) {
             return this.selectedItems.some((selectedItem) => selectedItem.id === item.id);
         },
-        updateMenuPosition: function () {
-            this.$nextTick(() => {
-                if (!this.$refs.selectInput) return;
-
-                const rect = this.$refs.selectInput.getBoundingClientRect();
-                this.menuStyle = {
-                    top: `${rect.bottom + 8}px`,
-                    left: `${rect.left}px`,
-                    width: `${rect.width}px`
-                };
-            });
-        },
         toggleSelect: function () {
-            this.showSelect ? this.closeSelect() : this.openSelect();
-        },
-        openSelect: function () {
-            this.showSelect = true;
-            this.updateMenuPosition();
+            this.showSelect = !this.showSelect;
         },
         closeSelect: function () {
             this.showSelect = false;
@@ -71,36 +53,31 @@ export default {
         removeItem: function (item) {
             this.selectedItems = this.selectedItems.filter(obj => obj.id != item.id);
             this.$emit("selectedItems", this.selectedItems);
+        },
+        documentClick: function (e) {
+            if (this.showSelect) {
+                const el = this.$el;
+                if (el && !el.contains(e.target)) {
+                    this.closeSelect();
+                }
+            }
         }
     },
     mounted: function () {
-        window.addEventListener("resize", this.updateMenuPosition);
-        window.addEventListener("scroll", this.updateMenuPosition, true);
+        document.addEventListener("click", this.documentClick);
     },
     beforeUnmount: function () {
-        window.removeEventListener("resize", this.updateMenuPosition);
-        window.removeEventListener("scroll", this.updateMenuPosition, true);
+        document.removeEventListener("click", this.documentClick);
     }
 }
 </script>
 <style scoped>
-.select-wrapper {
-    position: fixed;
-    width: 100vw;
-    height: 100vh;
-    top: 0;
-    left: 0;
-    z-index: 9997;
-}
-
 .select-multiple {
     position: relative;
     z-index: 20;
 }
 
 .selected-items {
-    position: relative;
-    z-index: 9999;
     display: flex;
     align-items: center;
     max-width: 90%;
@@ -122,14 +99,14 @@ export default {
     font-weight: 700;
 }
 
-    .selected-item span:first-child {
-        margin-right: 3px;
-    }
+.selected-item span:first-child {
+    margin-right: 3px;
+}
 
-    .selected-item .material-icons {
-        font-size: 16px;
-        cursor: pointer;
-    }
+.selected-item .material-icons {
+    font-size: 16px;
+    cursor: pointer;
+}
 
 .placeholder {
     color: var(--neutral-gray-low);
@@ -137,7 +114,10 @@ export default {
 }
 
 .select-list {
-    position: fixed;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    width: 100%;
     background: var(--primary-bg-light);
     color: var(--neutral-white);
     border: 1px solid var(--card-border);
@@ -163,10 +143,10 @@ export default {
     transition: background var(--transition-fast), color var(--transition-fast);
 }
 
-    .option:hover {
-        background: var(--secondary-blue-soft-2);
-        color: var(--neutral-white);
-    }
+.option:hover {
+    background: var(--secondary-blue-soft-2);
+    color: var(--neutral-white);
+}
 
 .option-check {
     color: var(--secondary-blue-soft);

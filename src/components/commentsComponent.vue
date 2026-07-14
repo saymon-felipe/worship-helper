@@ -386,21 +386,27 @@ export default {
             if (!warning || !warning.criador) {
                 return false;
             }
+            if (this.type === "aviso") {
+                return this.hasChurchPermission("warnings.edit");
+            }
             const isOwner = this.user && Number(this.user.id_usuario) === Number(warning.criador.id_usuario);
             if (isOwner) {
                 return true;
             }
-            return this.type === "aviso" && this.hasChurchPermission("warnings.edit");
+            return false;
         },
         canDelete: function (warning) {
             if (!warning || !warning.criador) {
                 return false;
             }
+            if (this.type === "aviso") {
+                return this.hasChurchPermission("warnings.delete");
+            }
             const isOwner = this.user && Number(this.user.id_usuario) === Number(warning.criador.id_usuario);
             if (isOwner) {
                 return true;
             }
-            return this.type === "aviso" && this.hasChurchPermission("warnings.delete");
+            return false;
         },
         updateWarning: function () {
             if (!this.editingWarningId || !this.editingWarningText.trim()) {

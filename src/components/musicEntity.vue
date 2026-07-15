@@ -107,6 +107,9 @@ export default {
         hasEventContext: function () {
             return Number(this.event_id) > 0;
         },
+        hasLibraryContext: function () {
+            return this.$route.query.source === "library";
+        },
         canCommentEventMusic: function () {
             if (!this.hasEventContext) {
                 return true;
@@ -125,7 +128,7 @@ export default {
             return members.some((member) => member.id_usuario == userId);
         },
         canDeleteMusic: function () {
-            return this.haveAppPermission || this.hasChurchPermission("music.delete");
+            return !this.hasEventContext && this.hasLibraryContext && (this.haveAppPermission || this.hasChurchPermission("music.delete"));
         }
     },
     components: {

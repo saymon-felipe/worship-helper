@@ -78,7 +78,7 @@
         </div>
 
         <div class="music-list" v-if="filteredMusics.length > 0">
-            <musicComponent v-for="(music, index) in filteredMusics" :key="index" :music="music"></musicComponent>
+            <musicComponent v-for="(music, index) in filteredMusics" :key="index" :music="music" detail-source="library"></musicComponent>
         </div>
         <div class="musics-empty-state" v-else>
             <span class="material-icons empty-icon">library_music</span>

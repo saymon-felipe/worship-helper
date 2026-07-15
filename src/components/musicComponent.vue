@@ -23,7 +23,7 @@ import $ from 'jquery';
 
 export default {
     name: "musicComponent",
-    props: ["music", "library", "clicktype", "allowremove"],
+    props: ["music", "library", "clicktype", "allowremove", "detailSource"],
     data() {
         return {
             default_music_image: api.defaults.baseURL + "/public/music-default-image.png"
@@ -46,7 +46,17 @@ export default {
                     break;
                 case undefined:
                     if (this.library != "true") {
-                        this.$router.push('/home/musics/' + this.music.id);
+                        const route = {
+                            path: '/home/musics/' + this.music.id
+                        };
+
+                        if (this.detailSource) {
+                            route.query = {
+                                source: this.detailSource
+                            };
+                        }
+
+                        this.$router.push(route);
                     }
                     break;
             }

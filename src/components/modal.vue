@@ -21,10 +21,30 @@
 export default {
     name: "modal",
     props: ['title', 'buttonTitle', 'button2Title', 'disabled'],
+    data() {
+        return {
+            hasPushState: false
+        };
+    },
+    mounted() {
+        if (!this.hasPushState) {
+            window.history.pushState({ genericModalOpen: true }, "");
+            this.hasPushState = true;
+        }
+        window.addEventListener("popstate", this.handlePopState);
+    },
     methods: {
+        handlePopState() {
+            this.hasPushState = false;
+            this.closeModal();
+        },
         closeModal: function () {
             if (this.disabled) return;
-            this.$emit("closeModal");
+            if (this.hasPushState) {
+                window.history.back();
+            } else {
+                this.$emit("closeModal");
+            }
         },
         emitSubmitEvent: function () {
             if (this.disabled) return;
@@ -33,7 +53,17 @@ export default {
         emitCancelEvent: function () {
             if (this.disabled) return;
             this.$emit("cancelEvent");
+        },
+        cleanupPopState() {
+            window.removeEventListener("popstate", this.handlePopState);
+            if (this.hasPushState) {
+                this.hasPushState = false;
+                window.history.back();
+            }
         }
+    },
+    beforeUnmount() {
+        this.cleanupPopState();
     }
 }
 </script>

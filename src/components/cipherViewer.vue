@@ -52,7 +52,16 @@
             </button>
         </div>
 
-        <div class="cipher-content" v-if="cipherText">
+        <div 
+            class="cipher-content" 
+            v-if="cipherText" 
+            @scroll="handleScroll"
+            @touchstart="handleTouchStart"
+            @touchend="handleTouchEnd"
+            @touchcancel="handleTouchEnd"
+            @mousedown="handleMouseDown"
+            @wheel="handleWheel"
+        >
             <pre><template v-for="(line, index) in renderedLines" :key="index"><span :class="{ 'chord-line': line.isChordLine }">{{ line.text }}</span>
 </template></pre>
         </div>
@@ -62,10 +71,68 @@
             <h5>Cifra não disponível</h5>
             <p>Essa música ainda não tem uma cifra salva no app.</p>
         </div>
+
+        <!-- Floating Auto Scroll Button -->
+        <button 
+            v-if="cipherText"
+            type="button" 
+            class="floating-scroll-btn"
+            :class="{ 'scrolling-active': autoScrollActive || isAtBottom }"
+            :style="{ top: scrollBtnY + 'px', left: scrollBtnX + 'px' }"
+            @mousedown="startDragBtn"
+            @touchstart="startDragBtn"
+            title="Rolagem Automática"
+        >
+            <span class="material-icons">
+                {{ isAtBottom ? 'replay' : (autoScrollActive ? 'pause' : 'expand_more') }}
+            </span>
+        </button>
+
+        <!-- Bottom Speed Selector Panel -->
+        <Transition name="slide-up">
+            <div class="scroll-speed-panel" v-if="showScrollPanel">
+                <div class="panel-header">
+                    <h6>Rolagem Automática</h6>
+                    <button class="panel-close-btn" @click="showScrollPanel = false">
+                        <span class="material-icons">close</span>
+                    </button>
+                </div>
+                
+                <div class="panel-body">
+                    <button 
+                        type="button" 
+                        class="play-pause-btn" 
+                        :class="{ 'is-playing': autoScrollActive && !isAtBottom }"
+                        @click="toggleAutoScroll"
+                    >
+                        <span class="material-icons">
+                            {{ isAtBottom ? 'replay' : (autoScrollActive ? 'pause' : 'play_arrow') }}
+                        </span>
+                    </button>
+
+                    <div class="speed-selector-wrapper">
+                        <div class="slider-container">
+                            <custom-range 
+                                :min="1" 
+                                :max="100" 
+                                v-model="scrollSpeedValue"
+                            />
+                            <div class="slider-labels">
+                                <span>Lento</span>
+                                <span>Normal</span>
+                                <span>Rápido</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </Transition>
     </div>
 </template>
 
 <script>
+import customRange from "./customRange.vue";
+
 const NOTES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 const FLATS = {
     Db: "C#",
@@ -102,6 +169,9 @@ function isChordToken(token) {
 
 export default {
     name: "cipherViewer",
+    components: {
+        customRange
+    },
     props: {
         cipherText: {
             type: String,
@@ -138,7 +208,17 @@ export default {
     },
     data() {
         return {
-            transposeSteps: 0
+            transposeSteps: 0,
+            autoScrollActive: false,
+            isAutoScrollPaused: false,
+            scrollSpeedValue: 50,
+            showScrollPanel: false,
+            isDraggingBtn: false,
+            scrollBtnX: 0,
+            scrollBtnY: 0,
+            isProgrammaticScroll: false,
+            currentScrollTop: 0,
+            isAtBottom: false
         }
     },
     computed: {
@@ -194,6 +274,15 @@ export default {
             };
 
             return clean(this.selectedToneName) === clean(this.targetTone);
+        },
+
+        scrollSpeedPxPerMs() {
+            const val = this.scrollSpeedValue;
+            if (val <= 50) {
+                return 0.01 + (0.05 - 0.01) * ((val - 1) / 49);
+            } else {
+                return 0.05 + (0.20 - 0.05) * ((val - 50) / 50);
+            }
         }
     },
     methods: {
@@ -327,6 +416,184 @@ export default {
                 }
             }
             return "";
+        },
+        toggleAutoScroll() {
+            if (this.isAtBottom) {
+                const container = this.$el.querySelector(".cipher-content");
+                if (container) {
+                    container.scrollTop = 0;
+                    this.currentScrollTop = 0;
+                }
+                this.isAtBottom = false;
+                this.startAutoScroll();
+            } else if (this.autoScrollActive) {
+                this.stopAutoScroll();
+            } else {
+                this.startAutoScroll();
+            }
+        },
+        startAutoScroll() {
+            this.stopAutoScroll();
+            this.autoScrollActive = true;
+            this.isAutoScrollPaused = false;
+            this.isAtBottom = false;
+            this.lastScrollTime = performance.now();
+            
+            const container = this.$el.querySelector(".cipher-content");
+            if (!container) return;
+            
+            this.currentScrollTop = container.scrollTop;
+
+            const scrollFrame = (timestamp) => {
+                if (!this.autoScrollActive) return;
+
+                const elapsed = timestamp - this.lastScrollTime;
+                this.lastScrollTime = timestamp;
+
+                if (!this.isAutoScrollPaused) {
+                    const speedPxPerMs = this.scrollSpeedPxPerMs;
+                    const delta = elapsed * speedPxPerMs;
+                    
+                    this.currentScrollTop += delta;
+                    
+                    if (this.currentScrollTop + container.clientHeight >= container.scrollHeight - 1) {
+                        this.stopAutoScroll();
+                        this.isAtBottom = true;
+                        return;
+                    }
+
+                    this.isProgrammaticScroll = true;
+                    container.scrollTop = this.currentScrollTop;
+                    
+                    window.requestAnimationFrame(() => {
+                        this.isProgrammaticScroll = false;
+                    });
+                }
+
+                this.scrollFrameId = requestAnimationFrame(scrollFrame);
+            };
+
+            this.scrollFrameId = requestAnimationFrame(scrollFrame);
+        },
+        stopAutoScroll() {
+            this.autoScrollActive = false;
+            if (this.scrollFrameId) {
+                cancelAnimationFrame(this.scrollFrameId);
+                this.scrollFrameId = null;
+            }
+            if (this.resumeTimer) {
+                clearTimeout(this.resumeTimer);
+                this.resumeTimer = null;
+            }
+        },
+        handleScroll() {
+            const container = this.$el.querySelector(".cipher-content");
+            if (container) {
+                const atBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 5;
+                this.isAtBottom = atBottom;
+            }
+            
+            if (this.isProgrammaticScroll || !this.autoScrollActive) {
+                return;
+            }
+            this.isAutoScrollPaused = true;
+            this.startResumeTimer();
+        },
+        handleTouchStart() {
+            if (!this.autoScrollActive) return;
+            this.isAutoScrollPaused = true;
+            clearTimeout(this.resumeTimer);
+        },
+        handleTouchEnd() {
+            if (!this.autoScrollActive) return;
+            this.startResumeTimer();
+        },
+        handleMouseDown(event) {
+            if (!this.autoScrollActive) return;
+            if (event.button !== 0) return; // Only trigger for left clicks
+            
+            this.isAutoScrollPaused = true;
+            clearTimeout(this.resumeTimer);
+            
+            const onMouseUp = () => {
+                window.removeEventListener("mouseup", onMouseUp);
+                this.startResumeTimer();
+            };
+            window.addEventListener("mouseup", onMouseUp);
+        },
+        handleWheel() {
+            if (!this.autoScrollActive) return;
+            this.isAutoScrollPaused = true;
+            clearTimeout(this.resumeTimer);
+            this.startResumeTimer();
+        },
+        startResumeTimer() {
+            clearTimeout(this.resumeTimer);
+            this.resumeTimer = setTimeout(() => {
+                const container = this.$el.querySelector(".cipher-content");
+                if (container) {
+                    this.currentScrollTop = container.scrollTop;
+                }
+                this.isAutoScrollPaused = false;
+                this.lastScrollTime = performance.now();
+            }, 800);
+        },
+        startDragBtn(event) {
+            event.preventDefault();
+            this.isDraggingBtn = false;
+            
+            const clientX = event.type === 'touchstart' ? event.touches[0].clientX : event.clientX;
+            const clientY = event.type === 'touchstart' ? event.touches[0].clientY : event.clientY;
+            
+            const startX = this.scrollBtnX;
+            const startY = this.scrollBtnY;
+            const dragStartX = clientX;
+            const dragStartY = clientY;
+            
+            const onDrag = (e) => {
+                const curX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+                const curY = e.type === 'touchmove' ? e.touches[0].clientY : e.clientY;
+                
+                const dx = curX - dragStartX;
+                const dy = curY - dragStartY;
+                
+                if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+                    this.isDraggingBtn = true;
+                }
+                
+                let newX = startX + dx;
+                let newY = startY + dy;
+                
+                const btnSize = 48;
+                const margin = 16;
+                
+                newX = Math.max(margin, Math.min(window.innerWidth - btnSize - margin, newX));
+                newY = Math.max(margin, Math.min(window.innerHeight - btnSize - margin, newY));
+                
+                this.scrollBtnX = newX;
+                this.scrollBtnY = newY;
+            };
+            
+            const stopDrag = () => {
+                window.removeEventListener(event.type === 'touchstart' ? 'touchmove' : 'mousemove', onDrag);
+                window.removeEventListener(event.type === 'touchstart' ? 'touchend' : 'mouseup', stopDrag);
+                
+                if (!this.isDraggingBtn) {
+                    this.handleBtnClick();
+                }
+            };
+            
+            window.addEventListener(event.type === 'touchstart' ? 'touchmove' : 'mousemove', onDrag, { passive: false });
+            window.addEventListener(event.type === 'touchstart' ? 'touchend' : 'mouseup', stopDrag);
+        },
+        handleResize() {
+            const btnSize = 48;
+            const margin = 16;
+            this.scrollBtnX = Math.max(margin, Math.min(window.innerWidth - btnSize - margin, this.scrollBtnX));
+            this.scrollBtnY = Math.max(margin, Math.min(window.innerHeight - btnSize - margin, this.scrollBtnY));
+        },
+        handleBtnClick() {
+            this.showScrollPanel = !this.showScrollPanel;
         }
     },
     watch: {
@@ -339,6 +606,13 @@ export default {
     },
     mounted: function () {
         this.syncTargetTone();
+        this.scrollBtnX = window.innerWidth - 64;
+        this.scrollBtnY = window.innerHeight - 120;
+        window.addEventListener("resize", this.handleResize);
+    },
+    beforeUnmount() {
+        this.stopAutoScroll();
+        window.removeEventListener("resize", this.handleResize);
     }
 }
 </script>
@@ -354,6 +628,7 @@ export default {
     background: var(--primary-bg);
     color: var(--neutral-white);
     overflow: hidden;
+    position: relative;
 }
 
 .cipher-toolbar {
@@ -575,6 +850,171 @@ export default {
 .cipher-empty h5,
 .cipher-empty p {
     margin: 0;
+}
+
+/* Floating scroll button */
+.floating-scroll-btn {
+    position: fixed;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--primary-primary-blue-high-2);
+    border: 2px solid rgba(255, 255, 255, 0.15);
+    color: var(--neutral-white);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 999;
+    touch-action: none;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast), transform 0.1s ease;
+}
+
+.floating-scroll-btn:hover {
+    background: var(--secondary-blue-soft);
+    border-color: var(--neutral-white);
+}
+
+.floating-scroll-btn.scrolling-active {
+    background: var(--secondary-blue-soft);
+    border-color: var(--neutral-white);
+    animation: pulseScrollGlow 2.5s infinite;
+}
+
+@keyframes pulseScrollGlow {
+    0% { box-shadow: 0 0 0 0 rgba(56, 182, 255, 0.5); }
+    70% { box-shadow: 0 0 0 10px rgba(56, 182, 255, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(56, 182, 255, 0); }
+}
+
+.floating-scroll-btn:active {
+    transform: scale(0.95);
+}
+
+.floating-scroll-btn span {
+    font-size: 24px;
+}
+
+/* Speed control panel */
+.scroll-speed-panel {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(18, 16, 41, 0.95);
+    backdrop-filter: blur(16px);
+    border-top: 1px solid var(--card-border);
+    padding: 16px;
+    z-index: 1001;
+    box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.panel-header h6 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--neutral-white);
+}
+
+.panel-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--neutral-gray-medium);
+    cursor: pointer;
+    padding: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.panel-close-btn span {
+    font-size: 18px;
+}
+
+.panel-body {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+}
+
+.play-pause-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--neutral-white);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.play-pause-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.play-pause-btn.is-playing {
+    background: var(--secondary-blue-soft);
+    color: var(--neutral-black-low);
+    box-shadow: 0 0 12px rgba(56, 182, 255, 0.3);
+}
+
+.play-pause-btn span {
+    font-size: 22px;
+}
+
+.speed-selector-wrapper {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Custom range slider styling */
+.slider-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+
+
+.slider-labels {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 2px;
+    margin-top: 4px;
+}
+
+.slider-labels span {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--neutral-gray-medium);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+/* Transitions */
+.slide-up-enter-active,
+.slide-up-leave-active {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease;
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+    transform: translateY(100%);
+    opacity: 0;
 }
 
 @media (max-width: 560px) {

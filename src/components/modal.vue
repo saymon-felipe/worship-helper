@@ -9,8 +9,21 @@
                 <slot />
             </div>
             <div class="modal-footer" v-if="buttonTitle != ''">
-                <button v-on:click="emitSubmitEvent()" class="btn" :disabled="disabled">{{ buttonTitle }}</button>
-                <button v-on:click="emitCancelEvent()" class="btn primary" v-if="button2Title != ''" :disabled="disabled">{{ button2Title }}</button>
+                <button 
+                    v-on:click="emitSubmitEvent()" 
+                    :class="['btn', !isDelete ? 'primary' : '']" 
+                    :disabled="disabled"
+                >
+                    {{ buttonTitle }}
+                </button>
+                <button 
+                    v-on:click="emitCancelEvent()" 
+                    :class="['btn', isDelete ? 'primary' : '']" 
+                    v-if="button2Title != ''" 
+                    :disabled="disabled"
+                >
+                    {{ button2Title }}
+                </button>
             </div>
         </div>
         <div class="modal-overlay" v-on:click="!disabled && closeModal()"></div>
@@ -20,7 +33,7 @@
 /* eslint-disable vue/multi-word-component-names */
 export default {
     name: "modal",
-    props: ['title', 'buttonTitle', 'button2Title', 'disabled'],
+    props: ['title', 'buttonTitle', 'button2Title', 'disabled', 'isDelete'],
     data() {
         return {
             hasPushState: false

@@ -14,6 +14,7 @@ const permissionParents = {
     "events.edit": "events.manage",
     "music.create": "music.manage",
     "music.delete": "music.manage",
+    "music.cifra.edit": "music.manage",
     "warnings.create": "warnings.manage",
     "warnings.edit": "warnings.manage",
     "warnings.delete": "warnings.manage"

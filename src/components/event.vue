@@ -179,6 +179,28 @@
                 </modal>
             </Transition>
         </Teleport>
+
+        <!-- Confirm Delete Note Modal -->
+        <Teleport to="body">
+            <Transition name="modal-fade">
+                <modal 
+                    v-if="showConfirmDeleteNote" 
+                    title="Excluir Anotação" 
+                    @closeModal="showConfirmDeleteNote = false" 
+                    class="modal" 
+                    @cancelEvent="showConfirmDeleteNote = false" 
+                    button2Title="Não, cancelar" 
+                    buttonTitle="Sim, excluir" 
+                    :isDelete="true" 
+                    @submitEvent="confirmDeleteNote()"
+                >
+                    <div class="confirm-delete-box">
+                        <p class="warning-text">Tem certeza que deseja excluir esta anotação?</p>
+                        <p>Esta ação não poderá ser desfeita.</p>
+                    </div>
+                </modal>
+            </Transition>
+        </Teleport>
     </section>
 </template>
 <script>
@@ -206,7 +228,9 @@ export default {
             notes: [],
             newNoteText: "",
             editingNoteId: null,
-            editingNoteText: ""
+            editingNoteText: "",
+            showConfirmDeleteNote: false,
+            noteIdToDelete: null
         }
     },
     computed: {
@@ -358,7 +382,12 @@ export default {
             });
         },
         deleteNote(noteId) {
-            if (!confirm("Deseja realmente excluir esta anotação?")) return;
+            this.noteIdToDelete = noteId;
+            this.showConfirmDeleteNote = true;
+        },
+        confirmDeleteNote() {
+            const noteId = this.noteIdToDelete;
+            if (!noteId) return;
             let self = this;
             let churchId = this.getCurrentChurchId();
             if (churchId == null) return;
@@ -372,6 +401,8 @@ export default {
             .then(function () {
                 self.getMemberNotes();
                 self.getEvent(); // refresh count labels on members list
+                self.showConfirmDeleteNote = false;
+                self.noteIdToDelete = null;
             })
             .catch(function (error) {
                 console.log(error);

@@ -152,16 +152,17 @@
             <Transition name="modal-fade">
                 <modal
                     v-if="showDeleteWarningModal"
-                    title="Excluir aviso"
+                    :title="type === 'aviso' ? 'Excluir aviso' : 'Excluir comentário'"
                     @closeModal="showDeleteWarningModal = false"
                     class="modal"
                     @cancelEvent="showDeleteWarningModal = false"
                     button2Title="Não, cancelar"
                     buttonTitle="Sim, excluir"
+                    :isDelete="true"
                     @submitEvent="deleteWarning()"
                 >
                     <div class="confirm-delete-box">
-                        <p class="warning-text">Tem certeza que deseja excluir este aviso?</p>
+                        <p class="warning-text">Tem certeza que deseja excluir este {{ type === 'aviso' ? 'aviso' : 'comentário' }}?</p>
                         <p>Se ele tiver respostas, elas também serão removidas.</p>
                     </div>
                 </modal>

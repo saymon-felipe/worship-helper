@@ -10,6 +10,8 @@
                     <cipherViewer
                         ref="cipherViewer"
                         v-else
+                        :musicId="music.id"
+                        :canEdit="canEdit"
                         :cipherText="music.cipher_text"
                         :title="music.cipher_title || music.name"
                         :artist="music.artist"
@@ -19,6 +21,7 @@
                         :showToneHighlight="showToneBadge"
                         @close="close()"
                         @submit="submit"
+                        @update-cipher="onUpdateCipher"
                     />
                 </div>
             </div>
@@ -27,10 +30,12 @@
 </template>
 
 <script>
+import { globalMethods } from "../js/globalMethods";
 import cipherViewer from "./cipherViewer.vue";
 
 export default {
     name: "cipherModal",
+    mixins: [globalMethods],
     props: {
         show: {
             type: Boolean,
@@ -55,6 +60,10 @@ export default {
         toneName: {
             type: String,
             default: ""
+        },
+        canEdit: {
+            type: Boolean,
+            default: false
         }
     },
     data() {
@@ -92,6 +101,9 @@ export default {
         },
         submit(selectedToneName) {
             this.$emit("submit", selectedToneName);
+        },
+        onUpdateCipher(newCipherText) {
+            this.$emit("update-cipher", newCipherText);
         },
         cleanupPopState() {
             window.removeEventListener("popstate", this.handlePopState);

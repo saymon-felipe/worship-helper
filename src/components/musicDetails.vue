@@ -58,6 +58,7 @@
                 buttonTitle="Salvar cifra"
                 @close="closeCipherContainer()"
                 @submit="handleCipherSubmit"
+                @update-cipher="onUpdateCipher"
             />
         </div>
         <p class="response">{{ response }}</p>
@@ -251,6 +252,13 @@ export default {
 
             this.musicTone = selectedTone;
             this.$emit("select", selectedTone);
+        },
+        onUpdateCipher(newText) {
+            if (this.resolvedMusic) {
+                this.resolvedMusic.cipher_text = newText;
+            } else {
+                this.resolvedMusic = { ...this.music, cipher_text: newText };
+            }
         }
     },
     components: {

@@ -6,7 +6,7 @@
                 <p v-if="artist" class="artist-name">{{ artist }}</p>
             </div>
             
-            <div class="toolbar-actions">
+            <div class="toolbar-actions" v-if="!isEditing">
                 <div class="transpose-controls">
                     <button type="button" class="icon-button" v-on:click="transpose(-1)" title="Descer meio tom">
                         <span class="material-icons">remove</span>
@@ -31,12 +31,30 @@
                 </div>
 
                 <button 
+                    v-if="canEdit" 
+                    type="button" 
+                    class="icon-button edit-cipher-btn" 
+                    @click="startEditing"
+                    title="Editar cifra"
+                >
+                    <span class="material-icons">edit</span>
+                </button>
+
+                <button 
                     v-if="buttonTitle" 
                     type="button" 
                     class="btn primary save-btn" 
                     @click="$emit('submit', selectedToneName)"
                 >
                     {{ buttonTitle }}
+                </button>
+            </div>
+            <div class="toolbar-actions" v-else>
+                <button type="button" class="btn secondary cancel-edit-btn" @click="cancelEditing">
+                    Cancelar
+                </button>
+                <button type="button" class="btn primary save-edit-btn" @click="saveEditedCipher" :disabled="savingEditedCipher">
+                    {{ savingEditedCipher ? "Salvando..." : "Salvar" }}
                 </button>
             </div>
 
@@ -62,8 +80,16 @@
             @mousedown="handleMouseDown"
             @wheel="handleWheel"
         >
-            <pre><template v-for="(line, index) in renderedLines" :key="index"><span :class="{ 'chord-line': line.isChordLine }">{{ line.text }}</span>
+            <pre v-if="!isEditing"><template v-for="(line, index) in renderedLines" :key="index"><span :class="{ 'chord-line': line.isChordLine }">{{ line.text }}</span>
 </template></pre>
+            <div class="edit-cipher-textarea-container" v-else>
+                <textarea 
+                    v-model="editableCipherText" 
+                    class="edit-cipher-textarea" 
+                    placeholder="Cole ou edite a cifra aqui..."
+                    ref="cipherTextarea"
+                ></textarea>
+            </div>
         </div>
 
         <div class="cipher-empty" v-if="!cipherText">
@@ -74,7 +100,7 @@
 
         <!-- Floating Auto Scroll Button -->
         <button 
-            v-if="cipherText"
+            v-if="cipherText && !isEditing"
             type="button" 
             class="floating-scroll-btn"
             :class="{ 'scrolling-active': autoScrollActive || isAtBottom }"
@@ -167,12 +193,24 @@ function isChordToken(token) {
     return CHORD_PATTERN.test(token.replace(/[()[\],]/g, ""));
 }
 
+import { globalMethods } from "../js/globalMethods";
+import api from "../config/api";
+
 export default {
     name: "cipherViewer",
+    mixins: [globalMethods],
     components: {
         customRange
     },
     props: {
+        musicId: {
+            type: [Number, String],
+            default: null
+        },
+        canEdit: {
+            type: Boolean,
+            default: false
+        },
         cipherText: {
             type: String,
             default: ""
@@ -218,7 +256,10 @@ export default {
             scrollBtnY: 0,
             isProgrammaticScroll: false,
             currentScrollTop: 0,
-            isAtBottom: false
+            isAtBottom: false,
+            isEditing: false,
+            editableCipherText: "",
+            savingEditedCipher: false
         }
     },
     computed: {
@@ -487,6 +528,7 @@ export default {
             }
         },
         handleScroll() {
+            if (this.isEditing) return;
             const container = this.$el.querySelector(".cipher-content");
             if (container) {
                 const atBottom = container.scrollTop + container.clientHeight >= container.scrollHeight - 5;
@@ -500,16 +542,16 @@ export default {
             this.startResumeTimer();
         },
         handleTouchStart() {
-            if (!this.autoScrollActive) return;
+            if (this.isEditing || !this.autoScrollActive) return;
             this.isAutoScrollPaused = true;
             clearTimeout(this.resumeTimer);
         },
         handleTouchEnd() {
-            if (!this.autoScrollActive) return;
+            if (this.isEditing || !this.autoScrollActive) return;
             this.startResumeTimer();
         },
         handleMouseDown(event) {
-            if (!this.autoScrollActive) return;
+            if (this.isEditing || !this.autoScrollActive) return;
             if (event.button !== 0) return; // Only trigger for left clicks
             
             this.isAutoScrollPaused = true;
@@ -522,10 +564,95 @@ export default {
             window.addEventListener("mouseup", onMouseUp);
         },
         handleWheel() {
-            if (!this.autoScrollActive) return;
+            if (this.isEditing || !this.autoScrollActive) return;
             this.isAutoScrollPaused = true;
             clearTimeout(this.resumeTimer);
             this.startResumeTimer();
+        },
+        startEditing() {
+            const container = this.$el.querySelector(".cipher-content");
+            let scrollPct = 0;
+            if (container) {
+                const maxScroll = container.scrollHeight - container.clientHeight;
+                if (maxScroll > 0) {
+                    scrollPct = container.scrollTop / maxScroll;
+                }
+            }
+
+            this.editableCipherText = this.cipherText;
+            this.isEditing = true;
+            this.stopAutoScroll();
+
+            this.$nextTick(() => {
+                if (container) {
+                    container.scrollTop = 0;
+                }
+                const textarea = this.$refs.cipherTextarea;
+                if (textarea) {
+                    textarea.focus();
+                    const maxTextareaScroll = textarea.scrollHeight - textarea.clientHeight;
+                    if (maxTextareaScroll > 0) {
+                        textarea.scrollTop = maxTextareaScroll * scrollPct;
+                    }
+                }
+            });
+        },
+        cancelEditing() {
+            const container = this.$el.querySelector(".cipher-content");
+            const textarea = this.$refs.cipherTextarea;
+            const scrollPct = this.getScrollPercentage(textarea);
+
+            this.isEditing = false;
+            this.editableCipherText = "";
+
+            this.syncScrollToView(container, scrollPct);
+        },
+        async saveEditedCipher() {
+            const churchId = this.getCurrentChurchId();
+            if (!churchId) {
+                alert("Nenhuma igreja selecionada");
+                return;
+            }
+
+            if (!this.musicId) {
+                alert("ID da música não encontrado");
+                return;
+            }
+
+            const container = this.$el.querySelector(".cipher-content");
+            const textarea = this.$refs.cipherTextarea;
+            const scrollPct = this.getScrollPercentage(textarea);
+
+            this.savingEditedCipher = true;
+            try {
+                await api.post("/musicas/editar-cifra/" + this.musicId, {
+                    id_igreja: churchId,
+                    cipher_text: this.editableCipherText
+                });
+                this.$emit("update-cipher", this.editableCipherText);
+                this.isEditing = false;
+                this.syncScrollToView(container, scrollPct);
+            } catch (error) {
+                console.error(error);
+                alert("Erro ao salvar cifra: " + (error.response?.data || error.message));
+            } finally {
+                this.savingEditedCipher = false;
+            }
+        },
+        getScrollPercentage(element) {
+            if (!element) return 0;
+            const maxScroll = element.scrollHeight - element.clientHeight;
+            return maxScroll > 0 ? (element.scrollTop / maxScroll) : 0;
+        },
+        syncScrollToView(container, scrollPct) {
+            if (!container) return;
+            this.$nextTick(() => {
+                const maxScroll = container.scrollHeight - container.clientHeight;
+                if (maxScroll > 0) {
+                    container.scrollTop = maxScroll * scrollPct;
+                    this.currentScrollTop = container.scrollTop;
+                }
+            });
         },
         startResumeTimer() {
             clearTimeout(this.resumeTimer);
@@ -1047,5 +1174,67 @@ export default {
         right: 16px;
         transform: none;
     }
+}
+
+/* Edit cipher text styles */
+.edit-cipher-textarea-container {
+    width: 100%;
+    height: 100%;
+    padding: 12px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+.edit-cipher-textarea {
+    width: 100%;
+    height: 100%;
+    flex: 1;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    color: var(--neutral-white);
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    padding: 16px;
+    resize: none;
+    outline: none;
+    box-sizing: border-box;
+    white-space: pre;
+    overflow-wrap: normal;
+    overflow-x: auto;
+}
+
+.edit-cipher-textarea:focus {
+    border-color: var(--secondary-blue-soft);
+    background: rgba(255, 255, 255, 0.04);
+}
+
+.edit-cipher-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--neutral-gray-high);
+}
+
+.edit-cipher-btn:hover {
+    color: var(--secondary-blue-soft) !important;
+    border-color: rgba(56, 182, 255, 0.3) !important;
+}
+
+.cancel-edit-btn {
+    padding: 6px 14px;
+    font-size: 13px;
+    height: 34px;
+    border-radius: var(--radius-pill);
+    font-weight: 600;
+}
+
+.save-edit-btn {
+    padding: 6px 14px;
+    font-size: 13px;
+    height: 34px;
+    border-radius: var(--radius-pill);
+    font-weight: 600;
 }
 </style>

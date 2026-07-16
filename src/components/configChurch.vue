@@ -75,8 +75,8 @@
                         <input type="text" v-model="functionSearchQuery" placeholder="Filtrar funções...">
                     </div>
 
-                    <div class="function-list-container">
-                        <div class="function-card" v-for="currentFunction in filteredFunctions" :key="currentFunction.id_funcao" v-if="filteredFunctions.length > 0">
+                    <div class="function-list-container" v-if="filteredFunctions.length > 0">
+                        <div class="function-card" v-for="currentFunction in filteredFunctions" :key="currentFunction.id_funcao">
                             <div class="function-card-main">
                                 <div>
                                     <h6>{{ currentFunction.nome_funcao }}</h6>
@@ -101,10 +101,10 @@
                                 <span>Sem permissões administrativas</span>
                             </div>
                         </div>
-                        <div class="empty-chips-state" v-else>
-                            <span class="material-icons">badge</span>
-                            <p>{{ functionSearchQuery ? 'Nenhuma função corresponde à busca' : 'Nenhuma função cadastrada' }}</p>
-                        </div>
+                    </div>
+                    <div class="empty-chips-state" v-else>
+                        <span class="material-icons">badge</span>
+                        <p>{{ functionSearchQuery ? 'Nenhuma função corresponde à busca' : 'Nenhuma função cadastrada' }}</p>
                     </div>
 
                     <button type="button" class="btn primary btn-add-setting" @click="toggleAddTagInput('function')" :disabled="!hasActiveChurch">
@@ -128,6 +128,50 @@
                         @success="closeModal(); returnPageInformations();"
                         @error="handleRegisterError"
                     />
+                </modal>
+            </Transition>
+        </Teleport>
+
+        <!-- Confirm Delete Tag Modal -->
+        <Teleport to="body">
+            <Transition name="modal-fade">
+                <modal 
+                    v-if="showConfirmDeleteTag" 
+                    title="Excluir Tag" 
+                    @closeModal="showConfirmDeleteTag = false" 
+                    class="modal" 
+                    @cancelEvent="showConfirmDeleteTag = false" 
+                    button2Title="Não, cancelar" 
+                    buttonTitle="Sim, excluir" 
+                    :isDelete="true" 
+                    @submitEvent="confirmDeleteTag()"
+                >
+                    <div class="confirm-delete-box">
+                        <p class="warning-text">Tem certeza que deseja excluir esta tag?</p>
+                        <p>Os membros associados a ela perderão essa identificação.</p>
+                    </div>
+                </modal>
+            </Transition>
+        </Teleport>
+
+        <!-- Confirm Delete Function Modal -->
+        <Teleport to="body">
+            <Transition name="modal-fade">
+                <modal 
+                    v-if="showConfirmDeleteFunction" 
+                    title="Excluir Função" 
+                    @closeModal="showConfirmDeleteFunction = false" 
+                    class="modal" 
+                    @cancelEvent="showConfirmDeleteFunction = false" 
+                    button2Title="Não, cancelar" 
+                    buttonTitle="Sim, excluir" 
+                    :isDelete="true" 
+                    @submitEvent="confirmDeleteFunction()"
+                >
+                    <div class="confirm-delete-box">
+                        <p class="warning-text">Tem certeza que deseja excluir esta função?</p>
+                        <p>Os membros associados a ela perderão esse cargo e suas permissões de acesso associadas.</p>
+                    </div>
                 </modal>
             </Transition>
         </Teleport>
@@ -165,11 +209,16 @@ export default {
                 { key: "music.manage", label: "Gerenciar músicas", parent: null },
                 { key: "music.create", label: "Cadastrar músicas", parent: "music.manage" },
                 { key: "music.delete", label: "Remover músicas", parent: "music.manage" },
+                { key: "music.cifra.edit", label: "Editar cifras", parent: "music.manage" },
                 { key: "warnings.manage", label: "Gerenciar avisos", parent: null },
                 { key: "warnings.create", label: "Publicar avisos", parent: "warnings.manage" },
                 { key: "warnings.edit", label: "Editar avisos", parent: "warnings.manage" },
                 { key: "warnings.delete", label: "Remover avisos", parent: "warnings.manage" }
-            ]
+            ],
+            showConfirmDeleteTag: false,
+            tagIdToDelete: null,
+            showConfirmDeleteFunction: false,
+            functionIdToDelete: null
         }
     },
     computed: {
@@ -219,6 +268,12 @@ export default {
             this.showModal = true;
         },
         deleteTag: function (id_tag) {
+            this.tagIdToDelete = id_tag;
+            this.showConfirmDeleteTag = true;
+        },
+        confirmDeleteTag: function () {
+            const id_tag = this.tagIdToDelete;
+            if (!id_tag) return;
             const churchId = this.getCurrentChurchId();
             const data = {
                 id_tag: id_tag,
@@ -226,8 +281,16 @@ export default {
             };
             this.tags = this.tags.filter(tag => tag.id_tag !== id_tag);
             api.post("/igreja/deletar-tag", data);
+            this.showConfirmDeleteTag = false;
+            this.tagIdToDelete = null;
         },
         deleteFunction: function (id_function) {
+            this.functionIdToDelete = id_function;
+            this.showConfirmDeleteFunction = true;
+        },
+        confirmDeleteFunction: function () {
+            const id_function = this.functionIdToDelete;
+            if (!id_function) return;
             const churchId = this.getCurrentChurchId();
             const data = {
                 id_function: id_function,
@@ -235,6 +298,8 @@ export default {
             };
             this.functions = this.functions.filter(currentFunction => currentFunction.id_funcao !== id_function);
             api.post("/igreja/deletar-funcao", data);
+            this.showConfirmDeleteFunction = false;
+            this.functionIdToDelete = null;
         },
         permissionLabelsForFunction: function (currentFunction) {
             const functionPermissions = Array.isArray(currentFunction.permissoes) ? currentFunction.permissoes : [];

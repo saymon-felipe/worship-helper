@@ -40,7 +40,9 @@
             :music="music"
             :showToneBadge="event_id != 0 && music.tom != null"
             :toneName="music.tom"
+            :canEdit="hasChurchPermission('music.cifra.edit')"
             @close="closeCipherContainer()"
+            @update-cipher="onUpdateCipher"
         />
         
         <!-- Comments Section -->
@@ -70,7 +72,7 @@
         <!-- Modal de Confirmação de Exclusão -->
         <Teleport to="body">
             <Transition name="modal-fade">
-                <modal v-if="showDeleteModal" title="Excluir Música" @closeModal="showDeleteModal = false" class="modal" @cancelEvent="showDeleteModal = false" button2Title="Não, cancelar" buttonTitle="Sim, excluir" @submitEvent="deleteMusic()">
+                <modal v-if="showDeleteModal" title="Excluir Música" @closeModal="showDeleteModal = false" class="modal" @cancelEvent="showDeleteModal = false" button2Title="Não, cancelar" buttonTitle="Sim, excluir" :isDelete="true" @submitEvent="deleteMusic()">
                     <div class="confirm-delete-box">
                         <p class="warning-text">Tem certeza que deseja excluir esta música permanentemente?</p>
                         <p>Todos os comentários, cifras e dados vinculados a <strong>{{ music.name }}</strong> serão excluídos e não poderão ser recuperados.</p>
@@ -175,6 +177,9 @@ export default {
         },
         openCipherContainer: function () {
             this.showCipherContainer = true;
+        },
+        onUpdateCipher(newText) {
+            this.music.cipher_text = newText;
         },
         getParams: function () {
             let url = new URLSearchParams(window.location.search);

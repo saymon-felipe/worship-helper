@@ -70,16 +70,14 @@
         </div>
 
         <!-- Modal de Confirmação de Exclusão -->
-        <Teleport to="body">
-            <Transition name="modal-fade">
-                <modal v-if="showDeleteModal" title="Excluir Música" @closeModal="showDeleteModal = false" class="modal" @cancelEvent="showDeleteModal = false" button2Title="Não, cancelar" buttonTitle="Sim, excluir" :isDelete="true" @submitEvent="deleteMusic()">
-                    <div class="confirm-delete-box">
-                        <p class="warning-text">Tem certeza que deseja excluir esta música permanentemente?</p>
-                        <p>Todos os comentários, cifras e dados vinculados a <strong>{{ music.name }}</strong> serão excluídos e não poderão ser recuperados.</p>
-                    </div>
-                </modal>
-            </Transition>
-        </Teleport>
+        <confirmDeleteModal
+            :show="showDeleteModal"
+            title="Excluir Música"
+            message="Tem certeza que deseja excluir esta música permanentemente?"
+            :subMessage="`Todos os comentários, cifras e dados vinculados a ${music.name} serão excluídos e não poderão ser recuperados.`"
+            @confirm="deleteMusic"
+            @cancel="showDeleteModal = false"
+        />
     </div>
 </template>
 
@@ -89,7 +87,7 @@ import api from '../config/api';
 import musicComponent from "./musicComponent.vue";
 import commentsComponent from "./commentsComponent.vue";
 import cipherModal from "./cipherModal.vue";
-import modal from "./modal.vue";
+import confirmDeleteModal from "./confirmDeleteModal.vue";
 
 export default {
     name: "musicEntityDetail",
@@ -137,7 +135,7 @@ export default {
         musicComponent,
         commentsComponent,
         cipherModal,
-        modal
+        confirmDeleteModal
     },
     methods: {
         getMusic: function () {

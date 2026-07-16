@@ -133,53 +133,30 @@
         </Teleport>
 
         <!-- Confirm Delete Tag Modal -->
-        <Teleport to="body">
-            <Transition name="modal-fade">
-                <modal 
-                    v-if="showConfirmDeleteTag" 
-                    title="Excluir Tag" 
-                    @closeModal="showConfirmDeleteTag = false" 
-                    class="modal" 
-                    @cancelEvent="showConfirmDeleteTag = false" 
-                    button2Title="Não, cancelar" 
-                    buttonTitle="Sim, excluir" 
-                    :isDelete="true" 
-                    @submitEvent="confirmDeleteTag()"
-                >
-                    <div class="confirm-delete-box">
-                        <p class="warning-text">Tem certeza que deseja excluir esta tag?</p>
-                        <p>Os membros associados a ela perderão essa identificação.</p>
-                    </div>
-                </modal>
-            </Transition>
-        </Teleport>
+        <confirmDeleteModal
+            :show="showConfirmDeleteTag"
+            title="Excluir Tag"
+            message="Tem certeza que deseja excluir esta tag?"
+            subMessage="Os membros associados a ela perderão essa identificação."
+            @confirm="confirmDeleteTag"
+            @cancel="showConfirmDeleteTag = false"
+        />
 
         <!-- Confirm Delete Function Modal -->
-        <Teleport to="body">
-            <Transition name="modal-fade">
-                <modal 
-                    v-if="showConfirmDeleteFunction" 
-                    title="Excluir Função" 
-                    @closeModal="showConfirmDeleteFunction = false" 
-                    class="modal" 
-                    @cancelEvent="showConfirmDeleteFunction = false" 
-                    button2Title="Não, cancelar" 
-                    buttonTitle="Sim, excluir" 
-                    :isDelete="true" 
-                    @submitEvent="confirmDeleteFunction()"
-                >
-                    <div class="confirm-delete-box">
-                        <p class="warning-text">Tem certeza que deseja excluir esta função?</p>
-                        <p>Os membros associados a ela perderão esse cargo e suas permissões de acesso associadas.</p>
-                    </div>
-                </modal>
-            </Transition>
-        </Teleport>
+        <confirmDeleteModal
+            :show="showConfirmDeleteFunction"
+            title="Excluir Função"
+            message="Tem certeza que deseja excluir esta função?"
+            subMessage="Os membros associados a ela perderão esse cargo e suas permissões de acesso associadas."
+            @confirm="confirmDeleteFunction"
+            @cancel="showConfirmDeleteFunction = false"
+        />
     </div>
 </template>
 
 <script>
 import modal from "./modal.vue";
+import confirmDeleteModal from "./confirmDeleteModal.vue";
 import registerTagOrFunction from "./registerTagOrFunction.vue";
 import { globalMethods } from '../js/globalMethods';
 import api from '../config/api';
@@ -363,6 +340,7 @@ export default {
     },
     components: {
         modal,
+        confirmDeleteModal,
         registerTagOrFunction
     }
 }

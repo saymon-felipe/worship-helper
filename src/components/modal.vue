@@ -44,18 +44,34 @@ export default {
             window.history.pushState({ genericModalOpen: true }, "");
             this.hasPushState = true;
         }
+        window.activeModalStack = window.activeModalStack || [];
+        window.activeModalStack.push(this);
         window.addEventListener("popstate", this.handlePopState);
     },
     methods: {
         handlePopState() {
+            if (window.isPoppingForClose) {
+                window.isPoppingForClose = false;
+                return;
+            }
+            if (window.activeModalStack && window.activeModalStack[window.activeModalStack.length - 1] !== this) {
+                return;
+            }
             this.hasPushState = false;
-            this.closeModal();
+            if (window.activeModalStack) {
+                window.activeModalStack = window.activeModalStack.filter(item => item !== this);
+            }
+            window.removeEventListener("popstate", this.handlePopState);
+            this.$emit("closeModal");
         },
         closeModal: function () {
             if (this.disabled) return;
             if (this.hasPushState) {
                 window.history.back();
             } else {
+                if (window.activeModalStack) {
+                    window.activeModalStack = window.activeModalStack.filter(item => item !== this);
+                }
                 this.$emit("closeModal");
             }
         },
@@ -69,8 +85,12 @@ export default {
         },
         cleanupPopState() {
             window.removeEventListener("popstate", this.handlePopState);
+            if (window.activeModalStack) {
+                window.activeModalStack = window.activeModalStack.filter(item => item !== this);
+            }
             if (this.hasPushState) {
                 this.hasPushState = false;
+                window.isPoppingForClose = true;
                 window.history.back();
             }
         }

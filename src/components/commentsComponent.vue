@@ -149,24 +149,14 @@
             </div>
         </div>
         <Teleport to="body">
-            <Transition name="modal-fade">
-                <modal
-                    v-if="showDeleteWarningModal"
-                    :title="type === 'aviso' ? 'Excluir aviso' : 'Excluir comentário'"
-                    @closeModal="showDeleteWarningModal = false"
-                    class="modal"
-                    @cancelEvent="showDeleteWarningModal = false"
-                    button2Title="Não, cancelar"
-                    buttonTitle="Sim, excluir"
-                    :isDelete="true"
-                    @submitEvent="deleteWarning()"
-                >
-                    <div class="confirm-delete-box">
-                        <p class="warning-text">Tem certeza que deseja excluir este {{ type === 'aviso' ? 'aviso' : 'comentário' }}?</p>
-                        <p>Se ele tiver respostas, elas também serão removidas.</p>
-                    </div>
-                </modal>
-            </Transition>
+            <confirmDeleteModal
+                :show="showDeleteWarningModal"
+                :title="type === 'aviso' ? 'Excluir aviso' : 'Excluir comentário'"
+                :message="`Tem certeza que deseja excluir este ${type === 'aviso' ? 'aviso' : 'comentário'}?`"
+                subMessage="Se ele tiver respostas, elas também serão removidas."
+                @confirm="deleteWarning"
+                @cancel="showDeleteWarningModal = false"
+            />
         </Teleport>
     </div>
 </template>
@@ -174,7 +164,7 @@
 import { globalMethods } from '../js/globalMethods';
 import $ from 'jquery';
 import api from '../config/api';
-import modal from "./modal.vue";
+import confirmDeleteModal from "./confirmDeleteModal.vue";
 
 export default {
     name: "commentsComponent",
@@ -542,7 +532,7 @@ export default {
         this.returnWarnings();
     },
     components: {
-        modal
+        confirmDeleteModal
     }
 }
 </script>

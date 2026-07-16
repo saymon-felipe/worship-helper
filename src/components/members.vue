@@ -105,16 +105,14 @@
             </Transition>
         </Teleport>
 
-        <Teleport to="body">
-            <Transition name="modal-fade">
-                <modal v-if="showConfirmDeleteInvite && canInviteMembers" title="Excluir Convite" @closeModal="showConfirmDeleteInvite = false" class="modal" @cancelEvent="showConfirmDeleteInvite = false" button2Title="Não, cancelar" buttonTitle="Sim, excluir" :isDelete="true" @submitEvent="submitDeleteInvite()">
-                    <div class="confirm-delete-box">
-                        <p class="warning-text">Tem certeza que deseja excluir este convite?</p>
-                        <p>O convite enviado para o e-mail <strong>{{ selectedInviteToDelete?.email_usuario }}</strong> será invalidado.</p>
-                    </div>
-                </modal>
-            </Transition>
-        </Teleport>
+        <confirmDeleteModal
+            :show="showConfirmDeleteInvite && canInviteMembers"
+            title="Excluir Convite"
+            message="Tem certeza que deseja excluir este convite?"
+            :subMessage="`O convite enviado para o e-mail ${selectedInviteToDelete?.email_usuario} será invalidado.`"
+            @confirm="submitDeleteInvite"
+            @cancel="showConfirmDeleteInvite = false"
+        />
     </div>
 </template>
 
@@ -123,6 +121,7 @@ import { globalMethods } from '../js/globalMethods';
 import api from '../config/api';
 import $ from 'jquery';
 import modal from "./modal.vue";
+import confirmDeleteModal from "./confirmDeleteModal.vue";
 import inviteMemberModalContent from "./inviteMemberModalContent.vue";
 import addTagModalContent from "./addTagModalContent.vue";
 import removeMemberModalContent from "./removeMemberModalContent.vue";
@@ -180,6 +179,7 @@ export default {
     },
     components: {
         modal,
+        confirmDeleteModal,
         inviteMemberModalContent,
         addTagModalContent,
         addFunctionModalContent,

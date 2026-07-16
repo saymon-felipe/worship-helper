@@ -181,26 +181,14 @@
         </Teleport>
 
         <!-- Confirm Delete Note Modal -->
-        <Teleport to="body">
-            <Transition name="modal-fade">
-                <modal 
-                    v-if="showConfirmDeleteNote" 
-                    title="Excluir Anotação" 
-                    @closeModal="showConfirmDeleteNote = false" 
-                    class="modal" 
-                    @cancelEvent="showConfirmDeleteNote = false" 
-                    button2Title="Não, cancelar" 
-                    buttonTitle="Sim, excluir" 
-                    :isDelete="true" 
-                    @submitEvent="confirmDeleteNote()"
-                >
-                    <div class="confirm-delete-box">
-                        <p class="warning-text">Tem certeza que deseja excluir esta anotação?</p>
-                        <p>Esta ação não poderá ser desfeita.</p>
-                    </div>
-                </modal>
-            </Transition>
-        </Teleport>
+        <confirmDeleteModal
+            :show="showConfirmDeleteNote"
+            title="Excluir Anotação"
+            message="Tem certeza que deseja excluir esta anotação?"
+            subMessage="Esta ação não poderá ser desfeita."
+            @confirm="confirmDeleteNote"
+            @cancel="showConfirmDeleteNote = false"
+        />
     </section>
 </template>
 <script>
@@ -211,6 +199,7 @@ import 'moment/locale/pt-br';
 import commentsComponent from "./commentsComponent.vue";
 import createEventModalContent from "./createEventModalContent.vue";
 import modal from "./modal.vue";
+import confirmDeleteModal from "./confirmDeleteModal.vue";
 import { appStore } from '../store/appStore';
 moment.locale('pt-br');
 
@@ -423,7 +412,8 @@ export default {
     components: {
         commentsComponent,
         createEventModalContent,
-        modal
+        modal,
+        confirmDeleteModal
     }
 }
 </script>

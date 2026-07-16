@@ -80,6 +80,8 @@ export default {
                         window.history.pushState({ cipherModalOpen: true }, "");
                         this.hasPushState = true;
                     }
+                    window.activeModalStack = window.activeModalStack || [];
+                    window.activeModalStack.push(this);
                     window.addEventListener("popstate", this.handlePopState);
                 } else {
                     this.cleanupPopState();
@@ -89,13 +91,27 @@ export default {
     },
     methods: {
         handlePopState() {
+            if (window.isPoppingForClose) {
+                window.isPoppingForClose = false;
+                return;
+            }
+            if (window.activeModalStack && window.activeModalStack[window.activeModalStack.length - 1] !== this) {
+                return;
+            }
             this.hasPushState = false;
+            if (window.activeModalStack) {
+                window.activeModalStack = window.activeModalStack.filter(item => item !== this);
+            }
+            window.removeEventListener("popstate", this.handlePopState);
             this.$emit("close");
         },
         close() {
             if (this.hasPushState) {
                 window.history.back();
             } else {
+                if (window.activeModalStack) {
+                    window.activeModalStack = window.activeModalStack.filter(item => item !== this);
+                }
                 this.$emit("close");
             }
         },
@@ -107,8 +123,12 @@ export default {
         },
         cleanupPopState() {
             window.removeEventListener("popstate", this.handlePopState);
+            if (window.activeModalStack) {
+                window.activeModalStack = window.activeModalStack.filter(item => item !== this);
+            }
             if (this.hasPushState) {
                 this.hasPushState = false;
+                window.isPoppingForClose = true;
                 window.history.back();
             }
         }

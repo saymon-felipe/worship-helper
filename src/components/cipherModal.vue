@@ -128,7 +128,9 @@ export default {
             }
             if (this.hasPushState) {
                 this.hasPushState = false;
-                window.isPoppingForClose = true;
+                if (window.activeModalStack && window.activeModalStack.length > 0) {
+                    window.isPoppingForClose = true;
+                }
                 window.history.back();
             }
         }

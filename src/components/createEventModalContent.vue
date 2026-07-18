@@ -139,7 +139,13 @@
                             {{ isTempMemberSelected(member) ? 'check_circle' : 'radio_button_unchecked' }}
                         </span>
                     </div>
-                    <div class="empty-members" v-if="filteredChurchMembers.length === 0">
+                    <div class="empty-members" v-if="loadingChurchMembers">
+                        <p>Carregando integrantes...</p>
+                    </div>
+                    <div class="empty-members" v-else-if="membersLoadError">
+                        <p>{{ membersLoadError }}</p>
+                    </div>
+                    <div class="empty-members" v-else-if="filteredChurchMembers.length === 0">
                         <p>Nenhum integrante encontrado</p>
                     </div>
                 </div>
@@ -154,6 +160,7 @@ import searchMusic from "./searchMusic.vue";
 import musicDetails from "./musicDetails.vue";
 import api from '../config/api';
 import moment from 'moment';
+import { appStore } from '../store/appStore';
 
 export default {
     name: "createEventModalContent",
@@ -170,6 +177,10 @@ export default {
             showSearchMusic: false,
             toneEditMusic: null,
             churchFunctions: [],
+            churchMembers: [],
+            churchMembersLoaded: false,
+            loadingChurchMembers: false,
+            membersLoadError: "",
             memberSearchQuery: "",
             showSearchMember: false,
             tempSelectedMembers: [],
@@ -179,12 +190,12 @@ export default {
     },
     computed: {
         filteredChurchMembers: function () {
-            const members = (this.igreja && this.igreja.membros) || [];
+            const members = Array.isArray(this.churchMembers) ? this.churchMembers : [];
             if (!this.memberSearchQuery) {
                 return members;
             }
             const q = this.memberSearchQuery.toLowerCase().trim();
-            return members.filter(m => m.nome_usuario.toLowerCase().includes(q));
+            return members.filter(m => String(m.nome_usuario || "").toLowerCase().includes(q));
         }
     },
     methods: {
@@ -242,9 +253,11 @@ export default {
         },
         openSearchMember: function () {
             this.memberSearchQuery = "";
+            this.membersLoadError = "";
             // Clona a lista atual para a lista temporária
             this.tempSelectedMembers = JSON.parse(JSON.stringify(this.event_selected_members));
             this.showSearchMember = true;
+            this.loadChurchMembers();
         },
         closeSearchMember: function () {
             this.showSearchMember = false;
@@ -284,6 +297,57 @@ export default {
         confirmSelectedMembers: function () {
             this.event_selected_members = [...this.tempSelectedMembers];
             this.showSearchMember = false;
+        },
+        syncChurchMembersFromStore: function () {
+            const churchId = this.getCurrentChurchId();
+            const storeHasMembers = this.igreja
+                && (!churchId || this.igreja.id_igreja == churchId)
+                && Array.isArray(this.igreja.membros);
+            this.churchMembers = storeHasMembers ? this.igreja.membros : [];
+            this.churchMembersLoaded = Boolean(storeHasMembers);
+        },
+        loadChurchMembers: function () {
+            const churchId = this.getCurrentChurchId();
+
+            if (!churchId) {
+                this.syncChurchMembersFromStore();
+                return Promise.resolve(this.churchMembers);
+            }
+
+            if (this.churchMembersLoaded) {
+                return Promise.resolve(this.churchMembers);
+            }
+
+            this.loadingChurchMembers = true;
+            this.membersLoadError = "";
+
+            return api.post("/igreja/retorna-membros", { id_igreja: churchId })
+                .then((response) => {
+                    const members = response.data && Array.isArray(response.data.returnObj)
+                        ? response.data.returnObj
+                        : [];
+
+                    this.churchMembers = members;
+                    this.churchMembersLoaded = true;
+
+                    if (this.igreja && this.igreja.id_igreja == churchId) {
+                        appStore.setChurch({
+                            ...this.igreja,
+                            membros: members,
+                            quantidade_membros: members.length
+                        });
+                    }
+
+                    return members;
+                })
+                .catch((error) => {
+                    console.log(error);
+                    this.membersLoadError = "Nao foi possivel carregar os integrantes";
+                    return [];
+                })
+                .finally(() => {
+                    this.loadingChurchMembers = false;
+                });
         },
         loadChurchFunctions: function () {
             let self = this;
@@ -348,6 +412,7 @@ export default {
         musicDetails
     },
     mounted: function () {
+        this.syncChurchMembersFromStore();
         this.loadChurchFunctions();
         this.fillEventToEdit();
     }

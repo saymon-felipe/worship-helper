@@ -258,6 +258,27 @@ export default {
         }
     },
     methods: {
+        hasRequiredTarget: function () {
+            const churchId = this.getCurrentChurchId();
+
+            if ((this.type == "aviso" || this.type == "evento" || this.type == "musica_evento") && churchId == null) {
+                return false;
+            }
+
+            if (this.type == "musica") {
+                return Number(this.id_musica) > 0;
+            }
+
+            if (this.type == "evento") {
+                return Number(this.id_evento) > 0;
+            }
+
+            if (this.type == "musica_evento") {
+                return Number(this.id_musica) > 0 && Number(this.id_evento) > 0;
+            }
+
+            return true;
+        },
         fillVariables: function () {
             if (this.type == "aviso") {
                 this.createPath = "/igreja/publicar-aviso";
@@ -305,7 +326,7 @@ export default {
                 return;
             }
 
-            if ((this.type == "aviso" || this.type == "evento" || this.type == "musica_evento") && churchId == null) {
+            if (!this.hasRequiredTarget()) {
                 return;
             }
 
@@ -338,7 +359,7 @@ export default {
             let self = this;
             let churchId = this.getCurrentChurchId();
 
-            if ((this.type == "aviso" || this.type == "evento" || this.type == "musica_evento") && churchId == null) {
+            if (!this.hasRequiredTarget()) {
                 return Promise.resolve();
             }
 
@@ -364,7 +385,7 @@ export default {
                 return;
             }
 
-            if ((this.type == "aviso" || this.type == "evento" || this.type == "musica_evento") && churchId == null) {
+            if (!this.hasRequiredTarget()) {
                 return;
             }
 
@@ -447,14 +468,14 @@ export default {
 
             let payload = {};
             if (this.type === "aviso") {
-                if (!churchId) return;
+                if (!this.hasRequiredTarget()) return;
                 payload = {
                     id_igreja: Number(churchId),
                     id_aviso: Number(this.editingWarningId),
                     mensagem: this.editingWarningText
                 };
             } else if (this.type === "evento" || this.type === "musica_evento") {
-                if (!churchId) return;
+                if (!this.hasRequiredTarget()) return;
                 payload = {
                     id_igreja: Number(churchId),
                     id_evento: this.id_evento ? Number(this.id_evento) : undefined,
@@ -488,13 +509,13 @@ export default {
 
             let payload = {};
             if (this.type === "aviso") {
-                if (!churchId) return;
+                if (!this.hasRequiredTarget()) return;
                 payload = {
                     id_igreja: Number(churchId),
                     id_aviso: Number(this.warningToDelete.id_aviso)
                 };
             } else if (this.type === "evento" || this.type === "musica_evento") {
-                if (!churchId) return;
+                if (!this.hasRequiredTarget()) return;
                 payload = {
                     id_igreja: Number(churchId),
                     id_evento: this.id_evento ? Number(this.id_evento) : undefined,
@@ -525,6 +546,18 @@ export default {
                     });
                 }
             });
+        }
+    },
+    watch: {
+        id_evento: function () {
+            this.returnWarnings();
+        },
+        id_musica: function () {
+            this.returnWarnings();
+        },
+        type: function () {
+            this.fillVariables();
+            this.returnWarnings();
         }
     },
     mounted: function () {

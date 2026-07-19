@@ -50,12 +50,11 @@ export default {
     },
     methods: {
         logout: function () {
-            removePushSubscription()
-                .catch(() => {})
-                .finally(() => {
-                    this.removeJwtFromLocalStorage();
-                    this.$router.push("/login");
-                });
+            const authToken = this.getJwtFromLocalStorage();
+
+            removePushSubscription(authToken).catch(() => {});
+            this.removeJwtFromLocalStorage();
+            window.location.replace("/login");
         },
         backToHome: function () {
             this.$router.push("/home");

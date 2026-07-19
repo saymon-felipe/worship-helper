@@ -62,7 +62,7 @@ export async function requestPushPermission() {
     return permission;
 }
 
-export async function removePushSubscription() {
+export async function removePushSubscription(authToken) {
     if (!isPushSupported()) {
         return;
     }
@@ -79,5 +79,9 @@ export async function removePushSubscription() {
 
     await api.post("/usuario/push/unsubscribe", {
         endpoint: subscription.endpoint
-    });
+    }, authToken ? {
+        headers: {
+            Authorization: `Bearer ${authToken}`
+        }
+    } : undefined);
 }

@@ -10,7 +10,7 @@
           </div>
           <div class="input-group">
             <label for="email">Email</label>
-            <input type="email" name="email_usuario" id="email" required>
+            <input type="email" name="email_usuario" id="email" v-model.trim="email" required>
           </div>
           <div class="input-group">
             <label for="senha">Senha</label>
@@ -44,7 +44,8 @@ export default {
   mixins: [globalMethods],
   data() {
     return {
-      response: ""
+      response: "",
+      email: ""
     }
   },
   methods: {
@@ -56,7 +57,7 @@ export default {
       }
       return true;
     },
-    register: function (event) {
+    register: function () {
       let self = this;
       let responseElement = $(".response");
       let form = $("#register-form");
@@ -97,6 +98,14 @@ export default {
   },
   components: {
     authorizationTemplate
+  },
+  mounted() {
+    this.email = typeof this.$route.query.email === "string" ? this.$route.query.email : "";
+  },
+  watch: {
+    "$route.query.email"(email) {
+      this.email = typeof email === "string" ? email : "";
+    }
   }
 }
 </script>
@@ -124,4 +133,3 @@ export default {
   text-align: center;
 }
 </style>
-

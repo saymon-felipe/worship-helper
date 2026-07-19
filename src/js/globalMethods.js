@@ -46,10 +46,12 @@ export const globalMethods = {
         },
         getCurrentChurchId: function () {
             let id = null;
-            if (this.igreja && this.igreja.id_igreja != null) {
-                id = this.igreja.id_igreja;
-            } else if (this.$route && this.$route.params && this.$route.params.id_igreja != null) {
+            if (this.$route && this.$route.params && this.$route.params.id_igreja != null) {
                 id = this.$route.params.id_igreja;
+            } else if (this.$route && this.$route.query && this.$route.query.church != null) {
+                id = this.$route.query.church;
+            } else if (this.igreja && this.igreja.id_igreja != null) {
+                id = this.igreja.id_igreja;
             } else {
                 let church = this.getCurrentChurchInLocalStorage();
                 id = church ? church.id_igreja : null;

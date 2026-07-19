@@ -20,6 +20,10 @@
                             <span>Alterar perfil</span>
                         </router-link>
                     </li>
+                    <li v-if="notificationPermission === 'default'" v-on:click="enableNotifications" class="menu-action">
+                        <span class="material-icons">notifications</span>
+                        <span>Ativar notificações</span>
+                    </li>
                     <li v-on:click="logout()" class="menu-action">
                         <span class="material-icons logout-icon">power_settings_new</span>
                         <span>Sair</span>
@@ -32,6 +36,7 @@
 </template>
 <script>
 import { globalMethods } from '../js/globalMethods';
+import { getPushPermission, removePushSubscription, requestPushPermission, syncPushSubscription } from '../services/pushNotifications';
 
 export default {
     name: "headerComponent",
@@ -39,13 +44,18 @@ export default {
     data() {
         return {
             load: true,
-            showDropdown: false
+            showDropdown: false,
+            notificationPermission: getPushPermission()
         }
     },
     methods: {
         logout: function () {
-            this.removeJwtFromLocalStorage();
-            this.$router.push("/login");
+            removePushSubscription()
+                .catch(() => {})
+                .finally(() => {
+                    this.removeJwtFromLocalStorage();
+                    this.$router.push("/login");
+                });
         },
         backToHome: function () {
             this.$router.push("/home");
@@ -53,13 +63,29 @@ export default {
         toogleMenuContainer: function () {
             this.showDropdown = !this.showDropdown;
         },
+        enableNotifications: async function () {
+            try {
+                this.notificationPermission = await requestPushPermission();
+            } catch (error) {
+                this.notificationPermission = getPushPermission();
+                console.error("[Push] Nao foi possivel ativar as notificacoes:", error.message);
+            }
+
+            this.showDropdown = false;
+        },
         goToAdmin: function () {
             // Se houver lógica específica para admin, adicionamos aqui
             this.toogleMenuContainer();
         }
     },
     mounted: function () {
-        this.requireUser();
+        this.requireUser().then(() => {
+            if (this.notificationPermission === "granted") {
+                return syncPushSubscription();
+            }
+        }).catch((error) => {
+            console.error("[Push] Nao foi possivel sincronizar as notificacoes:", error.message);
+        });
     }
 }
 </script>

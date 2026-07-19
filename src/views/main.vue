@@ -25,14 +25,30 @@
                 />
             </modal>
         </Transition>
+        <Transition name="modal-fade">
+            <modal
+                v-if="showPushNotificationsModal"
+                title="Ative as notificações"
+                buttonTitle="Ativar notificações"
+                button2Title="Agora não"
+                :disabled="isActivatingNotifications"
+                @closeModal="closePushNotificationsModal"
+                @cancelEvent="closePushNotificationsModal"
+                @submitEvent="activatePushNotifications"
+            >
+                <pushNotificationsModalContent :message="pushNotificationsError" />
+            </modal>
+        </Transition>
     </Teleport>
 </template>
 <script>
 import siteTemplate from "../templates/siteTemplate.vue";
 import modal from "../components/modal.vue";
 import installAppModalContent from "../components/installAppModalContent.vue";
+import pushNotificationsModalContent from "../components/pushNotificationsModalContent.vue";
 import { globalMethods } from '../js/globalMethods';
 import { getPwaInstallUnavailableMessage, isIOSDevice, isPwaInstalled, requestPwaInstall } from '../services/pwaInstall';
+import { getPushPermission, requestPushPermission } from '../services/pushNotifications';
 
 /* eslint-disable vue/multi-word-component-names, vue/no-reserved-component-names */
 export default {
@@ -41,7 +57,8 @@ export default {
     components: {
         siteTemplate,
         modal,
-        installAppModalContent
+        installAppModalContent,
+        pushNotificationsModalContent
     },
     data() {
         return {
@@ -49,7 +66,10 @@ export default {
             isInstalling: false,
             isIOS: false,
             showIOSInstructions: false,
-            installError: ""
+            installError: "",
+            showPushNotificationsModal: false,
+            isActivatingNotifications: false,
+            pushNotificationsError: ""
         };
     },
     computed: {
@@ -69,6 +89,41 @@ export default {
             this.showInstallModal = false;
             this.showIOSInstructions = false;
             this.installError = "";
+        },
+        openPushNotificationsModal() {
+            const dismissed = sessionStorage.getItem("push-notifications-dismissed");
+
+            if (!this.showInstallModal && !dismissed && getPushPermission() === "default") {
+                this.showPushNotificationsModal = true;
+            }
+        },
+        closePushNotificationsModal() {
+            sessionStorage.setItem("push-notifications-dismissed", "true");
+            this.showPushNotificationsModal = false;
+            this.pushNotificationsError = "";
+        },
+        async activatePushNotifications() {
+            this.isActivatingNotifications = true;
+            this.pushNotificationsError = "";
+
+            try {
+                const permission = await requestPushPermission();
+
+                if (permission === "granted") {
+                    this.closePushNotificationsModal();
+                    return;
+                }
+
+                this.pushNotificationsError = permission === "unsupported"
+                    ? "Este navegador nao oferece suporte a notificacoes."
+                    : "As notificacoes foram bloqueadas. Voce pode libera-las nas configuracoes do navegador.";
+            } catch (error) {
+                this.pushNotificationsError = error.response && error.response.data && error.response.data.error
+                    ? error.response.data.error
+                    : "Nao foi possivel ativar as notificacoes agora. Tente novamente mais tarde.";
+            } finally {
+                this.isActivatingNotifications = false;
+            }
         },
         async installApp() {
             if (this.showIOSInstructions) {
@@ -100,6 +155,7 @@ export default {
     mounted() {
         this.isIOS = isIOSDevice();
         window.setTimeout(() => this.openInstallModal(), 600);
+        window.setTimeout(() => this.openPushNotificationsModal(), 1400);
     }
 }
 </script>

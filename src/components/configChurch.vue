@@ -38,18 +38,21 @@
                     </div>
 
                     <div class="chips-list-container">
-                        <div class="chips-wrapper" v-if="filteredTags.length > 0">
-                            <div class="modern-chip tag-chip" v-for="tag in filteredTags" :key="tag.id_tag">
-                                <span class="chip-text">{{ tag.nome_tag }}</span>
-                                <button type="button" class="btn-delete-chip" @click="deleteTag(tag.id_tag)" title="Excluir tag">
-                                    <span class="material-icons">close</span>
-                                </button>
+                        <skeletonLoader v-if="isLoadingTags" type="config-chips" />
+                        <template v-else>
+                            <div class="chips-wrapper" v-if="filteredTags.length > 0">
+                                <div class="modern-chip tag-chip" v-for="tag in filteredTags" :key="tag.id_tag">
+                                    <span class="chip-text">{{ tag.nome_tag }}</span>
+                                    <button type="button" class="btn-delete-chip" @click="deleteTag(tag.id_tag)" title="Excluir tag">
+                                        <span class="material-icons">close</span>
+                                    </button>
+                                </div>
                             </div>
-                        </div>
-                        <div class="empty-chips-state" v-else>
-                            <span class="material-icons">local_offer</span>
-                            <p>{{ tagSearchQuery ? 'Nenhuma tag corresponde à busca' : 'Nenhuma tag cadastrada' }}</p>
-                        </div>
+                            <div class="empty-chips-state" v-else>
+                                <span class="material-icons">local_offer</span>
+                                <p>{{ tagSearchQuery ? 'Nenhuma tag corresponde à busca' : 'Nenhuma tag cadastrada' }}</p>
+                            </div>
+                        </template>
                     </div>
 
                     <button type="button" class="btn primary btn-add-setting" @click="toggleAddTagInput('tag')" :disabled="!hasActiveChurch">
@@ -75,37 +78,40 @@
                         <input type="text" v-model="functionSearchQuery" placeholder="Filtrar funções...">
                     </div>
 
-                    <div class="function-list-container" v-if="filteredFunctions.length > 0">
-                        <div class="function-card" v-for="currentFunction in filteredFunctions" :key="currentFunction.id_funcao">
-                            <div class="function-card-main">
-                                <div>
-                                    <h6>{{ currentFunction.nome_funcao }}</h6>
-                                    <p>{{ permissionSummary(currentFunction) }}</p>
+                    <skeletonLoader v-if="isLoadingFunctions" type="config-functions" :count="3" />
+                    <template v-else>
+                        <div class="function-list-container" v-if="filteredFunctions.length > 0">
+                            <div class="function-card" v-for="currentFunction in filteredFunctions" :key="currentFunction.id_funcao">
+                                <div class="function-card-main">
+                                    <div>
+                                        <h6>{{ currentFunction.nome_funcao }}</h6>
+                                        <p>{{ permissionSummary(currentFunction) }}</p>
+                                    </div>
+                                    <div class="function-actions">
+                                        <button type="button" class="btn-delete-chip" @click="editFunction(currentFunction)" title="Editar função">
+                                            <span class="material-icons">edit</span>
+                                        </button>
+                                        <button type="button" class="btn-delete-chip" @click="deleteFunction(currentFunction.id_funcao)" title="Excluir função">
+                                            <span class="material-icons">close</span>
+                                        </button>
+                                    </div>
                                 </div>
-                                <div class="function-actions">
-                                    <button type="button" class="btn-delete-chip" @click="editFunction(currentFunction)" title="Editar função">
-                                        <span class="material-icons">edit</span>
-                                    </button>
-                                    <button type="button" class="btn-delete-chip" @click="deleteFunction(currentFunction.id_funcao)" title="Excluir função">
-                                        <span class="material-icons">close</span>
-                                    </button>
+                                <div class="permission-chip-list" v-if="permissionLabelsForFunction(currentFunction).length > 0">
+                                    <span class="modern-chip function-chip permission-chip" v-for="permission in permissionLabelsForFunction(currentFunction)" :key="permission">
+                                        {{ permission }}
+                                    </span>
                                 </div>
-                            </div>
-                            <div class="permission-chip-list" v-if="permissionLabelsForFunction(currentFunction).length > 0">
-                                <span class="modern-chip function-chip permission-chip" v-for="permission in permissionLabelsForFunction(currentFunction)" :key="permission">
-                                    {{ permission }}
-                                </span>
-                            </div>
-                            <div class="permission-chip-list muted" v-else>
-                                <span class="material-icons">lock_open</span>
-                                <span>Sem permissões administrativas</span>
+                                <div class="permission-chip-list muted" v-else>
+                                    <span class="material-icons">lock_open</span>
+                                    <span>Sem permissões administrativas</span>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <div class="empty-chips-state" v-else>
-                        <span class="material-icons">badge</span>
-                        <p>{{ functionSearchQuery ? 'Nenhuma função corresponde à busca' : 'Nenhuma função cadastrada' }}</p>
-                    </div>
+                        <div class="empty-chips-state" v-else>
+                            <span class="material-icons">badge</span>
+                            <p>{{ functionSearchQuery ? 'Nenhuma função corresponde à busca' : 'Nenhuma função cadastrada' }}</p>
+                        </div>
+                    </template>
 
                     <button type="button" class="btn primary btn-add-setting" @click="toggleAddTagInput('function')" :disabled="!hasActiveChurch">
                         <span class="material-icons">add</span>
@@ -119,15 +125,8 @@
 
         <Teleport to="body">
             <Transition name="modal-fade">
-                <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm(); returnPageInformations();">
-                    <registerTagOrFunction
-                        :type="type"
-                        :churchId="resolvedChurchId"
-                        :permissionOptions="permissionOptions"
-                        :initialFunction="editingFunction"
-                        @success="closeModal(); returnPageInformations();"
-                        @error="handleRegisterError"
-                    />
+                <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm();">
+                    <registerTagOrFunction :type="type" :editingFunction="editingFunction" @success="closeModal(); returnChurchTags(); returnChurchFunctions();" />
                 </modal>
             </Transition>
         </Teleport>
@@ -158,6 +157,7 @@
 import modal from "./modal.vue";
 import confirmDeleteModal from "./confirmDeleteModal.vue";
 import registerTagOrFunction from "./registerTagOrFunction.vue";
+import skeletonLoader from "./skeletonLoader.vue";
 import { globalMethods } from '../js/globalMethods';
 import api from '../config/api';
 import $ from 'jquery';
@@ -165,8 +165,16 @@ import $ from 'jquery';
 export default {
     name: "configChurch",
     mixins: [globalMethods],
+    components: {
+        modal,
+        confirmDeleteModal,
+        registerTagOrFunction,
+        skeletonLoader
+    },
     data() {
         return {
+            isLoadingTags: true,
+            isLoadingFunctions: true,
             tags: [],
             functions: [],
             type: "",
@@ -293,7 +301,11 @@ export default {
         },
         returnChurchTags: function () {
             const churchId = this.getCurrentChurchId();
-            if (!churchId) return;
+            if (!churchId) {
+                this.isLoadingTags = false;
+                return;
+            }
+            this.isLoadingTags = true;
             api.post("/igreja/retorna-tags", { id_igreja: churchId })
                 .then((response) => {
                     this.tags = response.data.returnObj;
@@ -302,10 +314,17 @@ export default {
                 .catch((error) => {
                     this.showResponse(error.response.data, ".response", "error");
                 })
+                .finally(() => {
+                    this.isLoadingTags = false;
+                });
         },
         returnChurchFunctions: function () {
             const churchId = this.getCurrentChurchId();
-            if (!churchId) return;
+            if (!churchId) {
+                this.isLoadingFunctions = false;
+                return;
+            }
+            this.isLoadingFunctions = true;
             api.post("/igreja/retorna-funcoes", { id_igreja: churchId })
                 .then((response) => {
                     this.functions = response.data.returnObj;
@@ -314,6 +333,9 @@ export default {
                 .catch((error) => {
                     this.showResponse(error.response.data, ".response", "error");
                 })
+                .finally(() => {
+                    this.isLoadingFunctions = false;
+                });
         },
         returnPageInformations: function () {
             this.returnChurchTags();
@@ -337,11 +359,6 @@ export default {
         if (this.getCurrentChurchId()) {
             this.returnPageInformations();
         }
-    },
-    components: {
-        modal,
-        confirmDeleteModal,
-        registerTagOrFunction
     }
 }
 </script>

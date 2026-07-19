@@ -13,7 +13,10 @@
         <div class="church-events">
             <h5>Eventos</h5>
             <div class="church-events-list">
-                <eventComponent v-for="(event, index) in eventos" :event="event" :key="index" v-if="eventos.length > 0" />
+                <skeletonLoader v-if="isLoading" type="event-card" :count="3" />
+                <template v-else-if="eventos.length > 0">
+                    <eventComponent v-for="(event, index) in eventos" :event="event" :key="index" />
+                </template>
                 <div class="church-empty" v-else>
                     <span class="material-icons empty-icon" style="font-size: 48px; color: var(--neutral-gray-low); margin-bottom: 12px;">event_busy</span>
                     <h5>Nenhum evento agendado</h5>
@@ -41,6 +44,7 @@ import { globalMethods } from '../js/globalMethods';
 import createEventModalContent from "./createEventModalContent.vue";
 import eventComponent from "./eventComponent.vue";
 import modal from "./modal.vue";
+import skeletonLoader from "./skeletonLoader.vue";
 import api from '../config/api';
 
 export default {
@@ -48,6 +52,7 @@ export default {
     mixins: [globalMethods],
     data() {
         return {
+            isLoading: true,
             eventos: []
         }
     },
@@ -67,6 +72,7 @@ export default {
             let churchId = self.getCurrentChurchId();
 
             if (churchId == null) {
+                self.isLoading = false;
                 return;
             }
 
@@ -74,6 +80,7 @@ export default {
                 id_igreja: churchId
             }
 
+            self.isLoading = true;
             api.post("/igreja/retorna-eventos", data)
             .then(function (response) {
                 self.eventos = response.data.returnObj;
@@ -81,6 +88,9 @@ export default {
             .catch(function (error) {
                 console.log(error);
             })
+            .finally(function () {
+                self.isLoading = false;
+            });
         }
     },
     mounted: function () {
@@ -89,7 +99,8 @@ export default {
     components: {
         modal,
         createEventModalContent,
-        eventComponent
+        eventComponent,
+        skeletonLoader
     }
 }
 </script>

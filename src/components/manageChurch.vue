@@ -2,7 +2,8 @@
     <div class="manage-church">
         <div class="manage-container">
             <!-- Church Profile Header Banner -->
-            <div class="church-profile-card" v-if="igreja.id_igreja && igreja.id_igreja == getCurrentChurchId()">
+            <skeletonLoader v-if="!igreja.id_igreja" type="church-card" style="margin-bottom: 20px;" />
+            <div class="church-profile-card" v-else-if="igreja.id_igreja && igreja.id_igreja == getCurrentChurchId()">
                 <div class="avatar-wrapper">
                     <img :src="igreja.imagem_igreja || default_church_image" class="church-avatar-img">
                 </div>
@@ -93,12 +94,17 @@
 <script>
 import { globalMethods } from '../js/globalMethods';
 import commentsComponent from "./commentsComponent.vue";
+import skeletonLoader from "./skeletonLoader.vue";
 import api from '../config/api';
 import { appStore } from '../store/appStore';
 
 export default {
     name: "manageChurch",
     mixins: [globalMethods],
+    components: {
+        commentsComponent,
+        skeletonLoader
+    },
     data() {
         return {
             canManageChurch: false,
@@ -156,11 +162,7 @@ export default {
     },
     mounted: function () {
         this.loadChurchPermission();
-    },
-    components: {
-        commentsComponent
     }
-    
 }
 </script>
 <style scoped>

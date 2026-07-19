@@ -5,7 +5,8 @@
             <p class="subtitle">Personalize suas informações de perfil</p>
         </div>
 
-        <div class="edit-profile-card">
+        <skeletonLoader v-if="!user || !user.nome_usuario" type="profile" style="margin-bottom: 20px;" />
+        <div class="edit-profile-card" v-else>
             <div class="user-avatar-container">
                 <div class="avatar-wrapper">
                     <img :src="user.imagem_usuario || default_avatar_image" alt="Foto de perfil">
@@ -56,12 +57,14 @@ import { globalMethods } from '../js/globalMethods';
 import api from '../config/api';
 import $ from 'jquery';
 import imageCropModal from "./imageCropModal.vue";
+import skeletonLoader from "./skeletonLoader.vue";
 
 export default {
     name: "editProfile",
     mixins: [globalMethods],
     components: {
-        imageCropModal
+        imageCropModal,
+        skeletonLoader
     },
     data() {
         return {

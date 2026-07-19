@@ -914,3 +914,61 @@ label {
 .modal-fade-leave-to .modal-container {
   transform: translateY(80vh);
 }
+
+/* Skeleton Loading Shimmer Effects - Harmônio com o Background Escuro/Roxo */
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton-box {
+  background: linear-gradient(
+    90deg,
+    rgba(24, 21, 56, 0.7) 20%,
+    rgba(45, 40, 114, 0.4) 40%,
+    rgba(56, 182, 255, 0.12) 50%,
+    rgba(45, 40, 114, 0.4) 60%,
+    rgba(24, 21, 56, 0.7) 80%
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: skeleton-shimmer 1.8s infinite ease-in-out !important;
+  border: 1px solid rgba(63, 57, 161, 0.25) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important;
+  color: transparent !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+.skeleton-text {
+  height: 14px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    rgba(32, 28, 76, 0.85) 20%,
+    rgba(63, 57, 161, 0.5) 40%,
+    rgba(56, 182, 255, 0.22) 50%,
+    rgba(63, 57, 161, 0.5) 60%,
+    rgba(32, 28, 76, 0.85) 80%
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: skeleton-shimmer 1.8s infinite ease-in-out !important;
+  display: inline-block;
+}
+
+.skeleton-circle {
+  border-radius: var(--radius-pill) !important;
+  background: linear-gradient(
+    90deg,
+    rgba(32, 28, 76, 0.85) 20%,
+    rgba(63, 57, 161, 0.5) 40%,
+    rgba(56, 182, 255, 0.22) 50%,
+    rgba(63, 57, 161, 0.5) 60%,
+    rgba(32, 28, 76, 0.85) 80%
+  ) !important;
+  background-size: 200% 100% !important;
+  animation: skeleton-shimmer 1.8s infinite ease-in-out !important;
+}

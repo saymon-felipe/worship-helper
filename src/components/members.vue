@@ -50,46 +50,49 @@
         </section>
 
         <div class="members-list-grid">
-            <div class="member-card" :id="'member-' + member.id_usuario" v-for="(member, index) in membersList" v-bind:key="member.id_usuario || index">
-                <img :src="member.imagem_usuario || default_avatar" class="member-avatar" :alt="member.nome_usuario || 'Membro'">
-                <div class="member-info-content">
-                    <div class="member-details">
-                        <h6 class="member-name">{{ member.nome_usuario }}</h6>
-                        <p class="member-occupations" v-if="member.funcoes_usuario && member.funcoes_usuario.length > 0">
-                            {{ returnOccupations(member.funcoes_usuario) }}
-                        </p>
-                        <div class="member-badges" v-if="member.tag_usuario && member.tag_usuario.length > 0">
-                            <span class="member-tag-chip">{{ member.tag_usuario[0].nome_tag }}</span>
+            <skeletonLoader v-if="loadingMembers" type="member-card" :count="6" />
+            <template v-else>
+                <div class="member-card" :id="'member-' + member.id_usuario" v-for="(member, index) in membersList" v-bind:key="member.id_usuario || index">
+                    <img :src="member.imagem_usuario || default_avatar" class="member-avatar" :alt="member.nome_usuario || 'Membro'">
+                    <div class="member-info-content">
+                        <div class="member-details">
+                            <h6 class="member-name">{{ member.nome_usuario }}</h6>
+                            <p class="member-occupations" v-if="member.funcoes_usuario && member.funcoes_usuario.length > 0">
+                                {{ returnOccupations(member.funcoes_usuario) }}
+                            </p>
+                            <div class="member-badges" v-if="member.tag_usuario && member.tag_usuario.length > 0">
+                                <span class="member-tag-chip">{{ member.tag_usuario[0].nome_tag }}</span>
+                            </div>
                         </div>
+                        <button class="more-actions-btn" v-on:click.stop="openMemberMoreActions(member.id_usuario)" v-if="canOpenMemberActions" title="Opções do membro">
+                            <span class="material-icons">more_vert</span>
+                        </button>
                     </div>
-                    <button class="more-actions-btn" v-on:click.stop="openMemberMoreActions(member.id_usuario)" v-if="canOpenMemberActions" title="Opções do membro">
-                        <span class="material-icons">more_vert</span>
-                    </button>
+
+                    <div class="member-more-actions" v-if="canOpenMemberActions">
+                        <ul>
+                            <li v-on:click="addTagFunction(member)" v-if="canChangeMemberTags">
+                                <span class="material-icons action-icon">local_offer</span>
+                                <span>Atribuir tag</span>
+                            </li>
+                            <li v-on:click="addOccupationFunction(member)" v-if="canChangeMemberRoles">
+                                <span class="material-icons action-icon">work_outline</span>
+                                <span>Atribuir função</span>
+                            </li>
+                            <li v-on:click="removeMemberFunction(member)" class="danger-action" v-if="canRemoveMembers">
+                                <span class="material-icons action-icon danger-icon">person_remove</span>
+                                <span>Remover membro</span>
+                            </li>
+                        </ul>
+                    </div>
                 </div>
 
-                <div class="member-more-actions" v-if="canOpenMemberActions">
-                    <ul>
-                        <li v-on:click="addTagFunction(member)" v-if="canChangeMemberTags">
-                            <span class="material-icons action-icon">local_offer</span>
-                            <span>Atribuir tag</span>
-                        </li>
-                        <li v-on:click="addOccupationFunction(member)" v-if="canChangeMemberRoles">
-                            <span class="material-icons action-icon">work_outline</span>
-                            <span>Atribuir função</span>
-                        </li>
-                        <li v-on:click="removeMemberFunction(member)" class="danger-action" v-if="canRemoveMembers">
-                            <span class="material-icons action-icon danger-icon">person_remove</span>
-                            <span>Remover membro</span>
-                        </li>
-                    </ul>
+                <div class="church-empty" v-if="membersList.length <= 0">
+                    <span class="material-icons empty-icon">group_off</span>
+                    <h5>Nenhum membro encontrado</h5>
+                    <p>Tente buscar por um nome diferente ou convide novos membros para a sua igreja.</p>
                 </div>
-            </div>
-
-            <div class="church-empty" v-if="!loadingMembers && membersList.length <= 0">
-                <span class="material-icons empty-icon">group_off</span>
-                <h5>Nenhum membro encontrado</h5>
-                <p>Tente buscar por um nome diferente ou convide novos membros para a sua igreja.</p>
-            </div>
+            </template>
         </div>
 
         <div class="member-more-actions-wrapper" v-if="showMemberMoreActions" v-on:click="closeMemberMoreActions()"></div>
@@ -126,11 +129,21 @@ import inviteMemberModalContent from "./inviteMemberModalContent.vue";
 import addTagModalContent from "./addTagModalContent.vue";
 import removeMemberModalContent from "./removeMemberModalContent.vue";
 import addFunctionModalContent from "./addFunctionModalContent.vue";
+import skeletonLoader from "./skeletonLoader.vue";
 import { appStore } from '../store/appStore';
 
 export default {
     name: "membersList",
     mixins: [globalMethods],
+    components: {
+        modal,
+        confirmDeleteModal,
+        inviteMemberModalContent,
+        addTagModalContent,
+        removeMemberModalContent,
+        addFunctionModalContent,
+        skeletonLoader
+    },
     data() {
         return {
             inviteMember: false,
@@ -176,14 +189,6 @@ export default {
             if (this.removeMember) return this.canRemoveMembers;
             return false;
         }
-    },
-    components: {
-        modal,
-        confirmDeleteModal,
-        inviteMemberModalContent,
-        addTagModalContent,
-        addFunctionModalContent,
-        removeMemberModalContent
     },
     methods: {
         getSourceMembers: function () {

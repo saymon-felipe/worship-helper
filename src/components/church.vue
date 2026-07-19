@@ -1,7 +1,8 @@
 <template>
     <div class="church-dashboard">
         <div class="container">
-            <button class="latest-warning-banner" v-if="latestWarning" type="button" v-on:click="goToWarnings()">
+            <skeletonLoader v-if="isLoadingWarning" type="banner" style="margin-bottom: 18px;" />
+            <button class="latest-warning-banner" v-else-if="latestWarning" type="button" v-on:click="goToWarnings()">
                 <div class="banner-icon">
                     <span class="material-icons">campaign</span>
                 </div>
@@ -43,28 +44,38 @@
                 </div>
             </div>
             <div class="event-list-content">
-                <eventComponent :event="event" v-for="(event, index) in eventos" :key="index" />
-                <div class="church-empty" v-if="eventos.length <= 0">
-                    <span class="material-icons empty-icon">calendar_today</span>
-                    <h5>Nenhum evento agendado</h5>
-                    <p>Fique atento! Novas escalas e cultos aparecerão aqui em breve.</p>
-                </div>
+                <skeletonLoader v-if="isLoadingEvents" type="event-card" :count="3" />
+                <template v-else>
+                    <eventComponent :event="event" v-for="(event, index) in eventos" :key="index" />
+                    <div class="church-empty" v-if="eventos.length <= 0">
+                        <span class="material-icons empty-icon">calendar_today</span>
+                        <h5>Nenhum evento agendado</h5>
+                        <p>Fique atento! Novas escalas e cultos aparecerão aqui em breve.</p>
+                    </div>
+                </template>
             </div>
         </div>
     </div>
 </template>
 <script>
 import eventComponent from "./eventComponent.vue";
+import skeletonLoader from "./skeletonLoader.vue";
 import { globalMethods } from '../js/globalMethods';
 import api from '../config/api';
 
 export default {
     name: "churchDashboard",
     mixins: [globalMethods],
+    components: {
+        eventComponent,
+        skeletonLoader
+    },
     data() {
         return {
             eventos: [],
-            latestWarning: null
+            latestWarning: null,
+            isLoadingEvents: true,
+            isLoadingWarning: true
         }
     },
     methods: {
@@ -86,9 +97,11 @@ export default {
             let churchId = self.getCurrentChurchId();
 
             if (churchId == null) {
+                self.isLoadingWarning = false;
                 return;
             }
 
+            self.isLoadingWarning = true;
             api.post("/igreja/ultimo-aviso", { id_igreja: churchId })
             .then(function (response) {
                 self.latestWarning = response.data.returnObj;
@@ -96,12 +109,16 @@ export default {
             .catch(function (error) {
                 console.log(error);
             })
+            .finally(function () {
+                self.isLoadingWarning = false;
+            });
         },
         returnEvents: function () {
             let self = this;
             let churchId = self.getCurrentChurchId();
 
             if (churchId == null) {
+                self.isLoadingEvents = false;
                 return;
             }
 
@@ -109,6 +126,7 @@ export default {
                 id_igreja: churchId
             }
 
+            self.isLoadingEvents = true;
             api.post("/igreja/retorna-eventos", data)
             .then(function (response) {
                 self.eventos = response.data.returnObj;
@@ -116,6 +134,9 @@ export default {
             .catch(function (error) {
                 console.log(error);
             })
+            .finally(function () {
+                self.isLoadingEvents = false;
+            });
         }
     },
     mounted: function () {
@@ -123,9 +144,6 @@ export default {
             this.returnLatestWarning();
             this.returnEvents();
         }, 100);
-    },
-    components: {
-        eventComponent
     }
 }
 </script>

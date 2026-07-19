@@ -70,9 +70,12 @@
             </button>
         </div>
 
+        <div class="cipher-content" v-if="loading">
+            <skeletonLoader type="cipher" />
+        </div>
         <div 
             class="cipher-content" 
-            v-if="cipherText" 
+            v-else-if="cipherText" 
             @scroll="handleScroll"
             @touchstart="handleTouchStart"
             @touchend="handleTouchEnd"
@@ -92,7 +95,7 @@
             </div>
         </div>
 
-        <div class="cipher-empty" v-if="!cipherText">
+        <div class="cipher-empty" v-else-if="!cipherText && !loading">
             <span class="material-icons">lyrics</span>
             <h5>Cifra não disponível</h5>
             <p>Essa música ainda não tem uma cifra salva no app.</p>
@@ -195,14 +198,20 @@ function isChordToken(token) {
 
 import { globalMethods } from "../js/globalMethods";
 import api from "../config/api";
+import skeletonLoader from "./skeletonLoader.vue";
 
 export default {
     name: "cipherViewer",
     mixins: [globalMethods],
     components: {
-        customRange
+        customRange,
+        skeletonLoader
     },
     props: {
+        loading: {
+            type: Boolean,
+            default: false
+        },
         musicId: {
             type: [Number, String],
             default: null

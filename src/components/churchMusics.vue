@@ -77,14 +77,17 @@
             </Transition>
         </div>
 
-        <div class="music-list" v-if="filteredMusics.length > 0">
-            <musicComponent v-for="(music, index) in filteredMusics" :key="index" :music="music" detail-source="library"></musicComponent>
-        </div>
-        <div class="musics-empty-state" v-else>
-            <span class="material-icons empty-icon">library_music</span>
-            <h5>Nenhuma música encontrada</h5>
-            <p>Tente ajustar a busca ou limpar os filtros de tags selecionados.</p>
-        </div>
+        <skeletonLoader v-if="isLoading" type="music-card" :count="4" />
+        <template v-else>
+            <div class="music-list" v-if="filteredMusics.length > 0">
+                <musicComponent v-for="(music, index) in filteredMusics" :key="index" :music="music" detail-source="library"></musicComponent>
+            </div>
+            <div class="musics-empty-state" v-else>
+                <span class="material-icons empty-icon">library_music</span>
+                <h5>Nenhuma música encontrada</h5>
+                <p>Tente ajustar a busca ou limpar os filtros de tags selecionados.</p>
+            </div>
+        </template>
 
         <Teleport to="body">
             <Transition name="modal-fade">
@@ -100,6 +103,7 @@ import { globalMethods } from '../js/globalMethods';
 import musicComponent from "./musicComponent.vue";
 import createMusicModalContent from "./createMusicModalContent.vue";
 import modal from "./modal.vue";
+import skeletonLoader from "./skeletonLoader.vue";
 import api from '../config/api';
 
 export default {
@@ -107,6 +111,7 @@ export default {
     mixins: [globalMethods],
     data() {
         return {
+            isLoading: true,
             musics: [],
             searchQuery: "",
             showAdvancedFilters: false,
@@ -132,10 +137,11 @@ export default {
 
             // Filtro por tags
             if (this.selectedTags && this.selectedTags.length > 0) {
-                const selectedIds = this.selectedTags.map(t => t.id);
-                result = result.filter(music => 
-                    music.tags && music.tags.some(tag => selectedIds.includes(tag.id))
-                );
+                const selectedTagIds = this.selectedTags.map(t => t.id);
+                result = result.filter(music => {
+                    if (!music.tags || music.tags.length === 0) return false;
+                    return selectedTagIds.every(tagId => music.tags.some(t => t.id === tagId));
+                });
             }
 
             return result;
@@ -153,6 +159,7 @@ export default {
         returnMusics: function () {
             let self = this;
 
+            self.isLoading = true;
             api.get("/musicas")
                 .then(function (response) {
                     self.musics = response.data.returnObj;
@@ -160,6 +167,9 @@ export default {
                 .catch(function (error) {
                     console.log(error);
                 })
+                .finally(function () {
+                    self.isLoading = false;
+                });
         },
         returnTags: function () {
             let self = this;
@@ -196,7 +206,8 @@ export default {
     components: {
         musicComponent,
         createMusicModalContent,
-        modal
+        modal,
+        skeletonLoader
     }
 }
 </script>

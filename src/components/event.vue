@@ -1,7 +1,8 @@
 <template>
     <section class="event-page-container">
         <!-- Event Header Card -->
-        <div class="event-hero-card">
+        <skeletonLoader v-if="isLoading" type="hero-event" style="margin-bottom: 20px;" />
+        <div class="event-hero-card" v-else>
             <div class="hero-top">
                 <h2>{{ event.nome_evento }}</h2>
                 <button type="button" class="btn secondary edit-event-button" v-if="canEditEvent" @click="openEditEvent()">
@@ -33,7 +34,8 @@
         <!-- Musics Section -->
         <div class="event-section">
             <h3>Louvores Escalados</h3>
-            <div class="music-list">
+            <skeletonLoader v-if="isLoading" type="music-card" :count="3" />
+            <div class="music-list" v-else>
                 <div class="music-row-card" v-for="(music, index) in event.musicas" :key="index" v-on:click="goToMusic(music.id_musica)">
                     <div class="music-row-left">
                         <img :src="music.imagem_musica || default_music_image" class="music-thumbnail">
@@ -60,7 +62,8 @@
         <!-- Members Section -->
         <div class="event-section">
             <h3>Escala de Membros</h3>
-            <div class="member-list">
+            <skeletonLoader v-if="isLoading" type="member-card" :count="3" />
+            <div class="member-list" v-else>
                 <div class="member-row-card member-clickable" v-for="(member, index) in event.membros_evento" :key="index" @click="openMemberNotes(member)">
                     <div class="member-row-left">
                         <img :src="member.imagem_usuario" class="member-thumbnail">
@@ -200,14 +203,23 @@ import commentsComponent from "./commentsComponent.vue";
 import createEventModalContent from "./createEventModalContent.vue";
 import modal from "./modal.vue";
 import confirmDeleteModal from "./confirmDeleteModal.vue";
+import skeletonLoader from "./skeletonLoader.vue";
 import { appStore } from '../store/appStore';
 moment.locale('pt-br');
 
 export default {
     name: "eventDetail",
     mixins: [globalMethods],
+    components: {
+        commentsComponent,
+        createEventModalContent,
+        modal,
+        confirmDeleteModal,
+        skeletonLoader
+    },
     data() {
         return {
+            isLoading: true,
             event_id: null,
             event: {},
             currentUser: null,
@@ -256,6 +268,7 @@ export default {
             let churchId = this.getCurrentChurchId();
 
             if (churchId == null) {
+                self.isLoading = false;
                 return;
             }
 
@@ -263,6 +276,7 @@ export default {
                 id_igreja: churchId
             }
 
+            self.isLoading = true;
             api.post("/igreja/retorna-evento/" + self.event_id, data)
             .then(function (response) {
                 self.event = response.data.returnObj;
@@ -270,6 +284,9 @@ export default {
             .catch(function (error) {
                 console.log(error);
             })
+            .finally(function () {
+                self.isLoading = false;
+            });
         },
         openEditEvent: function () {
             this.modalTitle = "Editar evento";
@@ -408,12 +425,6 @@ export default {
         }).catch(() => {});
         this.getParam();
         this.getEvent();
-    },
-    components: {
-        commentsComponent,
-        createEventModalContent,
-        modal,
-        confirmDeleteModal
     }
 }
 </script>

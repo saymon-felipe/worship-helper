@@ -31,7 +31,6 @@
 <script>
 import { globalMethods } from '../js/globalMethods';
 import api from '../config/api';
-import $ from 'jquery';
 
 export default {
     name: "returnTagOrFunction",

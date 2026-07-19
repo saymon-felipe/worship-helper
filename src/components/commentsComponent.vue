@@ -11,103 +11,32 @@
         </div>
 
         <div class="warnings-list">
-            <div class="warning-container" v-for="(warning, index) in groupedWarnings" v-bind:key="index">
-                <!-- Comentário/Aviso Pai -->
-                <div class="warning">
-                    <div class="user-photo">
-                        <img :src="warning.criador.imagem_usuario || default_avatar" class="avatar-pp">
-                    </div>
-                    <div class="warning-informations">
-                        <div class="warning-header-wrapper">
-                            <div class="user-informations">
-                                <h6 class="font-size-3">{{ warning.criador.nome_usuario }}</h6>
-                                <p class="warning-date">{{ returnRelativeData(warning.data_criacao) }}</p>
-                            </div>
-                            <div class="comment-menu-container" v-if="canEdit(warning) || canDelete(warning)">
-                                <button type="button" class="btn-icon-only menu-trigger" @click="toggleDropdown(warning.id_aviso)" title="Mais ações">
-                                    <span class="material-icons">more_vert</span>
-                                </button>
-                                <div class="dropdown-overlay" v-if="activeDropdownId === warning.id_aviso" @click="activeDropdownId = null"></div>
-                                <Transition name="fade-in">
-                                    <div class="comment-dropdown-menu" v-if="activeDropdownId === warning.id_aviso">
-                                        <button type="button" class="dropdown-item" v-if="canEdit(warning)" @click="startEditWarning(warning); activeDropdownId = null;">
-                                            <span class="material-icons">edit</span>
-                                            <span>Editar</span>
-                                        </button>
-                                        <button type="button" class="dropdown-item danger" v-if="canDelete(warning)" @click="askDeleteWarning(warning); activeDropdownId = null;">
-                                            <span class="material-icons">delete</span>
-                                            <span>Excluir</span>
-                                        </button>
-                                    </div>
-                                </Transition>
-                            </div>
-                        </div>
-                        
-                        <!-- Edição Inline do Comentário Pai -->
-                        <div class="edit-comment-inline-form" v-if="editingWarningId === warning.id_aviso">
-                            <form @submit.prevent="updateWarning()">
-                                <div class="reply-input-container">
-                                    <input type="text" v-model="editingWarningText" placeholder="Edite seu comentário..." maxlength="100" class="reply-input" ref="editInput" required>
-                                    <div class="reply-actions-row">
-                                        <button type="button" class="btn btn-small btn-text" @click="cancelEditWarning()">Cancelar</button>
-                                        <button type="submit" class="btn btn-small primary">Salvar</button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                        <template v-else>
-                            <p class="warning-message">{{ warning.mensagem }}</p>
-                            <div class="warning-actions">
-                                <button type="button" v-on:click="likeWarning(warning.id_aviso, warning.usuario_atual_curtiu)" class="btn primary-alt btn-small like-warning-button" :class="warning.usuario_atual_curtiu ? 'primary' : ''">
-                                    <span class="material-icons">thumb_up_off_alt</span>
-                                    <span>{{ warning.quantidade_curtidas }}</span>
-                                </button>
-                                <button type="button" class="btn btn-small btn-reply" v-if="canCreate" v-on:click="toggleReply(warning.id_aviso)">
-                                    <span class="material-icons">reply</span>
-                                    <span>Responder</span>
-                                </button>
-                            </div>
-                        </template>
-                    </div>
-                </div>
-
-                <!-- Input de Resposta Inline -->
-                <div class="reply-input-box" v-if="canCreate && activeReplyId === warning.id_aviso">
-                    <form @submit.prevent="createNewWarning(warning.id_aviso)">
-                        <div class="reply-input-container">
-                            <input type="text" v-model="replyText" placeholder="Escreva uma resposta..." maxlength="100" class="reply-input" ref="replyInput" required>
-                            <div class="reply-actions-row">
-                                <button type="button" class="btn btn-small btn-text" @click="activeReplyId = null">Cancelar</button>
-                                <button type="submit" class="btn btn-small primary">Enviar</button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-
-                <!-- Sub-lista de Respostas (Endentada) -->
-                <div class="replies-container" v-if="warning.replies && warning.replies.length > 0">
-                    <div class="warning reply-item" v-for="(reply, rIndex) in warning.replies" :key="rIndex">
+            <skeletonLoader v-if="isLoading" type="comments" :count="3" />
+            <template v-else>
+                <div class="warning-container" v-for="(warning, index) in groupedWarnings" v-bind:key="index">
+                    <!-- Comentário/Aviso Pai -->
+                    <div class="warning">
                         <div class="user-photo">
-                            <img :src="reply.criador.imagem_usuario || default_avatar" class="avatar-pp">
+                            <img :src="warning.criador.imagem_usuario || default_avatar" class="avatar-pp">
                         </div>
                         <div class="warning-informations">
                             <div class="warning-header-wrapper">
                                 <div class="user-informations">
-                                    <h6 class="font-size-3">{{ reply.criador.nome_usuario }}</h6>
-                                    <p class="warning-date">{{ returnRelativeData(reply.data_criacao) }}</p>
+                                    <h6 class="font-size-3">{{ warning.criador.nome_usuario }}</h6>
+                                    <p class="warning-date">{{ returnRelativeData(warning.data_criacao) }}</p>
                                 </div>
-                                <div class="comment-menu-container" v-if="canEdit(reply) || canDelete(reply)">
-                                    <button type="button" class="btn-icon-only menu-trigger" @click="toggleDropdown(reply.id_aviso)" title="Mais ações">
+                                <div class="comment-menu-container" v-if="canEdit(warning) || canDelete(warning)">
+                                    <button type="button" class="btn-icon-only menu-trigger" @click="toggleDropdown(warning.id_aviso)" title="Mais ações">
                                         <span class="material-icons">more_vert</span>
                                     </button>
-                                    <div class="dropdown-overlay" v-if="activeDropdownId === reply.id_aviso" @click="activeDropdownId = null"></div>
+                                    <div class="dropdown-overlay" v-if="activeDropdownId === warning.id_aviso" @click="activeDropdownId = null"></div>
                                     <Transition name="fade-in">
-                                        <div class="comment-dropdown-menu" v-if="activeDropdownId === reply.id_aviso">
-                                            <button type="button" class="dropdown-item" v-if="canEdit(reply)" @click="startEditWarning(reply); activeDropdownId = null;">
+                                        <div class="comment-dropdown-menu" v-if="activeDropdownId === warning.id_aviso">
+                                            <button type="button" class="dropdown-item" v-if="canEdit(warning)" @click="startEditWarning(warning); activeDropdownId = null;">
                                                 <span class="material-icons">edit</span>
                                                 <span>Editar</span>
                                             </button>
-                                            <button type="button" class="dropdown-item danger" v-if="canDelete(reply)" @click="askDeleteWarning(reply); activeDropdownId = null;">
+                                            <button type="button" class="dropdown-item danger" v-if="canDelete(warning)" @click="askDeleteWarning(warning); activeDropdownId = null;">
                                                 <span class="material-icons">delete</span>
                                                 <span>Excluir</span>
                                             </button>
@@ -116,11 +45,11 @@
                                 </div>
                             </div>
                             
-                            <!-- Edição Inline do Comentário Filho (Resposta) -->
-                            <div class="edit-comment-inline-form" v-if="editingWarningId === reply.id_aviso">
+                            <!-- Edição Inline do Comentário Pai -->
+                            <div class="edit-comment-inline-form" v-if="editingWarningId === warning.id_aviso">
                                 <form @submit.prevent="updateWarning()">
                                     <div class="reply-input-container">
-                                        <input type="text" v-model="editingWarningText" placeholder="Edite sua resposta..." maxlength="100" class="reply-input" required>
+                                        <input type="text" v-model="editingWarningText" placeholder="Edite seu comentário..." maxlength="100" class="reply-input" ref="editInput" required>
                                         <div class="reply-actions-row">
                                             <button type="button" class="btn btn-small btn-text" @click="cancelEditWarning()">Cancelar</button>
                                             <button type="submit" class="btn btn-small primary">Salvar</button>
@@ -129,24 +58,92 @@
                                 </form>
                             </div>
                             <template v-else>
-                                <p class="warning-message">{{ reply.mensagem }}</p>
+                                <p class="warning-message">{{ warning.mensagem }}</p>
                                 <div class="warning-actions">
-                                    <button type="button" v-on:click="likeWarning(reply.id_aviso, reply.usuario_atual_curtiu)" class="btn primary-alt btn-small like-warning-button" :class="reply.usuario_atual_curtiu ? 'primary' : ''">
+                                    <button type="button" v-on:click="likeWarning(warning.id_aviso, warning.usuario_atual_curtiu)" class="btn primary-alt btn-small like-warning-button" :class="warning.usuario_atual_curtiu ? 'primary' : ''">
                                         <span class="material-icons">thumb_up_off_alt</span>
-                                        <span>{{ reply.quantidade_curtidas }}</span>
+                                        <span>{{ warning.quantidade_curtidas }}</span>
+                                    </button>
+                                    <button type="button" class="btn btn-small btn-reply" v-if="canCreate" v-on:click="toggleReply(warning.id_aviso)">
+                                        <span class="material-icons">reply</span>
+                                        <span>Responder</span>
                                     </button>
                                 </div>
                             </template>
                         </div>
                     </div>
+
+                    <!-- Input de Resposta Inline -->
+                    <div class="reply-input-box" v-if="canCreate && activeReplyId === warning.id_aviso">
+                        <form @submit.prevent="createNewWarning(warning.id_aviso)">
+                            <div class="reply-input-container">
+                                <input type="text" v-model="replyText" placeholder="Escreva uma resposta..." maxlength="100" class="reply-input" ref="replyInput" required>
+                                <div class="reply-actions-row">
+                                    <button type="button" class="btn btn-small btn-text" @click="activeReplyId = null">Cancelar</button>
+                                    <button type="submit" class="btn btn-small primary">Enviar</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Sub-lista de Respostas (Endentada) -->
+                    <div class="replies-container" v-if="warning.replies && warning.replies.length > 0">
+                        <div class="warning reply-item" v-for="(reply, rIndex) in warning.replies" :key="rIndex">
+                            <div class="user-photo">
+                                <img :src="reply.criador.imagem_usuario || default_avatar" class="avatar-pp">
+                            </div>
+                            <div class="warning-informations">
+                                <div class="warning-header-wrapper">
+                                    <div class="user-informations">
+                                        <h6 class="font-size-3">{{ reply.criador.nome_usuario }}</h6>
+                                        <p class="warning-date">{{ returnRelativeData(reply.data_criacao) }}</p>
+                                    </div>
+                                    <div class="comment-menu-container" v-if="canEdit(reply) || canDelete(reply)">
+                                        <button type="button" class="btn-icon-only menu-trigger" @click="toggleDropdown(reply.id_aviso)" title="Mais ações">
+                                            <span class="material-icons">more_vert</span>
+                                        </button>
+                                        <div class="dropdown-overlay" v-if="activeDropdownId === reply.id_aviso" @click="activeDropdownId = null"></div>
+                                        <Transition name="fade-in">
+                                            <div class="comment-dropdown-menu" v-if="activeDropdownId === reply.id_aviso">
+                                                <button type="button" class="dropdown-item" v-if="canEdit(reply)" @click="startEditWarning(reply); activeDropdownId = null;">
+                                                    <span class="material-icons">edit</span>
+                                                    <span>Editar</span>
+                                                </button>
+                                                <button type="button" class="dropdown-item danger" v-if="canDelete(reply)" @click="askDeleteWarning(reply); activeDropdownId = null;">
+                                                    <span class="material-icons">delete</span>
+                                                    <span>Excluir</span>
+                                                </button>
+                                            </div>
+                                        </Transition>
+                                    </div>
+                                </div>
+                                
+                                <!-- Edição Inline da Resposta -->
+                                <div class="edit-comment-inline-form" v-if="editingWarningId === reply.id_aviso">
+                                    <form @submit.prevent="updateWarning()">
+                                        <div class="reply-input-container">
+                                            <input type="text" v-model="editingWarningText" placeholder="Edite sua resposta..." maxlength="100" class="reply-input" ref="editInput" required>
+                                            <div class="reply-actions-row">
+                                                <button type="button" class="btn btn-small btn-text" @click="cancelEditWarning()">Cancelar</button>
+                                                <button type="submit" class="btn btn-small primary">Salvar</button>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                                <template v-else>
+                                    <p class="warning-message">{{ reply.mensagem }}</p>
+                                    <div class="warning-actions">
+                                        <button type="button" v-on:click="likeWarning(reply.id_aviso, reply.usuario_atual_curtiu)" class="btn primary-alt btn-small like-warning-button" :class="reply.usuario_atual_curtiu ? 'primary' : ''">
+                                            <span class="material-icons">thumb_up_off_alt</span>
+                                            <span>{{ reply.quantidade_curtidas }}</span>
+                                        </button>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            
-            <div class="warnings-empty-state" v-if="groupedWarnings.length === 0">
-                <span class="material-icons empty-icon">{{ emptyStateIcon }}</span>
-                <h5>{{ emptyStateTitle }}</h5>
-                <p>{{ emptyStateDescription }}</p>
-            </div>
+            </template>
         </div>
         <Teleport to="body">
             <confirmDeleteModal
@@ -165,13 +162,19 @@ import { globalMethods } from '../js/globalMethods';
 import $ from 'jquery';
 import api from '../config/api';
 import confirmDeleteModal from "./confirmDeleteModal.vue";
+import skeletonLoader from "./skeletonLoader.vue";
 
 export default {
     name: "commentsComponent",
     mixins: [globalMethods],
+    components: {
+        confirmDeleteModal,
+        skeletonLoader
+    },
     props: ["type", "id_musica", "id_evento", "canCreateThread", "canManageThread"],
     data() {
         return {
+            isLoading: true,
             warnings: [],
             activeReplyId: null,
             replyText: "",
@@ -360,6 +363,7 @@ export default {
             let churchId = this.getCurrentChurchId();
 
             if (!this.hasRequiredTarget()) {
+                self.isLoading = false;
                 return Promise.resolve();
             }
 
@@ -369,6 +373,7 @@ export default {
                 id_evento: this.id_evento ? Number(this.id_evento) : undefined
             }
 
+            self.isLoading = true;
             return api.post(self.returnPath, data)
                 .then(function (response) {
                     self.warnings = response.data.returnObj || [];
@@ -376,6 +381,9 @@ export default {
                 .catch(function (error) {
                     console.log(error);
                 })
+                .finally(function () {
+                    self.isLoading = false;
+                });
         },
         likeWarning: function (warning_id, usuario_atual_curtiu = false) {
             let self = this;
@@ -563,9 +571,6 @@ export default {
     mounted: function () {
         this.fillVariables();
         this.returnWarnings();
-    },
-    components: {
-        confirmDeleteModal
     }
 }
 </script>

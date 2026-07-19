@@ -1,7 +1,8 @@
 <template>
     <div class="music-detail-container">
         <!-- Header -->
-        <div class="music-detail-header-card">
+        <skeletonLoader v-if="isLoading" type="hero-music" style="margin-bottom: 20px;" />
+        <div class="music-detail-header-card" v-else>
             <musicComponent :music="music" clicktype="none" class="embedded-music-component"></musicComponent>
             <div class="tone-info-box" v-if="event_id != 0 && music.tom">
                 <span class="tone-label">Tom Escolhido</span>
@@ -10,7 +11,7 @@
         </div>
 
         <!-- Main Content -->
-        <div class="music-detail-content">
+        <div class="music-detail-content" v-if="!isLoading">
             <div class="music-action-buttons">
                 <button class="btn primary btn-2 cipher-btn" v-on:click="openCipherContainer()">
                     <span class="material-icons">menu_book</span>
@@ -46,7 +47,7 @@
         />
         
         <!-- Comments Section -->
-        <div class="music-comments-section" v-if="music.id != undefined">
+        <div class="music-comments-section" v-if="!isLoading && music.id != undefined">
             <h3>Comentários e Dicas</h3>
             <template v-if="hasEventContext">
                 <div class="comments-tabs">
@@ -88,12 +89,14 @@ import musicComponent from "./musicComponent.vue";
 import commentsComponent from "./commentsComponent.vue";
 import cipherModal from "./cipherModal.vue";
 import confirmDeleteModal from "./confirmDeleteModal.vue";
+import skeletonLoader from "./skeletonLoader.vue";
 
 export default {
     name: "musicEntityDetail",
     mixins: [globalMethods],
     data() {
         return {
+            isLoading: true,
             music: {},
             currentEvent: {},
             currentUser: null,
@@ -135,7 +138,8 @@ export default {
         musicComponent,
         commentsComponent,
         cipherModal,
-        confirmDeleteModal
+        confirmDeleteModal,
+        skeletonLoader
     },
     methods: {
         getMusic: function () {
@@ -144,6 +148,7 @@ export default {
                 event_id: this.event_id
             }
 
+            self.isLoading = true;
             api.post("/musicas/retorna_musica/" + self.$route.params.id_musica, data)
                 .then(function (response) {
                     self.music = response.data.returnObj;
@@ -151,6 +156,9 @@ export default {
                 .catch(function (error) {
                     console.log(error);
                 })
+                .finally(function () {
+                    self.isLoading = false;
+                });
         },
         getCurrentEvent: function () {
             if (!this.hasEventContext) {

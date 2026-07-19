@@ -1,6 +1,10 @@
 <template>
     <div class="choose-church-container">
-        <div class="my-groups" v-if="lista_igrejas.length > 0">
+        <div class="my-groups" v-if="isLoading">
+            <h3>Minhas igrejas</h3>
+            <skeletonLoader type="church-card" :count="3" />
+        </div>
+        <div class="my-groups" v-else-if="lista_igrejas.length > 0">
             <h3>Minhas igrejas</h3>
             <div class="churches-grid">
                 <div v-for="(igreja, index) in lista_igrejas" :key="index" class="church-card">
@@ -20,7 +24,7 @@
                 </div>
             </div>
         </div>
-        <div class="church-empty" v-else>
+        <div class="church-empty" v-else-if="!isLoading">
             <h5>Nenhuma igreja encontrada</h5>
             <p>Você ainda não é membro de nenhuma igreja. Solicite ao administrador da sua igreja o convite de acesso.</p>
         </div>
@@ -65,12 +69,17 @@ moment.locale('pt-br');
 import { globalMethods } from '../js/globalMethods';
 import api from '../config/api';
 import { appStore } from '../store/appStore';
+import skeletonLoader from './skeletonLoader.vue';
 
 export default {
     name: "chooseChurch",
     mixins: [globalMethods],
+    components: {
+        skeletonLoader
+    },
     data() {
         return {
+            isLoading: true,
             lista_igrejas: [],
             churchInviteList: {}
         }
@@ -86,17 +95,22 @@ export default {
 
             if (!force && appStore.state.myChurches) {
                 self.lista_igrejas = appStore.state.myChurches;
+                self.isLoading = false;
                 return;
             }
 
+            self.isLoading = true;
             api.post("/usuario/minhas-igrejas")
                 .then(function (response) {
                     appStore.setMyChurches(response.data.returnObj);
                     self.lista_igrejas = appStore.state.myChurches;
                 })
                 .catch(function (error) {
-                    console.log(error)
+                    console.log(error);
                 })
+                .finally(function () {
+                    self.isLoading = false;
+                });
         },
         getChurchInvitesList: function (reload_churches = false, force = false) {
             let self = this;
@@ -119,13 +133,13 @@ export default {
                 })
                 .catch(function (error) {
                     console.log(error);
-                })
+                });
         },
         acceptInvite: function (id_igreja) {
             let self = this;
             let data = {
                 id_igreja: id_igreja
-            }
+            };
 
             api.post("/usuario/aceita-convite", data)
                 .then(function () {
@@ -133,13 +147,13 @@ export default {
                 })
                 .catch(function (error) {
                     console.log(error);
-                })
+                });
         },
         denyInvite: function (id_igreja) {
             let self = this;
             let data = {
                 id_igreja: id_igreja
-            }
+            };
 
             api.post("/usuario/rejeita-convite", data)
                 .then(function () {
@@ -147,7 +161,7 @@ export default {
                 })
                 .catch(function (error) {
                     console.log(error);
-                })
+                });
         },
         goToRegisterChurchPage: function () {
             this.$router.push("/register-church");

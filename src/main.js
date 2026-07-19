@@ -4,6 +4,7 @@ import router from './router';
 import api from './config/api';
 import { moment, momentTimezone } from './config/moment';
 import { appStore } from './store/appStore';
+import './services/pwaInstall';
 
 const app = createApp(App);
 

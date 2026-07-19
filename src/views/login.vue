@@ -47,7 +47,7 @@ export default {
       let form = $("#" + event.target.id);
       let button = $("#access-account-button");
 
-      button.attr("disabled", "disabled");
+      button.prop("disabled", true);
 
       let data = form.serializeArray().reduce(function (obj, item) { // Pega todos os dados do formulário e coloca em um objeto.
           obj[item.name] = item.value;
@@ -55,28 +55,30 @@ export default {
       }, {});
 
       api.post("/usuario/login", data)
-      .then(function (response) {
-        let token = response.data.returnObj;
+        .then(function (response) {
+          let token = response.data.returnObj;
 
-        self.setJwtInLocalStorage(token);
-        self.response = response.data.message;
-        self.resetResponseClass(responseElement);
-        responseElement.css("opacity", 1).addClass("success");
-        self.$router.push("/home");
-      }).catch(function (error) {
-        let errorMessage = error.response.data;
+          self.setJwtInLocalStorage(token);
+          self.response = response.data.message;
+          self.resetResponseClass(responseElement);
+          responseElement.css("opacity", 1).addClass("success");
+          self.$router.push("/home");
+        })
+        .catch(function (error) {
+          const responseData = error.response ? error.response.data : null;
+          const errorMessage = typeof responseData === "string"
+            ? responseData
+            : responseData && responseData.message
+              ? responseData.message
+              : "Não foi possível conectar ao servidor. Verifique a conexão e tente novamente.";
 
-        self.setResponse(errorMessage, "error");
-
-        if (errorMessage != null || errorMessage != undefined) {
           self.response = errorMessage;
           self.resetResponseClass(responseElement);
           responseElement.css("opacity", 1).addClass("error");
-        }
-      })
-      .then(function () {
-        button.attr("disabled", false);
-      })
+        })
+        .finally(function () {
+          button.prop("disabled", false);
+        });
     }
   },
   components: {
@@ -105,4 +107,3 @@ export default {
   text-align: center;
 }
 </style>
-

@@ -445,6 +445,7 @@ export default {
 
 .show-cipher {
     align-self: flex-start;
+    max-width: 100%;
 }
 
 .cipher-loading {

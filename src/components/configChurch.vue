@@ -97,8 +97,11 @@
                                     </div>
                                 </div>
                                 <div class="permission-chip-list" v-if="permissionLabelsForFunction(currentFunction).length > 0">
-                                    <span class="modern-chip function-chip permission-chip" v-for="permission in permissionLabelsForFunction(currentFunction)" :key="permission">
+                                    <span class="modern-chip function-chip permission-chip" v-for="permission in visiblePermissionLabelsForFunction(currentFunction)" :key="permission" :title="permission">
                                         {{ permission }}
+                                    </span>
+                                    <span v-if="hiddenPermissionCount(currentFunction) > 0" class="modern-chip function-chip permission-chip more-permissions-chip" :title="hiddenPermissionCount(currentFunction) + ' permissões adicionais'">
+                                        +{{ hiddenPermissionCount(currentFunction) }}
                                     </span>
                                 </div>
                                 <div class="permission-chip-list muted" v-else>
@@ -298,6 +301,12 @@ export default {
             return this.permissionOptions
                 .filter((permission) => functionPermissions.includes(permission.key))
                 .map((permission) => permission.label);
+        },
+        visiblePermissionLabelsForFunction: function (currentFunction) {
+            return this.permissionLabelsForFunction(currentFunction).slice(0, 2);
+        },
+        hiddenPermissionCount: function (currentFunction) {
+            return Math.max(0, this.permissionLabelsForFunction(currentFunction).length - 2);
         },
         permissionSummary: function (currentFunction) {
             const labels = this.permissionLabelsForFunction(currentFunction);
@@ -645,15 +654,27 @@ export default {
 
 .permission-chip-list {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
     gap: 6px;
     margin-top: 10px;
+    overflow: hidden;
 }
 
 .permission-chip {
     font-size: 10px;
     padding: 4px 8px;
+    max-width: 130px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.more-permissions-chip {
+    flex-shrink: 0;
+    color: var(--secondary-blue-soft);
+    border-color: rgba(56, 182, 255, 0.35);
+    background: rgba(56, 182, 255, 0.08);
 }
 
 .permission-chip-list.muted {

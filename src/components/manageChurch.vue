@@ -143,12 +143,6 @@ export default {
                 return;
             }
 
-            if (appStore.state.church && appStore.state.church.id_igreja == churchId) {
-                this.canManageChurch = appStore.state.churchPermission.administrador;
-                this.updateActionPermissions();
-                return;
-            }
-
             api.post("/igreja/permissao", { id_igreja: churchId })
                 .then((response) => {
                     appStore.setChurchPermission(response.data.returnObj);

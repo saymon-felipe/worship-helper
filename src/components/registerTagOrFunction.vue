@@ -10,7 +10,13 @@
                 <div class="permission-group-card" v-for="group in groupedPermissionOptions" :key="group.key">
                     <div class="group-header">
                         <label class="permission-option parent-option">
-                            <input type="checkbox" :checked="isPermissionSelected(group.key)" @change="toggleParentPermission(group, $event.target.checked)">
+                            <input
+                                type="checkbox"
+                                :checked="isGroupFullySelected(group)"
+                                :indeterminate="isGroupPartiallySelected(group)"
+                                :aria-checked="groupSelectionState(group)"
+                                @change="toggleParentPermission(group, $event.target.checked)"
+                            >
                             <span class="custom-checkbox"></span>
                             <span class="option-text">{{ group.label }}</span>
                         </label>
@@ -97,13 +103,37 @@ export default {
         isPermissionSelected: function (permissionKey) {
             return this.selectedPermissions.includes(permissionKey);
         },
+        isGroupFullySelected: function (group) {
+            if (group.children.length === 0) {
+                return this.isPermissionSelected(group.key);
+            }
+
+            return group.children.every((child) => this.isPermissionSelected(child.key));
+        },
+        isGroupPartiallySelected: function (group) {
+            if (group.children.length === 0) {
+                return false;
+            }
+
+            const selectedChildren = group.children.filter((child) => this.isPermissionSelected(child.key)).length;
+            return selectedChildren > 0 && selectedChildren < group.children.length;
+        },
+        groupSelectionState: function (group) {
+            if (this.isGroupPartiallySelected(group)) {
+                return "mixed";
+            }
+
+            return this.isGroupFullySelected(group) ? "true" : "false";
+        },
         toggleParentPermission: function (group, checked) {
+            const childKeys = group.children.map((child) => child.key);
+
             if (checked) {
                 this.addPermission(group.key);
+                childKeys.forEach((childKey) => this.addPermission(childKey));
                 return;
             }
 
-            const childKeys = group.children.map((child) => child.key);
             this.selectedPermissions = this.selectedPermissions.filter((permission) => permission !== group.key && !childKeys.includes(permission));
         },
         toggleChildPermission: function (parentKey, childKey, checked) {
@@ -114,6 +144,12 @@ export default {
             }
 
             this.selectedPermissions = this.selectedPermissions.filter((permission) => permission !== childKey);
+
+            const parentGroup = this.groupedPermissionOptions.find((group) => group.key === parentKey);
+            const hasSelectedChild = parentGroup && parentGroup.children.some((child) => this.isPermissionSelected(child.key));
+            if (!hasSelectedChild) {
+                this.selectedPermissions = this.selectedPermissions.filter((permission) => permission !== parentKey);
+            }
         },
         addPermission: function (permissionKey) {
             if (!this.selectedPermissions.includes(permissionKey)) {
@@ -121,12 +157,21 @@ export default {
             }
         }
     },
-    mounted: function () {
-        if (this.initialFunction) {
-            this.entityName = this.initialFunction.nome_funcao || "";
-            this.selectedPermissions = Array.isArray(this.initialFunction.permissoes)
-                ? [...this.initialFunction.permissoes]
-                : [];
+    watch: {
+        initialFunction: {
+            immediate: true,
+            handler: function (initialFunction) {
+                this.entityName = initialFunction?.nome_funcao || "";
+                this.selectedPermissions = Array.isArray(initialFunction?.permissoes)
+                    ? [...initialFunction.permissoes]
+                    : [];
+
+                this.groupedPermissionOptions.forEach((group) => {
+                    if (group.children.some((child) => this.isPermissionSelected(child.key))) {
+                        this.addPermission(group.key);
+                    }
+                });
+            }
         }
     }
 }
@@ -220,6 +265,11 @@ export default {
     box-shadow: 0 4px 12px rgba(56, 182, 255, 0.15);
 }
 
+.parent-option:has(input:indeterminate) {
+    background: rgba(56, 182, 255, 0.07);
+    border-color: rgba(56, 182, 255, 0.3);
+}
+
 /* Child Option Box */
 .child-option {
     color: var(--neutral-gray-high);
@@ -291,6 +341,12 @@ export default {
     box-shadow: 0 0 6px rgba(56, 182, 255, 0.35);
 }
 
+.permission-option input:indeterminate ~ .custom-checkbox {
+    background-color: rgba(56, 182, 255, 0.45);
+    border-color: var(--secondary-blue-soft);
+    box-shadow: 0 0 6px rgba(56, 182, 255, 0.2);
+}
+
 /* Checkmark indicator (hidden when not checked) */
 .custom-checkbox:after {
     content: "";
@@ -308,5 +364,15 @@ export default {
 /* Show checkmark when checked */
 .permission-option input:checked ~ .custom-checkbox:after {
     display: block;
+}
+
+.permission-option input:indeterminate ~ .custom-checkbox:after {
+    display: block;
+    left: 4px;
+    top: 8px;
+    width: 10px;
+    height: 0;
+    border-width: 0 0 2px 0;
+    transform: none;
 }
 </style>

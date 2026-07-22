@@ -145,7 +145,8 @@ export default {
         getMusic: function () {
             let self = this;
             let data = {
-                event_id: this.event_id
+                event_id: this.event_id,
+                id_igreja: this.getCurrentChurchId()
             }
 
             self.isLoading = true;

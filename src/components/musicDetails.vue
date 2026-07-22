@@ -171,7 +171,8 @@ export default {
             this.loadingCipher = true;
             try {
                 const response = await api.post("/musicas/retorna_musica/" + this.music.id, {
-                    event_id: 0
+                    event_id: 0,
+                    id_igreja: this.getCurrentChurchId()
                 });
                 this.resolvedMusic = response.data.returnObj || this.music;
             } catch (error) {

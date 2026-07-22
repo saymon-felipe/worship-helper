@@ -126,7 +126,14 @@
         <Teleport to="body">
             <Transition name="modal-fade">
                 <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm();">
-                    <registerTagOrFunction :type="type" :editingFunction="editingFunction" @success="closeModal(); returnChurchTags(); returnChurchFunctions();" />
+                    <registerTagOrFunction
+                        :type="type"
+                        :church-id="resolvedChurchId"
+                        :permission-options="permissionOptions"
+                        :initial-function="editingFunction"
+                        @success="closeModal(); returnChurchTags(); returnChurchFunctions();"
+                        @error="handleRegisterError"
+                    />
                 </modal>
             </Transition>
         </Teleport>
@@ -681,6 +688,7 @@ export default {
     height: 44px;
     font-size: var(--font-size-5);
     margin-top: auto;
+    max-width: 100%;
 }
 
 .response {

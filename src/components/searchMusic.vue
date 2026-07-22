@@ -141,7 +141,7 @@ export default {
         returnMusics: function () {
             let self = this;
 
-            api.get("/musicas")
+            api.get("/musicas", { params: { id_igreja: this.getCurrentChurchId() } })
                 .then(function (response) {
                     self.musics = response.data.returnObj;
                 })
@@ -184,6 +184,16 @@ export default {
     mounted: function () {
         this.returnMusics();
         this.returnTags();
+    },
+    watch: {
+        igreja: {
+            handler: function (church) {
+                if (church && church.id_igreja) {
+                    this.returnMusics();
+                }
+            },
+            deep: true
+        }
     }
 }
 </script>

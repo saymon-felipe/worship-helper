@@ -269,7 +269,7 @@ export default {
             }
 
             if (this.type == "musica") {
-                return Number(this.id_musica) > 0;
+                return churchId != null && Number(this.id_musica) > 0;
             }
 
             if (this.type == "evento") {
@@ -492,7 +492,10 @@ export default {
                     mensagem: this.editingWarningText
                 };
             } else if (this.type === "musica") {
+                if (!this.hasRequiredTarget()) return;
                 payload = {
+                    id_igreja: Number(churchId),
+                    id_musica: Number(this.id_musica),
                     id_comentario: Number(this.editingWarningId),
                     mensagem: this.editingWarningText
                 };
@@ -531,7 +534,10 @@ export default {
                     id_comentario: Number(this.warningToDelete.id_aviso)
                 };
             } else if (this.type === "musica") {
+                if (!this.hasRequiredTarget()) return;
                 payload = {
+                    id_igreja: Number(churchId),
+                    id_musica: Number(this.id_musica),
                     id_comentario: Number(this.warningToDelete.id_aviso)
                 };
             }

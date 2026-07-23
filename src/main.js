@@ -148,4 +148,6 @@ app.config.globalProperties.checkAppPermission = checkAppPermission;
 
 app.use(router);
 
-app.mount('#app');
+router.isReady().then(() => {
+    app.mount('#app');
+});

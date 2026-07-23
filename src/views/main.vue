@@ -1,10 +1,6 @@
 <template>
     <siteTemplate>
-        <router-view v-slot="{ Component }">
-            <Transition name="route" mode="out-in">
-                <component :is="Component" />
-            </Transition>
-        </router-view>
+        <router-view />
     </siteTemplate>
     <Teleport to="body">
         <Transition name="modal-fade">
@@ -154,8 +150,6 @@ export default {
     },
     mounted() {
         this.isIOS = isIOSDevice();
-        window.setTimeout(() => this.openInstallModal(), 600);
-        window.setTimeout(() => this.openPushNotificationsModal(), 1400);
     }
 }
 </script>

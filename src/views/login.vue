@@ -41,7 +41,7 @@
   <Teleport to="body">
     <Transition name="modal-fade">
       <modal
-        v-if="showBiometricPrompt"
+        v-if="showBiometricPrompt && biometricSupported"
         title="Ativar biometria"
         buttonTitle="Ativar agora"
         button2Title="Agora não"

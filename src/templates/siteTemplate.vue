@@ -54,8 +54,8 @@ export default {
 </script>
 <style scoped>
 .main-container {
-    flex: 1;
-    max-height: calc(100vh - 150px); /* Ajuste dinâmico para header e footer modernizados */
+    flex: 1 1 0;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     overflow: hidden;
@@ -64,7 +64,8 @@ export default {
 .inner-container {
     width: 100%;
     max-width: 900px;
-    height: 100%;
+    min-height: 0;
+    flex: 1 1 auto;
     margin: auto;
     padding: 1.2rem;
     overflow-x: hidden;
@@ -79,6 +80,8 @@ export default {
     flex-direction: column;
     height: 100vh;
     min-height: 100vh;
+    height: 100dvh;
+    min-height: 100dvh;
     overflow: hidden;
     animation: fadeIn var(--transition-normal);
 }

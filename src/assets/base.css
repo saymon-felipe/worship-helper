@@ -111,8 +111,9 @@
   -webkit-tap-highlight-color: transparent; /* Remove highlight azul do clique no mobile */
 }
 
-html, body {
-  min-height: 100vh;
+html, body, #app {
+  height: 100%;
+  min-height: 100%;
   width: 100%;
   overflow-x: hidden;
   scroll-behavior: smooth;
@@ -382,7 +383,7 @@ label {
 
 /* Estrutura de Contêineres */
 #app, #app > div {
-  min-height: 100vh;
+  min-height: 100%;
   position: relative;
   display: flex;
   flex-direction: column;

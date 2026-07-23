@@ -100,7 +100,7 @@
         <Teleport to="body">
             <Transition name="modal-fade">
                 <modal v-if="showModal && canUseCurrentModal" :title="modalTitle" @closeModal="close_modal()" class="modal" @cancelEvent="cancelChanges()" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" :isDelete="modalTitle === 'Remover membro'" @submitEvent="submitForm()" :disabled="isLoading">
-                    <inviteMemberModalContent v-if="inviteMember && canInviteMembers" @success="handleInviteSuccess()" @loading="isLoading = $event" />
+                    <inviteMemberModalContent v-if="inviteMember && canInviteMembers" @success="handleInviteSuccess" @loading="isLoading = $event" />
                     <addTagModalContent v-if="addTag && canChangeMemberTags" :member="selected_member" @success="handleMembersChanged()" />
                     <addFunctionModalContent v-if="addOccupation && canChangeMemberRoles" :member="selected_member" @success="handleMembersChanged()" />
                     <removeMemberModalContent v-if="removeMember && canRemoveMembers" :member="selected_member" @success="handleMembersChanged()" />
@@ -388,17 +388,29 @@ export default {
             }).then(() => {
                 this.showConfirmDeleteInvite = false;
                 this.selectedInviteToDelete = null;
-                this.returnPendingInvites();
+                this.pendingInvites = this.pendingInvites.filter((currentInvite) => Number(currentInvite.id) !== Number(invite.id));
             });
         },
-        handleInviteSuccess: function () {
+        handleInviteSuccess: function (invite) {
             this.closeModal();
-            this.returnPendingInvites();
+            if (invite) this.pendingInvites.unshift(invite);
         },
-        handleMembersChanged: function () {
+        handleMembersChanged: function (change) {
             this.closeModal();
-            this.loadChurchMembers();
-            this.returnPendingInvites();
+            if (!change || !change.memberId) return;
+
+            const updateMember = (member) => {
+                if (Number(member.id_usuario) !== Number(change.memberId)) return member;
+                if (change.type === "remove") return null;
+                if (change.type === "tag") return { ...member, tag_usuario: change.tag };
+                if (change.type === "functions") return { ...member, funcoes_usuario: change.functions };
+                return member;
+            };
+
+            this.copy_members = this.copy_members.map(updateMember).filter(Boolean);
+            if (this.igreja && Array.isArray(this.igreja.membros)) {
+                this.igreja.membros = this.igreja.membros.map(updateMember).filter(Boolean);
+            }
         }
     },
     watch: {

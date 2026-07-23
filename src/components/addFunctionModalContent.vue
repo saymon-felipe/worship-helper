@@ -67,7 +67,11 @@ export default {
             data.new_functions = checkedInputs;
 
             api.post("/usuario/altera-funcoes", data).then(function () {
-                self.$emit("success", true);
+                self.$emit("success", {
+                    type: "functions",
+                    memberId: id_usuario,
+                    functions: self.functions.filter((churchFunction) => checkedInputs.includes(String(churchFunction.id_funcao)))
+                });
             })
         },
         returnOccupations: function () {

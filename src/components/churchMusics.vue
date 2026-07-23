@@ -91,8 +91,8 @@
 
         <Teleport to="body">
             <Transition name="modal-fade">
-                <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm(); returnMusics();">
-                    <createMusicModalContent @success="closeModal(); returnMusics();" />
+                <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm()">
+                    <createMusicModalContent @success="handleMusicCreated" />
                 </modal>
             </Transition>
         </Teleport>
@@ -180,6 +180,10 @@ export default {
                 .catch(function (error) {
                     console.log(error);
                 });
+        },
+        handleMusicCreated: function (music) {
+            if (music) this.musics.push(music);
+            this.closeModal();
         },
         toggleAdvancedFilters: function () {
             this.showAdvancedFilters = !this.showAdvancedFilters;

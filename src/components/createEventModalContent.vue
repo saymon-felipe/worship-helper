@@ -258,8 +258,8 @@ export default {
                 : "/igreja/cadastrar-evento";
 
             api.post(path, data)
-            .then(function () {
-                self.$emit("success");
+            .then(function (response) {
+                self.$emit("success", response.data.returnObj);
             })
             .catch(function (error) {
                 console.log(error);

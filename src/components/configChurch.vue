@@ -8,6 +8,7 @@
 
             <div class="settings-tabs-wrapper">
                 <div class="segmented-control">
+                    <span class="segment-slider" :class="{ 'is-functions': activeTab === 'functions' }"></span>
                     <button type="button" class="segment-tab" :class="{ active: activeTab === 'tags' }" @click="activeTab = 'tags'">
                         <span class="material-icons tab-icon">sell</span>
                         <span>Tags de usuários</span>
@@ -134,7 +135,7 @@
                         :church-id="resolvedChurchId"
                         :permission-options="permissionOptions"
                         :initial-function="editingFunction"
-                        @success="closeModal(); returnChurchTags(); returnChurchFunctions();"
+                        @success="handleEntitySaved"
                         @error="handleRegisterError"
                     />
                 </modal>
@@ -396,6 +397,25 @@ export default {
             this.returnChurchTags();
             this.returnChurchFunctions();
         },
+        handleEntitySaved: function (payload) {
+            if (!payload || !payload.entity) {
+                this.closeModal();
+                return;
+            }
+
+            if (payload.type === "tag") {
+                this.tags.push(payload.entity);
+            } else {
+                const index = this.functions.findIndex((currentFunction) => Number(currentFunction.id_funcao) === Number(payload.entity.id_funcao));
+                if (payload.isEditing && index >= 0) {
+                    this.functions.splice(index, 1, { ...this.functions[index], ...payload.entity });
+                } else {
+                    this.functions.push(payload.entity);
+                }
+            }
+
+            this.closeModal();
+        },
         handleRegisterError: function (message) {
             this.showResponse(message, ".response", "error");
         }
@@ -465,7 +485,26 @@ export default {
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
+.segment-slider {
+    position: absolute;
+    top: 4px;
+    bottom: 4px;
+    left: 4px;
+    width: calc(50% - 4px);
+    border-radius: var(--radius-pill);
+    background: linear-gradient(135deg, var(--secondary-blue-soft) 0%, #1e8cb8 100%);
+    box-shadow: 0 4px 12px rgba(56, 182, 255, 0.3);
+    transform: translateX(0);
+    transition: transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.segment-slider.is-functions {
+    transform: translateX(100%);
+}
+
 .segment-tab {
+    position: relative;
+    z-index: 1;
     flex: 1;
     display: flex;
     align-items: center;
@@ -489,9 +528,7 @@ export default {
 }
 
 .segment-tab.active {
-    background: linear-gradient(135deg, var(--secondary-blue-soft) 0%, #1e8cb8 100%);
     color: var(--primary-bg);
-    box-shadow: 0 4px 12px rgba(56, 182, 255, 0.3);
 }
 
 .tab-icon {

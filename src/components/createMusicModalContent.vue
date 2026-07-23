@@ -358,8 +358,8 @@ export default {
             };
 
             try {
-                await api.post("/musicas", data);
-                this.$emit("success");
+                const response = await api.post("/musicas", data);
+                this.$emit("success", response.data.returnObj);
             } catch (error) {
                 const message = error.response && error.response.data ? error.response.data.message || error.response.data : "Não foi possível cadastrar a música";
                 this.showResponse(message, ".response", "error");

@@ -101,7 +101,7 @@
         <Teleport to="body">
             <Transition name="modal-fade">
                 <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm();">
-                    <createEventModalContent :eventToEdit="event" @success="closeModal(); getEvent();" />
+                    <createEventModalContent :eventToEdit="event" @success="handleEventUpdated" />
                 </modal>
             </Transition>
         </Teleport>
@@ -298,6 +298,10 @@ export default {
             this.modalButton2Title = "";
             this.showModal = true;
         },
+        handleEventUpdated: function (event) {
+            if (event) this.event = event;
+            this.closeModal();
+        },
         formatEventDate: function (date) {
             moment.locale('pt-br');
             const eventDate = moment.parseZone(date).locale('pt-br');
@@ -354,10 +358,14 @@ export default {
             };
 
             api.post("/igreja/eventos/membros/anotacoes/criar", data)
-            .then(function () {
+            .then(function (response) {
+                const note = response.data.returnObj;
+                if (note) {
+                    self.notes.unshift(note);
+                    const member = self.event.membros_evento.find((currentMember) => Number(currentMember.id_usuario) === Number(self.selectedMember.id_usuario));
+                    if (member) member.quantidade_notas = Number(member.quantidade_notas || 0) + 1;
+                }
                 self.newNoteText = "";
-                self.getMemberNotes();
-                self.getEvent(); // refresh count labels on members list
             })
             .catch(function (error) {
                 console.log(error);
@@ -386,9 +394,10 @@ export default {
 
             api.post("/igreja/eventos/membros/anotacoes/editar", data)
             .then(function () {
+                const note = self.notes.find((currentNote) => Number(currentNote.id) === Number(noteId));
+                if (note) note.mensagem = self.editingNoteText;
                 self.editingNoteId = null;
                 self.editingNoteText = "";
-                self.getMemberNotes();
             })
             .catch(function (error) {
                 console.log(error);
@@ -414,8 +423,9 @@ export default {
 
             api.post("/igreja/eventos/membros/anotacoes/deletar", data)
             .then(function () {
-                self.getMemberNotes();
-                self.getEvent(); // refresh count labels on members list
+                self.notes = self.notes.filter((note) => Number(note.id) !== Number(noteId));
+                const member = self.event.membros_evento.find((currentMember) => Number(currentMember.id_usuario) === Number(self.selectedMember.id_usuario));
+                if (member) member.quantidade_notas = Math.max(0, Number(member.quantidade_notas || 0) - 1);
                 self.showConfirmDeleteNote = false;
                 self.noteIdToDelete = null;
             })

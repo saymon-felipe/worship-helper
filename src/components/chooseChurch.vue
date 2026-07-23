@@ -143,7 +143,16 @@ export default {
 
             api.post("/usuario/aceita-convite", data)
                 .then(function () {
-                    self.reloadInformations();
+                    const church = self.churchInviteList.find((invite) => Number(invite.id_igreja) === Number(id_igreja));
+                    if (church && !self.lista_igrejas.some((currentChurch) => Number(currentChurch.id_igreja) === Number(id_igreja))) {
+                        self.lista_igrejas.push({
+                            ...church,
+                            quantidade_membros: church.quantidade_membros ?? church.membros ?? 0
+                        });
+                    }
+                    self.churchInviteList = self.churchInviteList.filter((invite) => Number(invite.id_igreja) !== Number(id_igreja));
+                    appStore.setMyChurches(self.lista_igrejas);
+                    appStore.setChurchInvites(self.churchInviteList);
                 })
                 .catch(function (error) {
                     console.log(error);
@@ -157,7 +166,8 @@ export default {
 
             api.post("/usuario/rejeita-convite", data)
                 .then(function () {
-                    self.reloadInformations();
+                    self.churchInviteList = self.churchInviteList.filter((invite) => Number(invite.id_igreja) !== Number(id_igreja));
+                    appStore.setChurchInvites(self.churchInviteList);
                 })
                 .catch(function (error) {
                     console.log(error);

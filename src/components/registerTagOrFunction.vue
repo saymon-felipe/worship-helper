@@ -91,10 +91,14 @@ export default {
                 data.id_function = self.initialFunction.id_funcao;
             }
 
-            api.post("/igreja/" + path, data).then(function () {
+            api.post("/igreja/" + path, data).then(function (response) {
                 self.entityName = "";
                 self.selectedPermissions = [];
-                self.$emit("success", true);
+                self.$emit("success", {
+                    type: self.type,
+                    isEditing: self.isEditing,
+                    entity: response.data.returnObj
+                });
             }).catch(function (error) {
                 const errorMessage = error?.response?.data?.error || error?.response?.data?.message || "Erro ao cadastrar.";
                 self.$emit("error", errorMessage);

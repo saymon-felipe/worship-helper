@@ -32,8 +32,8 @@
         </div>
         <Teleport to="body">
             <Transition name="modal-fade">
-                <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm(); returnEvents();">
-                    <createEventModalContent @church="igreja" @success="closeModal(); returnEvents();" />
+                <modal v-if="showModal" :title="modalTitle" @closeModal="close_modal()" class="modal" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" @submitEvent="submitForm()">
+                    <createEventModalContent @church="igreja" @success="handleEventCreated" />
                 </modal>
             </Transition>
         </Teleport>
@@ -91,6 +91,13 @@ export default {
             .finally(function () {
                 self.isLoading = false;
             });
+        },
+        handleEventCreated: function (event) {
+            if (event) {
+                this.eventos.push(event);
+                this.eventos.sort((first, second) => new Date(first.data_inicio_evento) - new Date(second.data_inicio_evento));
+            }
+            this.closeModal();
         }
     },
     mounted: function () {

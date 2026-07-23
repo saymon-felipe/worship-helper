@@ -57,14 +57,20 @@ export default {
 
             data["id_usuario"] = id_usuario;
             data["id_igreja"] = this.getCurrentChurchId();
+            const selectedTag = self.occupations.find((occupation) => Number(occupation.id_tag) === Number(data["id_tag"]));
+            const payload = {
+                type: "tag",
+                memberId: id_usuario,
+                tag: selectedTag ? [selectedTag] : []
+            };
 
             if (self.member.tag_usuario.length != 0 && data["id_tag"] == self.member.tag_usuario[0].id_tag) {
-                this.$emit("success", true);
+                this.$emit("success", payload);
                 return;
             }
 
             api.post("/usuario/altera-tag", data).then(() => {
-                self.$emit("success", true);
+                self.$emit("success", payload);
             })
         },
         returnOccupations: function () {

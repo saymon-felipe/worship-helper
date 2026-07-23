@@ -117,7 +117,14 @@ export default {
             api.post("/igreja/envia-convite", data)
             .then(function (response) {
                 self.showResponse(response.data.message, ".response", "success");
-                self.$emit("success", true);
+                self.$emit("success", {
+                    ...response.data.returnObj,
+                    nome_usuario: self.selected_member.nome_usuario || typedValue,
+                    email_usuario: self.selected_member.email_usuario || typedValue,
+                    imagem_usuario: self.selected_member.imagem_usuario,
+                    cadastrado: self.selected_member.id_usuario != null,
+                    data_criacao: new Date().toISOString()
+                });
             })
             .catch(function (error) {
                 const message = self.getErrorMessage(error, "Não foi possível enviar o convite");

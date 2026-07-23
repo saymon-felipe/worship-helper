@@ -11,6 +11,13 @@
         </div>
 
         <div class="warnings-list">
+            <div class="comments-order-control" v-if="type !== 'aviso' && groupedWarnings.length > 1">
+                <span>Ordenar por:</span>
+                <button type="button" @click="toggleCommentOrder">
+                    <span class="material-icons">sort</span>
+                    <span>{{ commentOrderLabel }}</span>
+                </button>
+            </div>
             <skeletonLoader v-if="isLoading" type="comments" :count="3" />
             <template v-else>
                 <div class="warning-container" v-for="(warning, index) in groupedWarnings" v-bind:key="index">
@@ -196,7 +203,9 @@ export default {
             likePath: "",
             updatePath: "",
             deletePath: "",
-            activeDropdownId: null
+            activeDropdownId: null,
+            commentOrder: "recent",
+            newestCreatedWarningId: null
         }
     },
     computed: {
@@ -205,7 +214,7 @@ export default {
                 return [];
             }
             // Separa os avisos principais (parent_id é null ou undefined)
-            const parents = this.warnings.filter(w => w.parent_id === null || w.parent_id === undefined);
+            const parents = this.warnings.filter(w => w.parent_id === null || w.parent_id === undefined).map((warning) => ({ ...warning }));
             
             parents.forEach(parent => {
                 // Filtra as respostas vinculadas a este pai
@@ -215,8 +224,17 @@ export default {
                 parent.replies = replies;
             });
 
-            // Ordena os pais do mais recente para o mais antigo
-            parents.sort((a, b) => new Date(b.data_criacao) - new Date(a.data_criacao));
+            parents.sort((first, second) => {
+                if (Number(first.id_aviso) === Number(this.newestCreatedWarningId)) return -1;
+                if (Number(second.id_aviso) === Number(this.newestCreatedWarningId)) return 1;
+
+                if (this.commentOrder === "top") {
+                    const likesDifference = Number(second.quantidade_curtidas || 0) - Number(first.quantidade_curtidas || 0);
+                    if (likesDifference !== 0) return likesDifference;
+                }
+
+                return new Date(second.data_criacao) - new Date(first.data_criacao);
+            });
             return parents;
         },
         canCreate: function () {
@@ -272,6 +290,9 @@ export default {
                 return "Compartilhe informações ou observações sobre este evento.";
             }
             return "Seja o primeiro a comentar!";
+        },
+        commentOrderLabel: function () {
+            return this.commentOrder === "recent" ? "Mais recentes" : "Principais";
         }
     },
     methods: {
@@ -356,21 +377,46 @@ export default {
             }
 
             api.post(self.createPath, data)
-                .then(function () {
+                .then(function (response) {
+                    const comment = self.buildLocalWarning(response.data.returnObj, value, parentId);
+                    if (parentId) {
+                        self.warnings.push(comment);
+                    } else {
+                        self.warnings.unshift(comment);
+                        self.newestCreatedWarningId = comment.id_aviso;
+                    }
                     if (parentId) {
                         self.replyText = "";
                         self.activeReplyId = null;
-                        self.returnWarnings().then(() => {
-                            self.scrollToBottom();
-                        });
+                        self.scrollToBottom();
                     } else {
                         $("#send-warning").val("");
-                        self.returnWarnings();
                     }
                 })
                 .catch(function (error) {
                     console.log(error);
                 })
+        },
+        buildLocalWarning: function (savedComment, message, parentId) {
+            return {
+                id_aviso: savedComment.id_aviso,
+                mensagem: message,
+                data_criacao: new Date().toISOString(),
+                quantidade_curtidas: 0,
+                usuario_atual_curtiu: false,
+                parent_id: parentId,
+                criador: {
+                    id_usuario: this.user.id_usuario,
+                    nome_usuario: this.user.nome_usuario,
+                    imagem_usuario: this.user.imagem_usuario
+                }
+            };
+        },
+        findWarning: function (warningId) {
+            return this.warnings.find((warning) => Number(warning.id_aviso) === Number(warningId));
+        },
+        toggleCommentOrder: function () {
+            this.commentOrder = this.commentOrder === "recent" ? "top" : "recent";
         },
         returnWarnings: function () {
             let self = this;
@@ -421,7 +467,10 @@ export default {
 
             api.post(self.likePath, data)
                 .then(function () {
-                    self.returnWarnings();
+                    const warning = self.findWarning(warning_id);
+                    if (!warning) return;
+                    warning.usuario_atual_curtiu = !warning.usuario_atual_curtiu;
+                    warning.quantidade_curtidas = Math.max(0, Number(warning.quantidade_curtidas || 0) + (warning.usuario_atual_curtiu ? 1 : -1));
                 })
                 .catch(function (error) {
                     console.log(error);
@@ -522,8 +571,11 @@ export default {
             }
 
             api.post(this.updatePath, payload).then(() => {
+                const warning = this.findWarning(this.editingWarningId);
+                if (warning) {
+                    warning.mensagem = this.editingWarningText;
+                }
                 this.cancelEditWarning();
-                this.returnWarnings();
             }).catch((error) => {
                 console.log(error);
             });
@@ -563,9 +615,10 @@ export default {
             }
 
             api.post(this.deletePath, payload).then(() => {
+                const deletedId = Number(this.warningToDelete.id_aviso);
+                this.warnings = this.warnings.filter((warning) => Number(warning.id_aviso) !== deletedId && Number(warning.parent_id) !== deletedId);
                 this.showDeleteWarningModal = false;
                 this.warningToDelete = null;
-                this.returnWarnings();
             }).catch((error) => {
                 console.log(error);
             });
@@ -676,6 +729,33 @@ export default {
   display: flex;
   gap: 12px;
   align-items: center;
+}
+
+.comments-order-control {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 0 0 10px;
+  color: var(--neutral-gray-medium);
+  font-size: 12px;
+}
+
+.comments-order-control button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid rgba(56, 182, 255, 0.22);
+  border-radius: var(--radius-pill);
+  background: rgba(56, 182, 255, 0.08);
+  color: var(--secondary-blue-soft);
+  cursor: pointer;
+  padding: 5px 10px;
+  font-size: 12px;
+}
+
+.comments-order-control .material-icons {
+  font-size: 15px;
 }
 
 .like-warning-button {

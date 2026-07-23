@@ -3,6 +3,14 @@
         <!-- Event Header Card -->
         <skeletonLoader v-if="isLoading" type="hero-event" style="margin-bottom: 20px;" />
         <div class="event-hero-card" v-else>
+            <div class="past-event-banner" v-if="isPastEvent">
+                <span class="material-icons banner-icon">lock</span>
+                <div class="banner-text">
+                    <span class="banner-title">Evento Encerrado</span>
+                    <span class="banner-subtitle" v-if="isAppAdmin">Modo administrador ativado</span>
+                    <span class="banner-subtitle" v-else>Este evento já ocorreu. Alterações e novos comentários estão bloqueados.</span>
+                </div>
+            </div>
             <div class="hero-top">
                 <h2>{{ event.nome_evento }}</h2>
                 <button type="button" class="btn secondary edit-event-button" v-if="canEditEvent" @click="openEditEvent()">
@@ -93,9 +101,9 @@
             <commentsComponent
                 type="evento"
                 :id_evento="event_id"
-                :can-create-thread="isEventParticipant"
-                :can-manage-thread="isEventParticipant"
-                :can-like-thread="isEventParticipant"
+                :can-create-thread="canCommentEvent"
+                :can-manage-thread="canCommentEvent"
+                :can-like-thread="canCommentEvent"
             />
         </div>
         <Teleport to="body">
@@ -237,7 +245,20 @@ export default {
         }
     },
     computed: {
+        isPastEvent: function () {
+            if (!this.event || !this.event.data_inicio_evento) return false;
+            return moment.parseZone(this.event.data_inicio_evento).isBefore(moment());
+        },
+        isAppAdmin: function () {
+            return Boolean(
+                (appStore.state.auth && appStore.state.auth.isAppAdmin) ||
+                (this.currentUser && (this.currentUser.app_owner == 1 || this.currentUser.app_owner === true))
+            );
+        },
         canCommentEvent: function () {
+            if (this.isPastEvent && !this.isAppAdmin) {
+                return false;
+            }
             return this.isEventParticipant;
         },
         isEventParticipant: function () {
@@ -250,9 +271,15 @@ export default {
             return members.some((member) => member.id_usuario == userId);
         },
         canManageMemberNotes: function () {
+            if (this.isPastEvent && !this.isAppAdmin) {
+                return false;
+            }
             return this.isEventParticipant;
         },
         canEditEvent: function () {
+            if (this.isPastEvent && !this.isAppAdmin) {
+                return false;
+            }
             const userId = this.currentUser ? this.currentUser.id_usuario : null;
             return Boolean(
                 this.hasChurchPermission("events.edit") ||
@@ -465,6 +492,39 @@ export default {
     display: flex;
     flex-direction: column;
     gap: 20px;
+}
+
+.past-event-banner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255, 171, 0, 0.1);
+    border: 1px solid rgba(255, 171, 0, 0.3);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+}
+
+.past-event-banner .banner-icon {
+    color: #ffab00;
+    font-size: 22px;
+}
+
+.past-event-banner .banner-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.past-event-banner .banner-title {
+    font-weight: 700;
+    font-size: 13px;
+    color: #ffab00;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.past-event-banner .banner-subtitle {
+    font-size: 12px;
+    color: var(--neutral-gray-high);
 }
 
 .hero-top {

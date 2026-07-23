@@ -37,10 +37,21 @@
             </button>
 
             <div class="event-list-header">
-                <span class="material-icons header-icon-title">calendar_today</span>
+                <span class="material-icons header-icon-title">{{ activeEventTab === 'past' ? 'history' : 'calendar_today' }}</span>
                 <div class="header-text-title">
-                    <h3>Próximos Eventos</h3>
-                    <p class="subtitle">Acompanhe as escalas e programações agendadas</p>
+                    <h3>{{ activeEventTab === 'past' ? 'Eventos Anteriores' : 'Próximos Eventos' }}</h3>
+                    <p class="subtitle">{{ activeEventTab === 'past' ? 'Consulte o histórico de eventos já encerrados' : 'Acompanhe as escalas e programações agendadas' }}</p>
+                </div>
+            </div>
+            <div class="event-tabs-container">
+                <div class="event-tabs">
+                    <div class="tab-indicator" :style="indicatorStyle"></div>
+                    <button type="button" class="tab-btn" :class="{ active: activeEventTab === 'upcoming' }" @click="setEventTab('upcoming')">
+                        Próximos
+                    </button>
+                    <button type="button" class="tab-btn" :class="{ active: activeEventTab === 'past' }" @click="setEventTab('past')">
+                        Anteriores
+                    </button>
                 </div>
             </div>
             <div class="event-list-content">
@@ -48,9 +59,9 @@
                 <template v-else>
                     <eventComponent :event="event" v-for="(event, index) in eventos" :key="index" />
                     <div class="church-empty" v-if="eventos.length <= 0">
-                        <span class="material-icons empty-icon">calendar_today</span>
-                        <h5>Nenhum evento agendado</h5>
-                        <p>Fique atento! Novas escalas e cultos aparecerão aqui em breve.</p>
+                        <span class="material-icons empty-icon">{{ activeEventTab === 'past' ? 'history_toggle_off' : 'calendar_today' }}</span>
+                        <h5>{{ activeEventTab === 'past' ? 'Nenhum evento anterior encontrado' : 'Nenhum evento agendado' }}</h5>
+                        <p>{{ activeEventTab === 'past' ? 'Os eventos encerrados da igreja aparecerão aqui.' : 'Fique atento! Novas escalas e cultos aparecerão aqui em breve.' }}</p>
                     </div>
                 </template>
             </div>
@@ -75,7 +86,15 @@ export default {
             eventos: [],
             latestWarning: null,
             isLoadingEvents: true,
-            isLoadingWarning: true
+            isLoadingWarning: true,
+            activeEventTab: 'upcoming'
+        }
+    },
+    computed: {
+        indicatorStyle() {
+            return {
+                transform: this.activeEventTab === 'past' ? 'translateX(100%)' : 'translateX(0)'
+            };
         }
     },
     methods: {
@@ -91,6 +110,11 @@ export default {
             if (churchId) {
                 this.$router.push("/home/manage-church/" + churchId);
             }
+        },
+        setEventTab: function (tab) {
+            if (this.activeEventTab === tab) return;
+            this.activeEventTab = tab;
+            this.returnEvents();
         },
         returnLatestWarning: function () {
             let self = this;
@@ -123,13 +147,14 @@ export default {
             }
 
             let data = {
-                id_igreja: churchId
+                id_igreja: churchId,
+                tipo: self.activeEventTab
             }
 
             self.isLoadingEvents = true;
             api.post("/igreja/retorna-eventos", data)
             .then(function (response) {
-                self.eventos = response.data.returnObj;
+                self.eventos = response.data.returnObj || [];
             })
             .catch(function (error) {
                 console.log(error);
@@ -155,7 +180,59 @@ export default {
 }
 
 .event-list-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.25rem;
+    gap: 12px;
+}
+
+.event-tabs-container {
+    width: 100%;
     margin-bottom: 1.5rem;
+    display: flex;
+    justify-content: center;
+}
+
+.event-tabs {
+    position: relative;
+    display: flex;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-pill);
+    padding: 3px;
+    width: 100%;
+}
+
+.tab-indicator {
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    left: 3px;
+    width: calc(50% - 3px);
+    background: var(--primary-primary-blue-high-2);
+    border-radius: var(--radius-pill);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.tab-btn {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--neutral-gray-medium);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 0;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.tab-btn.active {
+    color: var(--neutral-white);
 }
 
 .latest-warning-banner {

@@ -1,12 +1,12 @@
 <template>
-    <div class="event-card-container" v-on:click="goToEvent(event.id_evento)">
+    <div class="event-card-container" :class="{ 'past-card': isPastEvent }" v-on:click="goToEvent(event.id_evento)">
         <div class="event-card-header">
             <div class="event-meta">
-                <span class="date-badge" :class="{ 'badge-urgent': urgent_event }">
-                    <span class="material-icons badge-icon">schedule</span>
-                    <span>{{ event_close }} {{ returnCloseText() }}</span>
+                <span class="date-badge" :class="{ 'badge-urgent': urgent_event, 'badge-past': isPastEvent }">
+                    <span class="material-icons badge-icon">{{ isPastEvent ? 'check_circle' : 'schedule' }}</span>
+                    <span>{{ isPastEvent ? '' : event_close }}{{ returnCloseText() }}</span>
                 </span>
-                <span class="material-icons pulse-bell pulse" :class="urgent_event ?'danger' : 'warning'">notifications</span>
+                <span class="material-icons pulse-bell pulse" :class="urgent_event ? 'danger' : 'warning'" v-if="!isPastEvent">notifications</span>
             </div>
             <h4 class="event-title">{{ event.nome_evento }}</h4>
             <div class="event-time">
@@ -52,11 +52,20 @@ export default {
             urgent_event: false
         }
     },
+    computed: {
+        isPastEvent: function () {
+            if (!this.event || !this.event.data_inicio_evento) return false;
+            return moment.parseZone(this.event.data_inicio_evento).isBefore(moment());
+        }
+    },
     methods: {
         goToEvent: function (event_id) {
             this.$router.push("/home/event/" + event_id);
         },
         returnCloseText: function () {
+            if (this.isPastEvent) {
+                return "Encerrado";
+            }
             const dateDiff = this.eventDayDifference();
             let returnText = "Faltam " + dateDiff + " dias";
 
@@ -69,6 +78,10 @@ export default {
             return returnText;
         },
         checkIfEventIsClose: function () {
+            if (this.isPastEvent) {
+                this.urgent_event = false;
+                return;
+            }
             const dateDiff = this.eventDayDifference();
 
             if (dateDiff >= 0 && dateDiff < 5) {
@@ -116,6 +129,10 @@ export default {
     box-shadow: 0 10px 24px rgba(0, 0, 0, 0.4);
 }
 
+.past-card {
+    opacity: 0.85;
+}
+
 .event-card-header {
     display: flex;
     flex-direction: column;
@@ -148,6 +165,12 @@ export default {
     background-color: rgba(241, 76, 76, 0.1);
     border-color: rgba(241, 76, 76, 0.25);
     color: var(--others-red);
+}
+
+.badge-past {
+    background-color: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: var(--neutral-gray-medium);
 }
 
 .badge-icon {

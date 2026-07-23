@@ -10,17 +10,30 @@
                 </p>
             </div>
         </div>
-        <div class="church-events">
-            <h5>Eventos</h5>
+        <div class="church-events-content">
+            <div class="events-header-row">
+                <h5>{{ activeEventTab === 'past' ? 'Eventos Anteriores' : 'Eventos Agendados' }}</h5>
+            </div>
+            <div class="event-tabs-container">
+                <div class="event-tabs">
+                    <div class="tab-indicator" :style="indicatorStyle"></div>
+                    <button type="button" class="tab-btn" :class="{ active: activeEventTab === 'upcoming' }" @click="setEventTab('upcoming')">
+                        Próximos
+                    </button>
+                    <button type="button" class="tab-btn" :class="{ active: activeEventTab === 'past' }" @click="setEventTab('past')">
+                        Anteriores
+                    </button>
+                </div>
+            </div>
             <div class="church-events-list">
                 <skeletonLoader v-if="isLoading" type="event-card" :count="3" />
                 <template v-else-if="eventos.length > 0">
                     <eventComponent v-for="(event, index) in eventos" :event="event" :key="index" />
                 </template>
                 <div class="church-empty" v-else>
-                    <span class="material-icons empty-icon" style="font-size: 48px; color: var(--neutral-gray-low); margin-bottom: 12px;">event_busy</span>
-                    <h5>Nenhum evento agendado</h5>
-                    <p>Crie um novo evento para escalar membros e planejar o repertório.</p>
+                    <span class="material-icons empty-icon" style="font-size: 48px; color: var(--neutral-gray-low); margin-bottom: 12px;">{{ activeEventTab === 'past' ? 'history_toggle_off' : 'event_busy' }}</span>
+                    <h5>{{ activeEventTab === 'past' ? 'Nenhum evento anterior encontrado' : 'Nenhum evento agendado' }}</h5>
+                    <p>{{ activeEventTab === 'past' ? 'Os eventos encerrados da igreja serão exibidos aqui.' : 'Crie um novo evento para escalar membros e planejar o repertório.' }}</p>
                 </div>
             </div>
         </div>
@@ -53,12 +66,18 @@ export default {
     data() {
         return {
             isLoading: true,
-            eventos: []
+            eventos: [],
+            activeEventTab: 'upcoming'
         }
     },
     computed: {
         canCreateEvent: function () {
             return this.hasChurchPermission("events.create");
+        },
+        indicatorStyle() {
+            return {
+                transform: this.activeEventTab === 'past' ? 'translateX(100%)' : 'translateX(0)'
+            };
         }
     },
     methods: {
@@ -66,6 +85,11 @@ export default {
             this.showModal = true;
             this.modalTitle = "Novo evento";
             this.modalButtonTitle = "Criar evento";
+        },
+        setEventTab: function (tab) {
+            if (this.activeEventTab === tab) return;
+            this.activeEventTab = tab;
+            this.returnEvents();
         },
         returnEvents: function () {
             let self = this;
@@ -77,13 +101,14 @@ export default {
             }
 
             let data = {
-                id_igreja: churchId
+                id_igreja: churchId,
+                tipo: self.activeEventTab
             }
 
             self.isLoading = true;
             api.post("/igreja/retorna-eventos", data)
             .then(function (response) {
-                self.eventos = response.data.returnObj;
+                self.eventos = response.data.returnObj || [];
             })
             .catch(function (error) {
                 console.log(error);
@@ -116,6 +141,61 @@ export default {
     position: relative;
     margin-top: 1rem;
     height: calc(100% - 44px);
+}
+
+.events-header-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.event-tabs-container {
+    width: 100%;
+    margin-bottom: 1.25rem;
+    display: flex;
+    justify-content: center;
+}
+
+.event-tabs {
+    position: relative;
+    display: flex;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-pill);
+    padding: 3px;
+    width: 100%;
+}
+
+.tab-indicator {
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    left: 3px;
+    width: calc(50% - 3px);
+    background: var(--primary-primary-blue-high-2);
+    border-radius: var(--radius-pill);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 0;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.tab-btn {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--neutral-gray-medium);
+    font-size: 13px;
+    font-weight: 600;
+    padding: 8px 0;
+    border-radius: var(--radius-pill);
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.tab-btn.active {
+    color: var(--neutral-white);
 }
 
 .create-event {

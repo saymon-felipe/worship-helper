@@ -49,7 +49,7 @@
         <!-- Comments Section -->
         <div class="music-comments-section" v-if="!isLoading && music.id != undefined">
             <h3>Comentários e Dicas</h3>
-            <template v-if="hasEventContext">
+            <template v-if="hasEventContext && isCurrentUserEventParticipant">
                 <div class="comments-tabs">
                     <button type="button" class="btn tab-button" :class="{ primary: activeCommentsTab === 'event' }" @click="activeCommentsTab = 'event'">
                         Evento atual
@@ -63,9 +63,10 @@
                     type="musica_evento"
                     :id_musica="music.id"
                     :id_evento="event_id"
-                    :can-create-thread="canCommentEventMusic"
+                    :can-create-thread="isCurrentUserEventParticipant"
+                    :can-like-thread="isCurrentUserEventParticipant"
                 />
-                <commentsComponent v-if="activeCommentsTab === 'music'" type="musica" :id_musica="music.id"></commentsComponent>
+                <commentsComponent v-else type="musica" :id_musica="music.id"></commentsComponent>
             </template>
             <commentsComponent v-else type="musica" :id_musica="music.id"></commentsComponent>
         </div>
@@ -113,22 +114,10 @@ export default {
         hasLibraryContext: function () {
             return this.$route.query.source === "library";
         },
-        canCommentEventMusic: function () {
-            if (!this.hasEventContext) {
-                return true;
-            }
-
+        isCurrentUserEventParticipant: function () {
             const userId = this.currentUser ? this.currentUser.id_usuario : null;
-            if (!userId || !this.currentEvent) {
-                return false;
-            }
-
-            if (this.currentEvent.id_criador == userId) {
-                return true;
-            }
-
             const members = Array.isArray(this.currentEvent.membros_evento) ? this.currentEvent.membros_evento : [];
-            return members.some((member) => member.id_usuario == userId);
+            return Boolean(userId && members.some((member) => member.id_usuario == userId));
         },
         canDeleteMusic: function () {
             return !this.hasEventContext && this.hasLibraryContext && (this.haveAppPermission || this.hasChurchPermission("music.delete"));

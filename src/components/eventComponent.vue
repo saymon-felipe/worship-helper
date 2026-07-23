@@ -57,29 +57,36 @@ export default {
             this.$router.push("/home/event/" + event_id);
         },
         returnCloseText: function () {
-            let startDate = moment(this.event.data_inicio_evento);
-            let dateDiff = startDate.diff(this.current_date, 'days');
+            const dateDiff = this.eventDayDifference();
             let returnText = "Faltam " + dateDiff + " dias";
 
-            if (dateDiff == 0) {
+            if (dateDiff === 0) {
                 returnText = "Hoje";
+            } else if (dateDiff === 1) {
+                returnText = "Amanhã";
             }
 
             return returnText;
         },
         checkIfEventIsClose: function () {
-            let startDate = moment(this.event.data_inicio_evento);
-            let dateDiff = startDate.diff(this.current_date, 'days');
+            const dateDiff = this.eventDayDifference();
 
-            if (dateDiff < 5) {
+            if (dateDiff >= 0 && dateDiff < 5) {
                 this.event_close = "Próximo - ";
                 this.urgent_event = true;
             }
         },
+        eventDayDifference: function () {
+            const eventDay = moment.parseZone(this.event.data_inicio_evento).format('YYYY-MM-DD');
+            const startDate = moment(eventDay, 'YYYY-MM-DD').startOf('day');
+            const today = moment().startOf('day');
+            return startDate.diff(today, 'days');
+        },
         formatEventDate: function (date) {
-            // Capitalizar primeiro caractere do dia da semana retornado pelo moment
-            let rawDate = moment.parseZone(date).format("dddd, DD/MM/YYYY [às] HH:mm");
-            return rawDate.charAt(0).toUpperCase() + rawDate.slice(1);
+            moment.locale('pt-br');
+            const eventDate = moment.parseZone(date).locale('pt-br');
+            const weekdays = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+            return weekdays[eventDate.day()] + eventDate.format(", DD/MM/YYYY [às] HH:mm");
         }
     },
     mounted: function () {

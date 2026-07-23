@@ -15,7 +15,7 @@
                         <span class="material-icons">schedule</span>
                         <span>Dia e Horário</span>
                     </label>
-                    <input type="datetime-local" name="event_date" v-model="eventForm.event_date" required>
+                    <input type="datetime-local" name="event_date" v-model="eventForm.event_date" :min="minimumEventDate" required>
                 </div>
             </div>
 
@@ -93,6 +93,13 @@
         </form>
 
         <p class="response">{{ response }}</p>
+
+        <feedbackModal
+            :show="showInvalidDateModal"
+            title="Data inválida"
+            message="A data do evento não pode ser anterior a hoje. Escolha uma data a partir de hoje para continuar."
+            @close="showInvalidDateModal = false"
+        />
         
         <!-- SUB-TELA: Escolher Música -->
         <Transition name="route">
@@ -161,6 +168,7 @@ import musicDetails from "./musicDetails.vue";
 import api from '../config/api';
 import moment from 'moment';
 import { appStore } from '../store/appStore';
+import feedbackModal from "./feedbackModal.vue";
 
 export default {
     name: "createEventModalContent",
@@ -184,6 +192,7 @@ export default {
             memberSearchQuery: "",
             showSearchMember: false,
             tempSelectedMembers: [],
+            showInvalidDateModal: false,
             default_avatar: api.defaults.baseURL + "/public/user-default-image.png",
             default_music_image: api.defaults.baseURL + "/public/music-default-image.png"
         }
@@ -196,6 +205,9 @@ export default {
             }
             const q = this.memberSearchQuery.toLowerCase().trim();
             return members.filter(m => String(m.nome_usuario || "").toLowerCase().includes(q));
+        },
+        minimumEventDate: function () {
+            return moment().startOf("day").format("YYYY-MM-DDTHH:mm");
         }
     },
     methods: {
@@ -214,6 +226,11 @@ export default {
         },
         createEvent: function (event) {
             let self = this;
+
+            if (moment(this.eventForm.event_date).isBefore(moment().startOf("day"))) {
+                this.showInvalidDateModal = true;
+                return;
+            }
 
             if (this.event_selected_members.length == 0) {
                 this.showResponse("Nenhum membro selecionado", ".response", "error");
@@ -409,7 +426,8 @@ export default {
     },
     components: {
         searchMusic,
-        musicDetails
+        musicDetails,
+        feedbackModal
     },
     mounted: function () {
         this.syncChurchMembersFromStore();

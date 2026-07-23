@@ -93,7 +93,9 @@
             <commentsComponent
                 type="evento"
                 :id_evento="event_id"
-                :can-create-thread="canCommentEvent"
+                :can-create-thread="isEventParticipant"
+                :can-manage-thread="isEventParticipant"
+                :can-like-thread="isEventParticipant"
             />
         </div>
         <Teleport to="body">
@@ -131,7 +133,7 @@
                                             <span class="note-date">{{ formatNoteDate(note.data_criacao) }}</span>
                                         </div>
                                     </div>
-                                    <div class="note-actions" v-if="currentUser && Number(note.id_usuario_criador) === Number(currentUser.id_usuario)">
+                                    <div class="note-actions" v-if="canManageMemberNotes && currentUser && Number(note.id_usuario_criador) === Number(currentUser.id_usuario)">
                                         <button class="note-action-btn edit-btn" @click="startEditingNote(note)" title="Editar">
                                             <span class="material-icons">edit</span>
                                         </button>
@@ -159,7 +161,7 @@
                         </div>
 
                         <!-- Create Note Form -->
-                        <div class="create-note-form-wrapper" v-if="!editingNoteId">
+                        <div class="create-note-form-wrapper" v-if="canManageMemberNotes && !editingNoteId">
                             <h5 class="create-note-title">Nova Anotação</h5>
                             <div class="create-note-input-group">
                                 <textarea 
@@ -236,17 +238,19 @@ export default {
     },
     computed: {
         canCommentEvent: function () {
+            return this.isEventParticipant;
+        },
+        isEventParticipant: function () {
             const userId = this.currentUser ? this.currentUser.id_usuario : null;
             if (!userId || !this.event) {
                 return false;
             }
 
-            if (this.event.id_criador == userId) {
-                return true;
-            }
-
             const members = Array.isArray(this.event.membros_evento) ? this.event.membros_evento : [];
             return members.some((member) => member.id_usuario == userId);
+        },
+        canManageMemberNotes: function () {
+            return this.isEventParticipant;
         },
         canEditEvent: function () {
             const userId = this.currentUser ? this.currentUser.id_usuario : null;
@@ -295,8 +299,10 @@ export default {
             this.showModal = true;
         },
         formatEventDate: function (date) {
-            let rawDate = moment.parseZone(date).format("dddd, DD/MM/YYYY [às] HH:mm");
-            return rawDate.charAt(0).toUpperCase() + rawDate.slice(1);
+            moment.locale('pt-br');
+            const eventDate = moment.parseZone(date).locale('pt-br');
+            const weekdays = ["Domingo", "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira", "Sexta-feira", "Sábado"];
+            return weekdays[eventDate.day()] + eventDate.format(", DD/MM/YYYY [às] HH:mm");
         },
         openMemberNotes(member) {
             this.selectedMember = member;
@@ -335,7 +341,7 @@ export default {
             });
         },
         createNote() {
-            if (!this.newNoteText.trim()) return;
+            if (!this.canManageMemberNotes || !this.newNoteText.trim()) return;
             let self = this;
             let churchId = this.getCurrentChurchId();
             if (churchId == null || !this.selectedMember.id_usuario) return;
@@ -358,6 +364,7 @@ export default {
             });
         },
         startEditingNote(note) {
+            if (!this.canManageMemberNotes || !this.currentUser || Number(note.id_usuario_criador) !== Number(this.currentUser.id_usuario)) return;
             this.editingNoteId = note.id;
             this.editingNoteText = note.mensagem;
         },
@@ -366,7 +373,7 @@ export default {
             this.editingNoteText = "";
         },
         saveEditedNote(noteId) {
-            if (!this.editingNoteText.trim()) return;
+            if (!this.canManageMemberNotes || !this.editingNoteText.trim()) return;
             let self = this;
             let churchId = this.getCurrentChurchId();
             if (churchId == null) return;
@@ -388,10 +395,12 @@ export default {
             });
         },
         deleteNote(noteId) {
+            if (!this.canManageMemberNotes) return;
             this.noteIdToDelete = noteId;
             this.showConfirmDeleteNote = true;
         },
         confirmDeleteNote() {
+            if (!this.canManageMemberNotes) return;
             const noteId = this.noteIdToDelete;
             if (!noteId) return;
             let self = this;

@@ -60,10 +60,14 @@
                             <template v-else>
                                 <p class="warning-message">{{ warning.mensagem }}</p>
                                 <div class="warning-actions">
-                                    <button type="button" v-on:click="likeWarning(warning.id_aviso, warning.usuario_atual_curtiu)" class="btn primary-alt btn-small like-warning-button" :class="warning.usuario_atual_curtiu ? 'primary' : ''">
+                                    <button v-if="canLike" type="button" v-on:click="likeWarning(warning.id_aviso, warning.usuario_atual_curtiu)" class="btn primary-alt btn-small like-warning-button" :class="warning.usuario_atual_curtiu ? 'primary' : ''">
                                         <span class="material-icons">thumb_up_off_alt</span>
                                         <span>{{ warning.quantidade_curtidas }}</span>
                                     </button>
+                                    <span v-else class="like-count-readonly">
+                                        <span class="material-icons">thumb_up_off_alt</span>
+                                        <span>{{ warning.quantidade_curtidas }}</span>
+                                    </span>
                                     <button type="button" class="btn btn-small btn-reply" v-if="canCreate" v-on:click="toggleReply(warning.id_aviso)">
                                         <span class="material-icons">reply</span>
                                         <span>Responder</span>
@@ -133,10 +137,14 @@
                                 <template v-else>
                                     <p class="warning-message">{{ reply.mensagem }}</p>
                                     <div class="warning-actions">
-                                        <button type="button" v-on:click="likeWarning(reply.id_aviso, reply.usuario_atual_curtiu)" class="btn primary-alt btn-small like-warning-button" :class="reply.usuario_atual_curtiu ? 'primary' : ''">
+                                        <button v-if="canLike" type="button" v-on:click="likeWarning(reply.id_aviso, reply.usuario_atual_curtiu)" class="btn primary-alt btn-small like-warning-button" :class="reply.usuario_atual_curtiu ? 'primary' : ''">
                                             <span class="material-icons">thumb_up_off_alt</span>
                                             <span>{{ reply.quantidade_curtidas }}</span>
                                         </button>
+                                        <span v-else class="like-count-readonly">
+                                            <span class="material-icons">thumb_up_off_alt</span>
+                                            <span>{{ reply.quantidade_curtidas }}</span>
+                                        </span>
                                     </div>
                                 </template>
                             </div>
@@ -171,7 +179,7 @@ export default {
         confirmDeleteModal,
         skeletonLoader
     },
-    props: ["type", "id_musica", "id_evento", "canCreateThread", "canManageThread"],
+    props: ["type", "id_musica", "id_evento", "canCreateThread", "canManageThread", "canLikeThread"],
     data() {
         return {
             isLoading: true,
@@ -222,6 +230,12 @@ export default {
                 return Boolean(this.canCreateThread);
             }
             return this.haveAdminPermission || Boolean(this.canCreateThread);
+        },
+        canLike: function () {
+            if (this.type === "evento" || this.type === "musica_evento") {
+                return Boolean(this.canLikeThread);
+            }
+            return true;
         },
         canEditWarning: function () {
             return this.type === "aviso" && this.hasChurchPermission("warnings.edit");
@@ -385,11 +399,11 @@ export default {
                     self.isLoading = false;
                 });
         },
-        likeWarning: function (warning_id, usuario_atual_curtiu = false) {
+        likeWarning: function (warning_id) {
             let self = this;
             let churchId = this.getCurrentChurchId();
 
-            if (usuario_atual_curtiu) {
+            if (!this.canLike) {
                 return;
             }
 
@@ -449,6 +463,9 @@ export default {
             if (this.type === "aviso") {
                 return this.hasChurchPermission("warnings.edit");
             }
+            if (this.type === "evento") {
+                return Boolean(this.canManageThread);
+            }
             const isOwner = this.user && Number(this.user.id_usuario) === Number(warning.criador.id_usuario);
             if (isOwner) {
                 return true;
@@ -461,6 +478,9 @@ export default {
             }
             if (this.type === "aviso") {
                 return this.hasChurchPermission("warnings.delete");
+            }
+            if (this.type === "evento") {
+                return Boolean(this.canManageThread);
             }
             const isOwner = this.user && Number(this.user.id_usuario) === Number(warning.criador.id_usuario);
             if (isOwner) {
@@ -665,6 +685,20 @@ export default {
   height: 28px;
   padding: 0 10px;
   font-size: 12px;
+}
+
+.like-count-readonly {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  color: var(--neutral-gray-high);
+  font-size: 12px;
+}
+
+.like-count-readonly .material-icons {
+  font-size: 16px;
 }
 
 .like-warning-button.primary {

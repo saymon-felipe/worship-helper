@@ -43,7 +43,7 @@
                             <div class="chips-wrapper" v-if="filteredTags.length > 0">
                                 <div class="modern-chip tag-chip" v-for="tag in filteredTags" :key="tag.id_tag">
                                     <span class="chip-text">{{ tag.nome_tag }}</span>
-                                    <button type="button" class="btn-delete-chip" @click="deleteTag(tag.id_tag)" title="Excluir tag">
+                                    <button v-if="canManageTags" type="button" class="btn-delete-chip" @click="deleteTag(tag.id_tag)" title="Excluir tag">
                                         <span class="material-icons">close</span>
                                     </button>
                                 </div>
@@ -55,7 +55,7 @@
                         </template>
                     </div>
 
-                    <button type="button" class="btn primary btn-add-setting" @click="toggleAddTagInput('tag')" :disabled="!hasActiveChurch">
+                    <button v-if="canManageTags" type="button" class="btn primary btn-add-setting" @click="toggleAddTagInput('tag')" :disabled="!hasActiveChurch">
                         <span class="material-icons">add</span>
                         <span>Adicionar tag</span>
                     </button>
@@ -88,10 +88,10 @@
                                         <p>{{ permissionSummary(currentFunction) }}</p>
                                     </div>
                                     <div class="function-actions">
-                                        <button type="button" class="btn-delete-chip" @click="editFunction(currentFunction)" title="Editar função">
+                                        <button v-if="canManageFunctions" type="button" class="btn-delete-chip" @click="editFunction(currentFunction)" title="Editar função">
                                             <span class="material-icons">edit</span>
                                         </button>
-                                        <button type="button" class="btn-delete-chip" @click="deleteFunction(currentFunction.id_funcao)" title="Excluir função">
+                                        <button v-if="canManageFunctions" type="button" class="btn-delete-chip" @click="deleteFunction(currentFunction.id_funcao)" title="Excluir função">
                                             <span class="material-icons">close</span>
                                         </button>
                                     </div>
@@ -116,7 +116,7 @@
                         </div>
                     </template>
 
-                    <button type="button" class="btn primary btn-add-setting" @click="toggleAddTagInput('function')" :disabled="!hasActiveChurch">
+                    <button v-if="canManageFunctions" type="button" class="btn primary btn-add-setting" @click="toggleAddTagInput('function')" :disabled="!hasActiveChurch">
                         <span class="material-icons">add</span>
                         <span>Adicionar função</span>
                     </button>
@@ -170,6 +170,7 @@ import registerTagOrFunction from "./registerTagOrFunction.vue";
 import skeletonLoader from "./skeletonLoader.vue";
 import { globalMethods } from '../js/globalMethods';
 import api from '../config/api';
+import { appStore } from '../store/appStore';
 import $ from 'jquery';
 
 export default {
@@ -196,7 +197,7 @@ export default {
                 { key: "members.manage", label: "Gerenciar membros", parent: null },
                 { key: "members.invite", label: "Convidar membros", parent: "members.manage" },
                 { key: "members.remove", label: "Remover membros", parent: "members.manage" },
-                { key: "members.roles", label: "Alterar cargos", parent: "members.manage" },
+                { key: "members.roles", label: "Alterar funções", parent: "members.manage" },
                 { key: "members.tags", label: "Alterar tags", parent: "members.manage" },
                 { key: "events.manage", label: "Gerenciar eventos", parent: null },
                 { key: "events.create", label: "Criar eventos", parent: "events.manage" },
@@ -237,10 +238,22 @@ export default {
             }
             const query = this.functionSearchQuery.toLowerCase().trim();
             return this.functions.filter(currentFunction => currentFunction.nome_funcao.toLowerCase().includes(query));
+        },
+        canManageTags: function () {
+            return this.hasChurchPermission("members.tags");
+        },
+        canManageFunctions: function () {
+            return this.hasChurchPermission("members.roles");
         }
     },
     methods: {
         toggleAddTagInput: function (type) {
+            const permissionKey = type === "function" ? "members.roles" : "members.tags";
+            if (!this.hasChurchPermission(permissionKey)) {
+                this.showResponse("Você não tem permissão para alterar " + (type === "function" ? "funções" : "tags") + ".", ".response", "error");
+                return;
+            }
+
             if (!this.hasActiveChurch) {
                 this.showResponse("Não foi possível identificar a igreja atual. Recarregue a página e tente novamente.", ".response", "error");
                 return;
@@ -256,6 +269,10 @@ export default {
             }, 100);
         },
         editFunction: function (currentFunction) {
+            if (!this.canManageFunctions) {
+                return;
+            }
+
             this.type = "function";
             this.editingFunction = { ...currentFunction };
             this.modalTitle = "Editar função";
@@ -263,6 +280,10 @@ export default {
             this.showModal = true;
         },
         deleteTag: function (id_tag) {
+            if (!this.canManageTags) {
+                return;
+            }
+
             this.tagIdToDelete = id_tag;
             this.showConfirmDeleteTag = true;
         },
@@ -280,6 +301,10 @@ export default {
             this.tagIdToDelete = null;
         },
         deleteFunction: function (id_function) {
+            if (!this.canManageFunctions) {
+                return;
+            }
+
             this.functionIdToDelete = id_function;
             this.showConfirmDeleteFunction = true;
         },
@@ -353,6 +378,20 @@ export default {
                     this.isLoadingFunctions = false;
                 });
         },
+        loadChurchPermission: function () {
+            const churchId = this.getCurrentChurchId();
+            if (!churchId) {
+                return;
+            }
+
+            api.post("/igreja/permissao", { id_igreja: churchId })
+                .then((response) => {
+                    appStore.setChurchPermission(response.data.returnObj);
+                })
+                .catch((error) => {
+                    console.log(error);
+                });
+        },
         returnPageInformations: function () {
             this.returnChurchTags();
             this.returnChurchFunctions();
@@ -372,6 +411,7 @@ export default {
         }
     },
     mounted: function () {
+        this.loadChurchPermission();
         if (this.getCurrentChurchId()) {
             this.returnPageInformations();
         }

@@ -63,8 +63,8 @@
                     </div>
                 </router-link>
 
-                <!-- Settings (Conditional) -->
-                <router-link v-if="canConfigureChurch" :to="'/home/manage-church/' + igreja.id_igreja + '/config'" class="church-action-card">
+                <!-- Every member can consult roles and tags; editing is permission-gated in the settings page. -->
+                <router-link :to="'/home/manage-church/' + igreja.id_igreja + '/config'" class="church-action-card">
                     <div class="card-icon-box icon-config">
                         <span class="material-icons">settings</span>
                     </div>
@@ -109,7 +109,6 @@ export default {
         return {
             canManageChurch: false,
             canManageMembers: false,
-            canConfigureChurch: false,
             canCreateWarnings: false,
             canManageWarnings: false
         }
@@ -118,7 +117,6 @@ export default {
         updateActionPermissions: function () {
             this.canManageChurch = this.haveAdminPermission || this.haveAppPermission;
             this.canManageMembers = this.canManageChurch || this.hasChurchPermission("members.manage") || this.hasChurchPermission("members.invite") || this.hasChurchPermission("members.remove") || this.hasChurchPermission("members.roles") || this.hasChurchPermission("members.tags");
-            this.canConfigureChurch = this.canManageChurch || this.hasChurchPermission("members.roles") || this.hasChurchPermission("members.tags");
             this.canCreateWarnings = this.canManageChurch || this.hasChurchPermission("warnings.create");
             this.canManageWarnings = this.canManageChurch || this.hasChurchPermission("warnings.edit") || this.hasChurchPermission("warnings.delete");
         },

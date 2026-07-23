@@ -1,5 +1,7 @@
 import loginPage from "../views/login.vue";
 import registerPage from "../views/register.vue";
+import forgotPasswordPage from "../views/forgotPassword.vue";
+import resetPasswordPage from "../views/resetPassword.vue";
 import homeComponent from "../views/main.vue";
 import chooseChurch from "../components/chooseChurch.vue";
 import registerChurch from "../components/registerChurch.vue";
@@ -26,6 +28,20 @@ const routes = [
         component: registerPage,
         meta: {
             title: "Registre-se - Worship Helper"
+        }
+    },
+    {
+        path: '/forgot-password',
+        component: forgotPasswordPage,
+        meta: {
+            title: "Esqueci minha senha - Worship Helper"
+        }
+    },
+    {
+        path: '/reset-password',
+        component: resetPasswordPage,
+        meta: {
+            title: "Redefinir senha - Worship Helper"
         }
     },
     {

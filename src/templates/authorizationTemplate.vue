@@ -23,6 +23,7 @@ export default {
         align-items: center;
         padding-top: 2rem;
         color: var(--neutral-white);
+        position: relative;
     }
     .authorization-container {
         width: 90%;

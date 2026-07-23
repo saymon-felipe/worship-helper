@@ -55,11 +55,6 @@
                             </div>
                         </template>
                     </div>
-
-                    <button v-if="canManageTags" type="button" class="btn primary btn-add-setting" @click="toggleAddTagInput('tag')" :disabled="!hasActiveChurch">
-                        <span class="material-icons">add</span>
-                        <span>Adicionar tag</span>
-                    </button>
                 </div>
 
                 <div class="settings-card glass-card" v-if="activeTab === 'functions'">
@@ -116,15 +111,21 @@
                             <p>{{ functionSearchQuery ? 'Nenhuma função corresponde à busca' : 'Nenhuma função cadastrada' }}</p>
                         </div>
                     </template>
-
-                    <button v-if="canManageFunctions" type="button" class="btn primary btn-add-setting" @click="toggleAddTagInput('function')" :disabled="!hasActiveChurch">
-                        <span class="material-icons">add</span>
-                        <span>Adicionar função</span>
-                    </button>
                 </div>
             </div>
 
             <p class="response">{{ response }}</p>
+
+            <div class="create-setting-button-container" v-if="(activeTab === 'tags' && canManageTags) || (activeTab === 'functions' && canManageFunctions)">
+                <button v-if="activeTab === 'tags'" type="button" class="btn primary btn-add-setting-floating" @click="toggleAddTagInput('tag')" :disabled="!hasActiveChurch">
+                    Adicionar tag
+                    <span class="material-icons">add</span>
+                </button>
+                <button v-if="activeTab === 'functions'" type="button" class="btn primary btn-add-setting-floating" @click="toggleAddTagInput('function')" :disabled="!hasActiveChurch">
+                    Adicionar função
+                    <span class="material-icons">add</span>
+                </button>
+            </div>
         </div>
 
         <Teleport to="body">
@@ -443,14 +444,15 @@ export default {
 .config-church {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    height: auto;
+    padding-bottom: 160px;
 }
 
 .config-church-container {
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
-    height: 100%;
+    height: auto;
 }
 
 .page-title-header h3 {
@@ -633,10 +635,10 @@ export default {
 
 .chips-list-container,
 .function-list-container {
-    flex: 1;
-    overflow-y: auto;
-    max-height: 46vh;
-    padding-right: 4px;
+    flex: none;
+    overflow-y: visible;
+    max-height: none;
+    padding-right: 0;
 }
 
 .chips-wrapper {
@@ -787,6 +789,30 @@ export default {
     font-size: var(--font-size-5);
     margin-top: auto;
     max-width: 100%;
+}
+
+.create-setting-button-container {
+    position: fixed;
+    bottom: 90px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 500px;
+    display: flex;
+    justify-content: center;
+    background: linear-gradient(to top, #14112c 50%, rgba(20, 17, 44, 0.8) 75%, rgba(20, 17, 44, 0) 100%);
+    padding: 20px 0 10px 0;
+    backdrop-filter: blur(6px);
+    z-index: 98;
+}
+
+.btn-add-setting-floating {
+    width: 100%;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
 }
 
 .response {

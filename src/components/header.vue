@@ -1,6 +1,12 @@
 <template>
     <div class="header" v-if="load">
-        <img src="../assets/img/worship-helper-icon.png" class="app-icon" v-on:click="backToHome()" alt="Worship Helper Logo">
+        <div class="header-left-group">
+            <img src="../assets/img/worship-helper-icon.png" class="app-icon" v-on:click="backToHome()" alt="Worship Helper Logo">
+            <span class="church-connected-badge" v-if="currentChurchName" :title="'Conectado a ' + currentChurchName">
+                <span class="material-icons badge-icon">church</span>
+                <span class="badge-text">{{ currentChurchName }}</span>
+            </span>
+        </div>
         <nav class="header-menu-container">
             <div class="user-container">
                 <div class="user-information" v-on:click="toogleMenuContainer()">
@@ -37,6 +43,7 @@
 <script>
 import { globalMethods } from '../js/globalMethods';
 import { getPushPermission, removePushSubscription, requestPushPermission, syncPushSubscription } from '../services/pushNotifications';
+import { appStore } from '../store/appStore';
 
 export default {
     name: "headerComponent",
@@ -46,6 +53,11 @@ export default {
             load: true,
             showDropdown: false,
             notificationPermission: getPushPermission()
+        }
+    },
+    computed: {
+        currentChurchName() {
+            return appStore.state.church ? appStore.state.church.nome_igreja : null;
         }
     },
     methods: {
@@ -101,6 +113,38 @@ export default {
     position: sticky;
     top: 0;
     z-index: 100;
+}
+
+.header-left-group {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.church-connected-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--secondary-blue-soft-2);
+    border: 1px solid rgba(56, 182, 255, 0.25);
+    color: var(--secondary-blue-soft);
+    padding: 4px 10px;
+    border-radius: var(--radius-pill);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.church-connected-badge .badge-icon {
+    font-size: 14px;
+}
+
+.church-connected-badge .badge-text {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .header img.app-icon {
@@ -229,4 +273,3 @@ export default {
     background: transparent;
 }
 </style>
-

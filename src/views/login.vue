@@ -17,10 +17,6 @@
             <input v-model="rememberUser" type="checkbox">
             <span>Lembrar meu e-mail neste dispositivo</span>
           </label>
-          <label v-if="biometricSupported" class="login-option">
-            <input v-model="enableBiometrics" type="checkbox">
-            <span>Ativar acesso por biometria neste dispositivo</span>
-          </label>
 
           <button type="submit" class="btn btn-2" id="access-account-button" :disabled="isSubmitting">
             {{ isSubmitting ? "Acessando..." : "Acessar conta" }}
@@ -42,19 +38,41 @@
       </div>
     </div>
   </authorizationTemplate>
+  <Teleport to="body">
+    <Transition name="modal-fade">
+      <modal
+        v-if="showBiometricPrompt"
+        title="Ativar biometria"
+        buttonTitle="Ativar agora"
+        button2Title="Agora não"
+        :disabled="isActivatingBiometrics"
+        @submitEvent="confirmBiometrics"
+        @cancelEvent="declineBiometrics"
+        @closeModal="declineBiometrics"
+      >
+        <div class="biometric-prompt">
+          <span class="material-icons">fingerprint</span>
+          <p>Seu dispositivo permite acesso biométrico. Deseja usar a biometria para entrar mais rapidamente neste dispositivo?</p>
+          <p v-if="biometricPromptError" class="biometric-prompt-error">{{ biometricPromptError }}</p>
+        </div>
+      </modal>
+    </Transition>
+  </Teleport>
 </template>
 
 <script>
 import authorizationTemplate from "../templates/authorizationTemplate.vue";
 import { globalMethods } from "../js/globalMethods";
 import api from "../config/api";
+import modal from "../components/modal.vue";
 
 const rememberedEmailKey = "wh_remembered_email";
+const biometricDeclinedKey = (email) => `wh_biometric_prompt_declined:${String(email || "").trim().toLowerCase()}`;
 
 export default {
   name: "loginPage",
   mixins: [globalMethods],
-  components: { authorizationTemplate },
+  components: { authorizationTemplate, modal },
   data() {
     const rememberedEmail = localStorage.getItem(rememberedEmailKey) || "";
     return {
@@ -63,10 +81,12 @@ export default {
       email: rememberedEmail,
       password: "",
       rememberUser: Boolean(rememberedEmail),
-      enableBiometrics: false,
       biometricSupported: false,
       isSubmitting: false,
-      isBiometricLoading: false
+      isBiometricLoading: false,
+      isActivatingBiometrics: false,
+      showBiometricPrompt: false,
+      biometricPromptError: ""
     };
   },
   computed: {
@@ -89,11 +109,55 @@ export default {
     async getWebAuthn() {
       return import("@simplewebauthn/browser");
     },
+    async checkBiometricSupport() {
+      try {
+        if (!window.PublicKeyCredential || typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable !== "function") {
+          this.biometricSupported = false;
+          return;
+        }
+        this.biometricSupported = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+      } catch (error) {
+        this.biometricSupported = false;
+      }
+    },
     async activateBiometrics() {
       const { startRegistration } = await this.getWebAuthn();
       const optionsResponse = await api.post("/usuario/biometria/registro/opcoes");
       const credential = await startRegistration({ optionsJSON: optionsResponse.data.returnObj });
       await api.post("/usuario/biometria/registro/verificar", { credential });
+    },
+    async shouldPromptForBiometrics() {
+      if (!this.biometricSupported) await this.checkBiometricSupport();
+      if (!this.biometricSupported || localStorage.getItem(biometricDeclinedKey(this.email))) return false;
+
+      try {
+        const response = await api.get("/usuario/biometria/status");
+        return !response.data?.returnObj?.hasCredential;
+      } catch (error) {
+        return false;
+      }
+    },
+    finishLogin() {
+      this.showBiometricPrompt = false;
+      this.$nextTick(() => this.$router.push("/home"));
+    },
+    async confirmBiometrics() {
+      this.isActivatingBiometrics = true;
+      this.biometricPromptError = "";
+      try {
+        await this.activateBiometrics();
+        localStorage.setItem(rememberedEmailKey, this.email);
+        localStorage.removeItem(biometricDeclinedKey(this.email));
+        this.finishLogin();
+      } catch (error) {
+        this.biometricPromptError = this.getErrorMessage(error, "Não foi possível ativar a biometria. Tente novamente.");
+      } finally {
+        this.isActivatingBiometrics = false;
+      }
+    },
+    declineBiometrics() {
+      localStorage.setItem(biometricDeclinedKey(this.email), "true");
+      this.finishLogin();
     },
     async login() {
       this.isSubmitting = true;
@@ -104,17 +168,14 @@ export default {
           senha_usuario: this.password
         });
 
-        if (this.enableBiometrics) this.rememberUser = true;
         this.saveRememberedEmail();
         this.setJwtInLocalStorage(response.data.returnObj);
-        if (this.enableBiometrics && this.biometricSupported) {
-          try {
-            await this.activateBiometrics();
-          } catch (error) {
-            console.warn("Não foi possível ativar a biometria:", error);
-          }
+        this.password = "";
+        if (await this.shouldPromptForBiometrics()) {
+          this.showBiometricPrompt = true;
+        } else {
+          this.finishLogin();
         }
-        this.$router.push("/home");
       } catch (error) {
         this.response = this.getErrorMessage(error, "Não foi possível conectar ao servidor. Verifique a conexão e tente novamente.");
         this.responseType = "error";
@@ -147,14 +208,7 @@ export default {
     }
   },
   async mounted() {
-    try {
-      if (!window.PublicKeyCredential || typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable !== "function") {
-        return;
-      }
-      this.biometricSupported = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-    } catch (error) {
-      this.biometricSupported = false;
-    }
+    await this.checkBiometricSupport();
   }
 };
 </script>
@@ -168,6 +222,9 @@ export default {
 .login-option input { accent-color: var(--secondary-blue-soft); }
 .biometric-login-button { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 8px; margin: 0 0 1rem; border: 1px solid rgba(56, 182, 255, .35); background: rgba(56, 182, 255, .08); color: var(--secondary-blue-soft); }
 .biometric-login-button:disabled { opacity: .7; cursor: wait; }
+.biometric-prompt { display: flex; flex-direction: column; align-items: center; gap: 16px; color: var(--neutral-gray-high); text-align: center; line-height: 1.5; padding: 1rem; }
+.biometric-prompt > .material-icons { font-size: 54px; color: var(--secondary-blue-soft); }
+.biometric-prompt-error { color: var(--others-red); }
 .login .response { opacity: 1; visibility: visible; display: block; }
 .response.error { color: var(--others-red); }
 .copyright { text-align: center; }

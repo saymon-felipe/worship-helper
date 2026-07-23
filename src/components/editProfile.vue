@@ -44,6 +44,22 @@
             <textarea name="descricao_usuario" id="descricao-usuario" v-model="user.descricao_usuario" placeholder="Ex: Sou guitarrista e toco na igreja há 3 anos..." v-on:focus="saveUserDescription()" v-on:blur="updateBio($event)"></textarea>
             <span class="response-message">{{ response }}</span>
         </div>
+
+        <div class="biometric-settings-card" v-if="user && user.id_usuario">
+            <div class="bio-header">
+                <span class="material-icons bio-icon">fingerprint</span>
+                <h4>Acesso por biometria</h4>
+            </div>
+            <p class="bio-desc" v-if="!biometricSupported">Este dispositivo não oferece suporte a biometria para acesso.</p>
+            <template v-else>
+                <p class="bio-desc">{{ biometricRegistered ? "A biometria já está ativada para sua conta neste dispositivo." : "Use a biometria deste dispositivo para entrar na sua conta mais rapidamente." }}</p>
+                <button v-if="!biometricRegistered" type="button" class="btn primary biometric-settings-button" :disabled="isActivatingBiometrics" @click="activateBiometrics">
+                    <span class="material-icons">fingerprint</span>
+                    <span>{{ isActivatingBiometrics ? "Ativando..." : "Ativar acesso por biometria" }}</span>
+                </button>
+                <p v-if="biometricResponse" class="biometric-response" :class="{ error: biometricError }">{{ biometricResponse }}</p>
+            </template>
+        </div>
         
         <Teleport to="body">
             <Transition name="modal-fade">
@@ -59,6 +75,8 @@ import $ from 'jquery';
 import imageCropModal from "./imageCropModal.vue";
 import skeletonLoader from "./skeletonLoader.vue";
 
+const biometricDeclinedKey = (email) => `wh_biometric_prompt_declined:${String(email || "").trim().toLowerCase()}`;
+
 export default {
     name: "editProfile",
     mixins: [globalMethods],
@@ -73,7 +91,12 @@ export default {
             formData: null,
             default_avatar_image: api.defaults.baseURL + "/public/user-default-image.png", // Fallback seguro
             cropModalOpen: false,
-            cropImageSrc: ""
+            cropImageSrc: "",
+            biometricSupported: false,
+            biometricRegistered: false,
+            isActivatingBiometrics: false,
+            biometricResponse: "",
+            biometricError: false
         }
     },
     methods: {
@@ -158,10 +181,54 @@ export default {
             .catch(function (error) {
                 console.log(error);
             })
+        },
+        checkBiometricSupport: async function () {
+            try {
+                if (!window.PublicKeyCredential || typeof window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable !== "function") {
+                    this.biometricSupported = false;
+                    return;
+                }
+                this.biometricSupported = await window.PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+            } catch (error) {
+                this.biometricSupported = false;
+            }
+        },
+        loadBiometricStatus: async function () {
+            if (!this.biometricSupported) return;
+            try {
+                const response = await api.get("/usuario/biometria/status");
+                this.biometricRegistered = Boolean(response.data?.returnObj?.hasCredential);
+            } catch (error) {
+                this.biometricResponse = "Não foi possível consultar o status da biometria.";
+                this.biometricError = true;
+            }
+        },
+        activateBiometrics: async function () {
+            this.isActivatingBiometrics = true;
+            this.biometricResponse = "";
+            this.biometricError = false;
+            try {
+                const { startRegistration } = await import("@simplewebauthn/browser");
+                const optionsResponse = await api.post("/usuario/biometria/registro/opcoes");
+                const credential = await startRegistration({ optionsJSON: optionsResponse.data.returnObj });
+                await api.post("/usuario/biometria/registro/verificar", { credential });
+                localStorage.setItem("wh_remembered_email", this.user.email_usuario);
+                localStorage.removeItem(biometricDeclinedKey(this.user.email_usuario));
+                this.biometricRegistered = true;
+                this.biometricResponse = "Biometria ativada neste dispositivo.";
+            } catch (error) {
+                const data = error.response?.data;
+                this.biometricResponse = typeof data === "string" ? data : data?.error || "Não foi possível ativar a biometria.";
+                this.biometricError = true;
+            } finally {
+                this.isActivatingBiometrics = false;
+            }
         }
     },
-    mounted: function () {
-        this.requireUser();
+    mounted: async function () {
+        await this.requireUser();
+        await this.checkBiometricSupport();
+        await this.loadBiometricStatus();
     }
 }
 </script>
@@ -291,6 +358,22 @@ h3 {
     flex-direction: column;
     gap: 10px;
 }
+
+.biometric-settings-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    box-shadow: var(--card-shadow);
+    backdrop-filter: var(--glass-blur);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 2rem;
+}
+
+.biometric-settings-button { width: 100%; margin-top: 8px; }
+.biometric-response { text-align: center; color: var(--others-green); margin-top: 8px; }
 
 .bio-header {
     display: flex;

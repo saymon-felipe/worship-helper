@@ -113,7 +113,7 @@
 
 html, body, #app {
   height: 100%;
-  min-height: 100%;
+  min-height: 100dvh;
   width: 100%;
   overflow-x: hidden;
   scroll-behavior: smooth;

@@ -5,6 +5,8 @@ import moment from 'moment';
 import 'moment/locale/pt-br';
 moment.locale('pt-br');
 
+const currentChurchStorageKey = "wh_current_church";
+
 const permissionParents = {
     "members.invite": "members.manage",
     "members.remove": "members.manage",
@@ -32,6 +34,7 @@ export const globalMethods = {
             };
 
             sessionStorage.setItem("current_church", JSON.stringify(obj));
+            localStorage.setItem(currentChurchStorageKey, JSON.stringify(obj));
             appStore.setChurch(obj);
             appStore.setChurchPermission({
                 administrador: obj.administrador == 1 || obj.administrador === true,
@@ -42,7 +45,14 @@ export const globalMethods = {
             this.checkPermission();
         },
         getCurrentChurchInLocalStorage: function () {
-            return JSON.parse(sessionStorage.getItem("current_church"));
+            try {
+                const storedChurch = sessionStorage.getItem("current_church") || localStorage.getItem(currentChurchStorageKey);
+                return storedChurch ? JSON.parse(storedChurch) : null;
+            } catch (error) {
+                sessionStorage.removeItem("current_church");
+                localStorage.removeItem(currentChurchStorageKey);
+                return null;
+            }
         },
         getCurrentChurchId: function () {
             let id = null;

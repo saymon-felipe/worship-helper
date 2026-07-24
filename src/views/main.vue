@@ -75,6 +75,11 @@ export default {
         }
     },
     methods: {
+        isMobileBrowser() {
+            const hasMobileViewport = window.matchMedia("(max-width: 768px)").matches;
+            const hasTouchInput = window.matchMedia("(pointer: coarse)").matches || navigator.maxTouchPoints > 0;
+            return hasMobileViewport && hasTouchInput;
+        },
         openInstallModal() {
             if (!isPwaInstalled() && !sessionStorage.getItem("pwa-install-dismissed")) {
                 this.showInstallModal = true;
@@ -150,6 +155,11 @@ export default {
     },
     mounted() {
         this.isIOS = isIOSDevice();
+        window.setTimeout(() => {
+            if (this.isMobileBrowser()) {
+                this.openInstallModal();
+            }
+        }, 800);
     }
 }
 </script>

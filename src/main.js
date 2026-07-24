@@ -58,11 +58,29 @@ app.config.globalProperties.$globalState = appStore.state;
 app.config.globalProperties.moment = moment;
 app.config.globalProperties.momentTimezone = momentTimezone;
 
+function getStoredChurch() {
+    try {
+        const storedValue = sessionStorage.getItem("current_church") || localStorage.getItem("wh_current_church");
+        return storedValue ? JSON.parse(storedValue) : null;
+    } catch (error) {
+        sessionStorage.removeItem("current_church");
+        localStorage.removeItem("wh_current_church");
+        return null;
+    }
+}
+
+function persistCurrentChurch(church) {
+    if (!church || !church.id_igreja) return;
+    const value = JSON.stringify(church);
+    sessionStorage.setItem("current_church", value);
+    localStorage.setItem("wh_current_church", value);
+}
+
 function getCurrentChurchId() {
     let churchId = app.config.globalProperties.$route.params.id_igreja;
 
     if (churchId == undefined) {
-        const storedChurch = JSON.parse(sessionStorage.getItem("current_church"));
+        const storedChurch = getStoredChurch();
         churchId = storedChurch ? storedChurch.id_igreja : undefined;
     }
 
@@ -92,7 +110,13 @@ function getMyChurch() {
 
     api.post("/igreja/retorna-igreja", { id_igreja: churchId })
         .then(function (response) {
-            appStore.setChurch(response.data.returnObj);
+            const church = response.data.returnObj;
+            appStore.setChurch(church);
+            persistCurrentChurch({
+                ...getStoredChurch(),
+                ...church,
+                administrador: appStore.state.churchPermission.administrador
+            });
             appStore.state.loadingApp = false;
         })
         .catch(function (error) {
@@ -110,7 +134,7 @@ function checkPermission() {
     }
 
     const churchId = getCurrentChurchId();
-    const storedChurch = JSON.parse(sessionStorage.getItem("current_church"));
+    const storedChurch = getStoredChurch();
 
     if (churchId == undefined) {
         appStore.state.loadingApp = false;

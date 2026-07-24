@@ -1,15 +1,15 @@
 <template>
-    <footer v-if="current_church.id_igreja != null">
+    <footer v-if="activeChurch.id_igreja != null">
         <div class="nav-container">
-            <div class="menu-option" v-on:click="navigate('/home/church/' + current_church.id_igreja)" :class="{ 'active-option': isHomeActive }">
+            <div class="menu-option" v-on:click="navigate('/home/church/' + activeChurch.id_igreja)" :class="{ 'active-option': isHomeActive }">
                 <span class="material-icons">home</span>
                 <p>Início</p>
             </div>
-            <div class="menu-option" v-on:click="navigate('/home/manage-church/' + current_church.id_igreja + '/musics')" :class="{ 'active-option': isMusicsActive }">
+            <div class="menu-option" v-on:click="navigate('/home/manage-church/' + activeChurch.id_igreja + '/musics')" :class="{ 'active-option': isMusicsActive }">
                 <span class="material-icons">queue_music</span>
                 <p>Músicas</p>
             </div>
-            <div class="menu-option" v-on:click="navigate('/home/manage-church/' + current_church.id_igreja)" :class="{ 'active-option': isPanelActive }">
+            <div class="menu-option" v-on:click="navigate('/home/manage-church/' + activeChurch.id_igreja)" :class="{ 'active-option': isPanelActive }">
                 <span class="material-icons">home_work</span>
                 <p>{{ returnLabelAdmin() }}</p>
             </div>
@@ -18,36 +18,57 @@
 </template>
 <script>
 import { globalMethods } from '../js/globalMethods';
+import { appStore } from '../store/appStore';
 
 export default {
     name: "footerComponent",
     mixins: [globalMethods],
-    data() {
-        return {
-            currentId: null,
-            current_church: {
-                id_igreja: null
-            }
-        }
-    },
     computed: {
+        activeChurch() {
+            const routeChurchId = Number(this.$route.params.id_igreja || 0);
+            const currentChurch = appStore.state.church;
+
+            if (currentChurch && (!routeChurchId || Number(currentChurch.id_igreja) === routeChurchId)) {
+                return currentChurch;
+            }
+
+            try {
+                const storedValue = sessionStorage.getItem("current_church") || localStorage.getItem("wh_current_church");
+                const storedChurch = storedValue ? JSON.parse(storedValue) : null;
+                if (storedChurch && (!routeChurchId || Number(storedChurch.id_igreja) === routeChurchId)) {
+                    return storedChurch;
+                }
+            } catch (error) {
+                sessionStorage.removeItem("current_church");
+                localStorage.removeItem("wh_current_church");
+            }
+
+            if (routeChurchId) {
+                return {
+                    id_igreja: routeChurchId,
+                    administrador: appStore.state.churchPermission.administrador
+                };
+            }
+
+            return { id_igreja: null };
+        },
         isHomeActive() {
             if (this.$route.path === '/home' || this.$route.path === '/register-church') return false;
-            return this.$route.path === '/home/church/' + this.current_church.id_igreja || 
+            return this.$route.path === '/home/church/' + this.activeChurch.id_igreja || 
                    this.$route.path.startsWith('/home/event/');
         },
         isMusicsActive() {
             if (this.$route.path === '/home' || this.$route.path === '/register-church') return false;
-            return this.$route.path === '/home/manage-church/' + this.current_church.id_igreja + '/musics';
+            return this.$route.path === '/home/manage-church/' + this.activeChurch.id_igreja + '/musics';
         },
         isPanelActive() {
             if (this.$route.path === '/home' || this.$route.path === '/register-church') return false;
-            return this.$route.path === '/home/manage-church/' + this.current_church.id_igreja;
+            return this.$route.path === '/home/manage-church/' + this.activeChurch.id_igreja;
         }
     },
     methods: {
         returnLabelAdmin: function () {
-            if (this.current_church.administrador == 1) {
+            if (this.activeChurch.administrador == 1 || this.activeChurch.administrador === true) {
                 return "Painel";
             }
             return "Visualizar";
@@ -56,23 +77,12 @@ export default {
             if (this.$route.path === '/home') {
                 return;
             }
-            if (this.current_church.id_igreja == null) {
+            if (this.activeChurch.id_igreja == null) {
                 this.$router.push('/home');
                 return;
             }
             this.$router.push(path);
-        },
-        watchChurchInSessionStorage: function () {
-            setInterval(() => {
-                if (sessionStorage.getItem("current_church") != null && this.currentId != JSON.parse(sessionStorage.getItem("current_church")).id_igreja) {
-                    this.currentId = JSON.parse(sessionStorage.getItem("current_church")).id_igreja;
-                    this.current_church = this.getCurrentChurchInLocalStorage();
-                }
-            }, 1000)
         }
-    },
-    mounted: function () {
-        this.watchChurchInSessionStorage();
     }
 }
 </script>

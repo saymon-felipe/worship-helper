@@ -1,5 +1,6 @@
 import { reactive } from "vue";
 const authStorageKey = "wh_jwt";
+const currentChurchStorageKey = "wh_current_church";
 const state = reactive({
     auth: {
         token: localStorage.getItem(authStorageKey),
@@ -95,6 +96,8 @@ function clearAuth() {
         apenas_membro: false,
         permissions: []
     };
+    sessionStorage.removeItem("current_church");
+    localStorage.removeItem(currentChurchStorageKey);
 }
 function setUser(user) {
     state.user = user || null;

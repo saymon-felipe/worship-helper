@@ -211,9 +211,12 @@ export default {
     }
 
 .create-event-button-container {
-    position: absolute;
-    bottom: -90px;
-    width: 100%;
+    position: fixed;
+    bottom: calc(96px + env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 500px;
     display: flex;
     justify-content: center;
     background: linear-gradient(to top, #14112c 50%, rgba(20, 17, 44, 0.8) 75%, rgba(20, 17, 44, 0) 100%);
@@ -229,6 +232,6 @@ export default {
 .church-events-list {
     height: 53vh;
     overflow-y: auto;
-    padding-bottom: 90px;
+    padding-bottom: 170px;
 }
 </style>

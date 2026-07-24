@@ -52,11 +52,12 @@
             </div>
             <p class="bio-desc" v-if="!biometricSupported">Este dispositivo não oferece suporte a biometria para acesso.</p>
             <template v-else>
-                <p class="bio-desc">{{ biometricRegistered ? "A biometria já está ativada para sua conta neste dispositivo." : "Use a biometria deste dispositivo para entrar na sua conta mais rapidamente." }}</p>
-                <button v-if="!biometricRegistered" type="button" class="btn primary biometric-settings-button" :disabled="isActivatingBiometrics" @click="activateBiometrics">
-                    <span class="material-icons">fingerprint</span>
-                    <span>{{ isActivatingBiometrics ? "Ativando..." : "Ativar acesso por biometria" }}</span>
-                </button>
+                <p class="bio-desc">Use a biometria deste dispositivo para entrar na sua conta mais rapidamente.</p>
+                <label class="biometric-toggle" :class="{ disabled: isActivatingBiometrics }">
+                    <input type="checkbox" :checked="biometricRegistered" :disabled="isActivatingBiometrics" @change="toggleBiometrics">
+                    <span class="biometric-toggle-track" aria-hidden="true"><span></span></span>
+                    <span>{{ biometricRegistered ? "Login com biometria ativado" : "Login com biometria desativado" }}</span>
+                </label>
                 <p v-if="biometricResponse" class="biometric-response" :class="{ error: biometricError }">{{ biometricResponse }}</p>
             </template>
         </div>
@@ -223,6 +224,30 @@ export default {
             } finally {
                 this.isActivatingBiometrics = false;
             }
+        },
+        disableBiometrics: async function () {
+            this.isActivatingBiometrics = true;
+            this.biometricResponse = "";
+            this.biometricError = false;
+            try {
+                await api.delete("/usuario/biometria");
+                localStorage.setItem(biometricDeclinedKey(this.user.email_usuario), "true");
+                this.biometricRegistered = false;
+                this.biometricResponse = "Login com biometria desativado.";
+            } catch (error) {
+                const data = error.response?.data;
+                this.biometricResponse = typeof data === "string" ? data : data?.error || "Não foi possível desativar a biometria.";
+                this.biometricError = true;
+            } finally {
+                this.isActivatingBiometrics = false;
+            }
+        },
+        toggleBiometrics: async function (event) {
+            if (event.target.checked) {
+                await this.activateBiometrics();
+                return;
+            }
+            await this.disableBiometrics();
         }
     },
     mounted: async function () {
@@ -372,8 +397,14 @@ h3 {
     margin-top: 2rem;
 }
 
-.biometric-settings-button { width: 100%; margin-top: 8px; }
 .biometric-response { text-align: center; color: var(--others-green); margin-top: 8px; }
+.biometric-toggle { display: flex; align-items: center; gap: 12px; cursor: pointer; color: var(--neutral-gray-high); font-size: var(--font-size-4); margin-top: 8px; }
+.biometric-toggle.disabled { cursor: wait; opacity: .7; }
+.biometric-toggle input { position: absolute; opacity: 0; pointer-events: none; }
+.biometric-toggle-track { width: 46px; height: 26px; border-radius: var(--radius-pill); padding: 3px; display: flex; align-items: center; background: var(--neutral-gray-low); transition: background var(--transition-fast); flex-shrink: 0; }
+.biometric-toggle-track span { width: 20px; height: 20px; border-radius: 50%; background: var(--neutral-white); transition: transform var(--transition-fast); box-shadow: 0 1px 3px rgba(0, 0, 0, .4); }
+.biometric-toggle input:checked + .biometric-toggle-track { background: var(--primary-primary-blue-high-2); }
+.biometric-toggle input:checked + .biometric-toggle-track span { transform: translateX(20px); }
 
 .bio-header {
     display: flex;

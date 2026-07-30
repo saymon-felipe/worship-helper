@@ -104,7 +104,7 @@
                         <span class="material-icons">arrow_back</span> Voltar
                     </button>
                     <button type="button" class="btn primary" :disabled="!selectedVideo || loadingCipher" @click="changeStep(3)">
-                        Buscar Cifra <span class="material-icons">arrow_forward</span>
+                        Escolher Cifra <span class="material-icons">arrow_forward</span>
                     </button>
                 </div>
             </div>
@@ -119,21 +119,32 @@
                     </div>
                 </div>
 
+                <div class="cipher-source-selector">
+                    <button type="button" class="source-tab" :class="{ active: cipherMode === 'cifra_club' }" @click="selectCipherMode('cifra_club')">
+                        <span class="material-icons">search</span>
+                        <span>Cifra Club</span>
+                    </button>
+                    <button type="button" class="source-tab" :class="{ active: cipherMode === 'custom_pdf' }" @click="selectCipherMode('custom_pdf')">
+                        <span class="material-icons">upload_file</span>
+                        <span>Enviar PDF</span>
+                    </button>
+                </div>
+
                 <!-- Estados Auxiliares -->
-                <div class="wizard-state-card" v-if="loadingCipher">
+                <div class="wizard-state-card" v-if="cipherMode === 'cifra_club' && loadingCipher">
                     <span class="spinner-loader"></span>
                     <h6>Procurando cifras...</h6>
                     <p>Buscando as versões mais completas.</p>
                 </div>
 
-                <div class="wizard-state-card" v-else-if="cipherList.length === 0">
+                <div class="wizard-state-card" v-if="cipherMode === 'cifra_club' && !loadingCipher && cipherList.length === 0">
                     <span class="material-icons state-icon">menu_book</span>
                     <h6>Nenhuma cifra encontrada</h6>
                     <p>Tente ajustar os dados de busca no passo 1.</p>
                 </div>
 
                 <!-- Lista de Cifras (Mobile Layout) -->
-                <div class="results-scroll-pane compact" v-else>
+                <div class="results-scroll-pane compact" v-if="cipherMode === 'cifra_club' && !loadingCipher && cipherList.length > 0">
                     <div class="cipher-card-mobile" v-for="(cipher, index) in cipherList" :key="index" :class="{ selected: selectedCipher && selectedCipher.href === cipher.href }" @click="selectCipher(cipher)">
                         <div class="cipher-card-main">
                             <span class="material-icons doc-icon">article</span>
@@ -156,8 +167,54 @@
                     </div>
                 </div>
 
+                <div class="pdf-import-pane" v-if="cipherMode === 'custom_pdf'">
+                    <input ref="cipherPdfInput" class="pdf-file-input" type="file" accept="application/pdf" @change="handlePdfFileChange">
+                    <button type="button" class="pdf-upload-card" :class="{ selected: pdfFileName }" @click="$refs.cipherPdfInput.click()">
+                        <span class="material-icons">picture_as_pdf</span>
+                        <span class="pdf-upload-copy">
+                            <strong>{{ pdfFileName || "Selecionar PDF" }}</strong>
+                            <small>PDF com texto selecionavel, ate 5 MB</small>
+                        </span>
+                    </button>
+
+                    <div class="wizard-state-card compact-state" v-if="pdfImporting">
+                        <span class="spinner-loader"></span>
+                        <h6>Importando cifra...</h6>
+                        <p>Extraindo acordes e letra do PDF.</p>
+                    </div>
+
+                    <div class="pdf-page-list" v-if="!pdfImporting && pdfPages.length > 0">
+                        <button
+                            type="button"
+                            class="pdf-page-option"
+                            v-for="page in pdfPages"
+                            :key="page.page"
+                            :class="{ selected: isPdfPageSelected(page) }"
+                            @click="togglePdfPage(page)"
+                        >
+                            <span class="material-icons">{{ isPdfPageSelected(page) ? 'check_circle' : 'radio_button_unchecked' }}</span>
+                            <span class="page-copy">
+                                <strong>{{ page.label }}</strong>
+                                <small v-if="page.detected_artist || page.detected_tone">
+                                    {{ page.detected_artist }}{{ page.detected_artist && page.detected_tone ? " - " : "" }}{{ page.detected_tone ? "Tom: " + page.detected_tone : "" }}
+                                </small>
+                            </span>
+                        </button>
+                    </div>
+
+                    <div class="pdf-preview-section" v-if="!pdfImporting && pdfPages.length > 0">
+                        <label for="pdf-cipher-preview">Preview da cifra</label>
+                        <textarea
+                            id="pdf-cipher-preview"
+                            v-model="pdfPreviewText"
+                            spellcheck="false"
+                            placeholder="A cifra importada vai aparecer aqui..."
+                        ></textarea>
+                    </div>
+                </div>
+
                 <!-- Banner de Pronto -->
-                <div class="ready-banner" v-if="selectedVideo && selectedCipher">
+                <div class="ready-banner" v-if="canFinishCipher">
                     <span class="material-icons">check_circle</span>
                     <div class="ready-text">
                         <h6>Tudo pronto!</h6>
@@ -169,8 +226,8 @@
                     <button type="button" class="btn secondary" @click="changeStep(2)">
                         <span class="material-icons">arrow_back</span> Voltar
                     </button>
-                    <button type="button" class="btn primary success-btn" :disabled="!selectedCipher" @click="createMusic()">
-                        <span class="material-icons">done_all</span> Finalizar
+                    <button type="button" class="btn primary success-btn" :disabled="!canFinishCipher || savingMusic" @click="createMusic()">
+                        <span class="material-icons">{{ savingMusic ? 'sync' : 'done_all' }}</span> {{ savingMusic ? 'Salvando...' : 'Finalizar' }}
                     </button>
                 </div>
             </div>
@@ -213,10 +270,17 @@ export default {
             modalPreviewVideoId: null,
             loadingMusic: false,
             loadingCipher: false,
+            pdfImporting: false,
+            savingMusic: false,
+            cipherMode: "cifra_club",
             cipherList: [],
             musicList: [],
             selectedVideo: null,
             selectedCipher: null,
+            pdfPages: [],
+            selectedPdfPageNumbers: [],
+            pdfPreviewText: "",
+            pdfFileName: "",
             musicTags: [],
             musicTagsList: []
         }
@@ -227,6 +291,17 @@ export default {
     computed: {
         canSearchVideo() {
             return Boolean(this.form.name && this.form.name.trim()) && this.musicTags.length > 0;
+        },
+        canFinishCipher() {
+            if (!this.selectedVideo) {
+                return false;
+            }
+
+            if (this.cipherMode === "custom_pdf") {
+                return Boolean(this.pdfPreviewText && this.pdfPreviewText.trim());
+            }
+
+            return Boolean(this.selectedCipher);
         },
         currentStepTitle() {
             const titles = [
@@ -244,10 +319,74 @@ export default {
         selectCipher: function (cipher) {
             this.selectedCipher = cipher;
         },
+        selectCipherMode: function (mode) {
+            this.cipherMode = mode;
+            if (mode === "cifra_club" && this.currentStep === 3 && this.cipherList.length === 0 && !this.loadingCipher) {
+                this.searchCipher();
+            }
+        },
+        normalizeMatchText: function (value) {
+            return String(value || "")
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .toLowerCase()
+                .trim();
+        },
+        selectedPdfPageObjects: function () {
+            return this.pdfPages
+                .filter(page => this.selectedPdfPageNumbers.includes(page.page))
+                .sort((a, b) => a.page - b.page);
+        },
+        syncPdfPreviewText: function () {
+            this.pdfPreviewText = this.selectedPdfPageObjects()
+                .map(page => page.text)
+                .join("\n\n");
+        },
+        isPdfPageSelected: function (page) {
+            return this.selectedPdfPageNumbers.includes(page.page);
+        },
+        togglePdfPage: function (page) {
+            if (this.isPdfPageSelected(page)) {
+                if (this.selectedPdfPageNumbers.length === 1) {
+                    return;
+                }
+                this.selectedPdfPageNumbers = this.selectedPdfPageNumbers.filter(pageNumber => pageNumber !== page.page);
+            } else {
+                this.selectedPdfPageNumbers.push(page.page);
+            }
+
+            this.syncPdfPreviewText();
+        },
+        selectDefaultPdfPage: function () {
+            if (this.pdfPages.length === 0) {
+                this.selectedPdfPageNumbers = [];
+                this.pdfPreviewText = "";
+                return;
+            }
+
+            const musicName = this.normalizeMatchText(this.form.name);
+            const matchingPage = this.pdfPages.find((page) => {
+                const pageTitle = this.normalizeMatchText(page.detected_title);
+                return pageTitle && musicName && (pageTitle.includes(musicName) || musicName.includes(pageTitle));
+            });
+            const selectedPage = matchingPage || this.pdfPages[0];
+            this.selectedPdfPageNumbers = [selectedPage.page];
+            this.syncPdfPreviewText();
+        },
+        resetPdfImport: function () {
+            this.pdfPages = [];
+            this.selectedPdfPageNumbers = [];
+            this.pdfPreviewText = "";
+            this.pdfFileName = "";
+            if (this.$refs.cipherPdfInput) {
+                this.$refs.cipherPdfInput.value = "";
+            }
+        },
         selectVideo: function (video) {
             this.selectedVideo = video;
             this.selectedCipher = null;
             this.cipherList = [];
+            this.resetPdfImport();
             if (!this.form.artist) {
                 this.form.artist = video.channelTitle || "";
             }
@@ -282,7 +421,7 @@ export default {
             } else if (step === 3) {
                 if (this.validateSearch() && this.selectedVideo) {
                     this.currentStep = 3;
-                    if (this.cipherList.length === 0 && !this.loadingCipher) {
+                    if (this.cipherMode === "cifra_club" && this.cipherList.length === 0 && !this.loadingCipher) {
                         this.searchCipher();
                     }
                 }
@@ -327,6 +466,7 @@ export default {
             this.selectedVideo = null;
             this.selectedCipher = null;
             this.modalPreviewVideoId = null;
+            this.resetPdfImport();
 
             try {
                 const response = await api.post("/musicas/procurar", {
@@ -342,34 +482,87 @@ export default {
                 this.loadingMusic = false;
             }
         },
+        handlePdfFileChange: async function (event) {
+            const file = event.target.files && event.target.files[0];
+
+            if (!file) {
+                return;
+            }
+
+            const isPdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+            if (!isPdf) {
+                this.showResponse("Envie um arquivo PDF valido", ".response", "error");
+                this.resetPdfImport();
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                this.showResponse("O PDF deve ter no maximo 5 MB", ".response", "error");
+                this.resetPdfImport();
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append("id_igreja", this.getCurrentChurchId());
+            formData.append("cipher_pdf", file);
+
+            this.pdfImporting = true;
+            this.pdfFileName = file.name;
+            this.pdfPages = [];
+            this.selectedPdfPageNumbers = [];
+            this.pdfPreviewText = "";
+
+            try {
+                const response = await api.post("/musicas/importar-cifra-pdf", formData, { timeout: 60000 });
+                this.pdfPages = response.data.returnObj.pages || [];
+                if (this.pdfPages.length === 0) {
+                    this.showResponse("Nao foi possivel extrair cifras deste PDF", ".response", "error");
+                    return;
+                }
+                this.selectDefaultPdfPage();
+            } catch (error) {
+                const message = error.response && error.response.data ? error.response.data.message || error.response.data : "Nao foi possivel importar o PDF";
+                this.showResponse(message, ".response", "error");
+            } finally {
+                this.pdfImporting = false;
+            }
+        },
         createMusic: async function () {
             if (this.musicTags.length == 0) {
                 this.showResponse("Tags faltando", ".response", "error");
                 return;
             }
 
-            if (!this.selectedVideo || !this.selectedCipher) {
+            if (!this.selectedVideo || !this.canFinishCipher) {
                 this.showResponse("Vídeo ou cifra faltando", ".response", "error");
                 return;
             }
 
+            const selectedPdfPages = this.selectedPdfPageObjects();
+            const firstPdfPage = selectedPdfPages[0] || {};
+            const isCustomPdf = this.cipherMode === "custom_pdf";
             const data = {
                 name: this.form.name,
                 artist: this.form.artist,
                 id_igreja: this.getCurrentChurchId(),
                 video_url: this.selectedVideo.url,
-                cipher_url: this.selectedCipher.href,
-                cipher_title: this.selectedCipher.title,
+                cipher_source: isCustomPdf ? "custom_pdf" : "cifra_club",
+                cipher_url: isCustomPdf ? "" : this.selectedCipher.href,
+                cipher_title: isCustomPdf ? (firstPdfPage.detected_title || this.form.name) : this.selectedCipher.title,
+                cipher_text: isCustomPdf ? this.pdfPreviewText : "",
                 video_image: this.selectedVideo.videoThumbnail,
                 music_tags: this.musicTags
             };
 
+            this.savingMusic = true;
             try {
                 const response = await api.post("/musicas", data);
                 this.$emit("success", response.data.returnObj);
             } catch (error) {
                 const message = error.response && error.response.data ? error.response.data.message || error.response.data : "Não foi possível cadastrar a música";
                 this.showResponse(message, ".response", "error");
+            } finally {
+                this.savingMusic = false;
             }
         },
         returnMusicTags: async function () {
@@ -816,6 +1009,191 @@ export default {
     background: var(--primary-primary-blue-high-2);
     border-color: var(--secondary-blue-soft);
     color: var(--neutral-white) !important;
+}
+
+.cipher-source-selector {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    background: rgba(24, 21, 56, 0.45);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    padding: 6px;
+    margin-bottom: 1.2rem;
+}
+
+.source-tab {
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--neutral-gray-medium);
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    font-size: var(--font-size-5);
+    font-weight: 800;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.source-tab .material-icons {
+    font-size: 18px;
+}
+
+.source-tab.active {
+    background: var(--secondary-blue-soft-2);
+    color: var(--secondary-blue-soft);
+    box-shadow: var(--glow-shadow);
+}
+
+.pdf-import-pane {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 1.2rem;
+}
+
+.pdf-file-input {
+    display: none;
+}
+
+.pdf-upload-card {
+    width: 100%;
+    min-height: 76px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    background: rgba(24, 21, 56, 0.55);
+    border: 1.5px dashed rgba(255, 255, 255, 0.16);
+    border-radius: var(--radius-md);
+    color: var(--neutral-gray-high);
+    padding: 14px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.pdf-upload-card:hover,
+.pdf-upload-card.selected {
+    border-color: var(--secondary-blue-soft);
+    background: rgba(56, 182, 255, 0.05);
+}
+
+.pdf-upload-card > .material-icons {
+    font-size: 30px;
+    color: var(--secondary-blue-soft);
+    flex-shrink: 0;
+}
+
+.pdf-upload-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.pdf-upload-copy strong {
+    color: var(--neutral-white);
+    font-size: var(--font-size-4);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pdf-upload-copy small,
+.page-copy small {
+    color: var(--neutral-gray-medium);
+    font-size: var(--font-size-5);
+}
+
+.compact-state {
+    min-height: 120px;
+    padding: 1rem;
+}
+
+.pdf-page-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.pdf-page-option {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    background: rgba(24, 21, 56, 0.55);
+    color: var(--neutral-gray-high);
+    padding: 10px 12px;
+    cursor: pointer;
+    text-align: left;
+    transition: all var(--transition-fast);
+}
+
+.pdf-page-option.selected {
+    border-color: var(--secondary-blue-soft);
+    background: rgba(56, 182, 255, 0.05);
+}
+
+.pdf-page-option .material-icons {
+    color: var(--secondary-blue-soft);
+    font-size: 22px;
+    flex-shrink: 0;
+}
+
+.page-copy {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.page-copy strong {
+    color: var(--neutral-white);
+    font-size: var(--font-size-4);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.pdf-preview-section {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.pdf-preview-section label {
+    color: var(--neutral-gray-high);
+    font-size: var(--font-size-5);
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+.pdf-preview-section textarea {
+    width: 100%;
+    min-height: 260px;
+    max-height: 40vh;
+    resize: vertical;
+    overflow: auto;
+    background: rgba(12, 10, 28, 0.82);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    color: var(--neutral-gray-high-2);
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 13px;
+    line-height: 1.55;
+    padding: 14px;
+    white-space: pre;
+}
+
+.pdf-preview-section textarea:focus {
+    outline: none;
+    border-color: var(--secondary-blue-soft);
+    box-shadow: var(--glow-shadow);
 }
 
 /* Banner de Sucesso */

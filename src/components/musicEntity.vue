@@ -174,8 +174,14 @@ export default {
         openCipherContainer: function () {
             this.showCipherContainer = true;
         },
-        onUpdateCipher(newText) {
-            this.music.cipher_text = newText;
+        onUpdateCipher(update) {
+            const newText = typeof update === "string" ? update : update.text;
+            const version = typeof update === "string" ? null : update.version;
+
+            this.music.cipher_text = newText || "";
+            if (version) {
+                this.music.cipher_version = version;
+            }
         },
         getParams: function () {
             let url = new URLSearchParams(window.location.search);

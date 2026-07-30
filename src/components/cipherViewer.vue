@@ -401,7 +401,7 @@ export default {
         optimizeTabs: function (cipherText) {
             if (!cipherText) return "";
 
-            const lines = cipherText.split("\n");
+            const lines = String(cipherText).split("\n");
             const isTab = lines.map(line => {
                 const trimmed = line.trim();
                 if (!trimmed) return false;
@@ -580,41 +580,36 @@ export default {
         },
         startEditing() {
             const container = this.$el.querySelector(".cipher-content");
-            let scrollPct = 0;
-            if (container) {
-                const maxScroll = container.scrollHeight - container.clientHeight;
-                if (maxScroll > 0) {
-                    scrollPct = container.scrollTop / maxScroll;
-                }
-            }
+            const scrollPosition = this.getScrollPosition(container);
 
-            this.editableCipherText = this.cipherText;
+            this.editableCipherText = String(this.cipherText || "");
             this.isEditing = true;
             this.stopAutoScroll();
 
             this.$nextTick(() => {
                 if (container) {
                     container.scrollTop = 0;
+                    container.scrollLeft = 0;
                 }
                 const textarea = this.$refs.cipherTextarea;
                 if (textarea) {
                     textarea.focus();
-                    const maxTextareaScroll = textarea.scrollHeight - textarea.clientHeight;
-                    if (maxTextareaScroll > 0) {
-                        textarea.scrollTop = maxTextareaScroll * scrollPct;
-                    }
+                    this.applyScrollPosition(textarea, scrollPosition);
+                    requestAnimationFrame(() => {
+                        this.applyScrollPosition(textarea, scrollPosition);
+                    });
                 }
             });
         },
         cancelEditing() {
             const container = this.$el.querySelector(".cipher-content");
             const textarea = this.$refs.cipherTextarea;
-            const scrollPct = this.getScrollPercentage(textarea);
+            const scrollPosition = this.getScrollPosition(textarea);
 
             this.isEditing = false;
             this.editableCipherText = "";
 
-            this.syncScrollToView(container, scrollPct);
+            this.syncScrollToView(container, scrollPosition);
         },
         async saveEditedCipher() {
             const churchId = this.getCurrentChurchId();
@@ -630,7 +625,7 @@ export default {
 
             const container = this.$el.querySelector(".cipher-content");
             const textarea = this.$refs.cipherTextarea;
-            const scrollPct = this.getScrollPercentage(textarea);
+            const scrollPosition = this.getScrollPosition(textarea);
 
             this.savingEditedCipher = true;
             try {
@@ -643,7 +638,7 @@ export default {
                     version: response.data?.returnObj?.cipher_version
                 });
                 this.isEditing = false;
-                this.syncScrollToView(container, scrollPct);
+                this.syncScrollToView(container, scrollPosition);
             } catch (error) {
                 console.error(error);
                 alert("Erro ao salvar cifra: " + (error.response?.data || error.message));
@@ -651,19 +646,38 @@ export default {
                 this.savingEditedCipher = false;
             }
         },
-        getScrollPercentage(element) {
-            if (!element) return 0;
-            const maxScroll = element.scrollHeight - element.clientHeight;
-            return maxScroll > 0 ? (element.scrollTop / maxScroll) : 0;
+        getScrollPosition(element) {
+            if (!element) {
+                return { top: 0, left: 0 };
+            }
+
+            const maxTop = element.scrollHeight - element.clientHeight;
+            const maxLeft = element.scrollWidth - element.clientWidth;
+
+            return {
+                top: maxTop > 0 ? element.scrollTop / maxTop : 0,
+                left: maxLeft > 0 ? element.scrollLeft / maxLeft : 0
+            };
         },
-        syncScrollToView(container, scrollPct) {
+        applyScrollPosition(element, scrollPosition) {
+            if (!element || !scrollPosition) return;
+
+            const maxTop = element.scrollHeight - element.clientHeight;
+            const maxLeft = element.scrollWidth - element.clientWidth;
+
+            if (maxTop > 0) {
+                element.scrollTop = maxTop * scrollPosition.top;
+            }
+
+            if (maxLeft > 0) {
+                element.scrollLeft = maxLeft * scrollPosition.left;
+            }
+        },
+        syncScrollToView(container, scrollPosition) {
             if (!container) return;
             this.$nextTick(() => {
-                const maxScroll = container.scrollHeight - container.clientHeight;
-                if (maxScroll > 0) {
-                    container.scrollTop = maxScroll * scrollPct;
-                    this.currentScrollTop = container.scrollTop;
-                }
+                this.applyScrollPosition(container, scrollPosition);
+                this.currentScrollTop = container.scrollTop;
             });
         },
         startResumeTimer() {

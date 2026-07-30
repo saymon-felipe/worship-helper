@@ -41,7 +41,7 @@
                     <button type="button" class="btn btn-cancel" @click="$emit('success')">
                         Cancelar
                     </button>
-                    <button type="button" class="btn primary" :disabled="!form.name" @click="changeStep(2)">
+                    <button type="button" class="btn primary" :disabled="!canSearchVideo" @click="changeStep(2)">
                         Buscar Vídeo <span class="material-icons">arrow_forward</span>
                     </button>
                 </div>
@@ -225,6 +225,9 @@ export default {
         selectMultiple
     },
     computed: {
+        canSearchVideo() {
+            return Boolean(this.form.name && this.form.name.trim()) && this.musicTags.length > 0;
+        },
         currentStepTitle() {
             const titles = [
                 "Dados da Música",
@@ -252,6 +255,10 @@ export default {
         validateSearch: function () {
             if (!this.form.name) {
                 this.showResponse("Informe o nome da música", ".response", "error");
+                return false;
+            }
+            if (this.musicTags.length === 0) {
+                this.showResponse("Selecione pelo menos uma tag", ".response", "error");
                 return false;
             }
             return true;

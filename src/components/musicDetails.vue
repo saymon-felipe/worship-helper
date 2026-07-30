@@ -68,6 +68,7 @@
 import { globalMethods } from '../js/globalMethods';
 import cipherModal from "./cipherModal.vue";
 import api from "../config/api";
+import { cacheCipher, clearCachedCipher, getCachedCipher } from "../services/cipherCache";
 
 const FLAT_TO_SHARP = {
     Db: "C#",
@@ -168,13 +169,31 @@ export default {
             if (this.displayMusic.cipher_text || this.loadingCipher) {
                 return;
             }
+            const churchId = this.getCurrentChurchId();
+            const cached = await getCachedCipher(churchId, this.music.id, this.music.cipher_version);
+            if (cached) {
+                this.resolvedMusic = {
+                    ...this.music,
+                    cipher_text: cached.text,
+                    cipher_title: cached.title,
+                    cipher_version: cached.version
+                };
+                return;
+            }
             this.loadingCipher = true;
             try {
                 const response = await api.post("/musicas/retorna_musica/" + this.music.id, {
                     event_id: 0,
-                    id_igreja: this.getCurrentChurchId()
+                    id_igreja: churchId
                 });
                 this.resolvedMusic = response.data.returnObj || this.music;
+                await cacheCipher(
+                    churchId,
+                    this.music.id,
+                    this.resolvedMusic.cipher_version,
+                    this.resolvedMusic.cipher_text,
+                    this.resolvedMusic.cipher_title
+                );
             } catch (error) {
                 console.log(error);
             } finally {
@@ -254,12 +273,18 @@ export default {
             this.musicTone = selectedTone;
             this.$emit("select", selectedTone);
         },
-        onUpdateCipher(newText) {
+        async onUpdateCipher(update) {
+            const newText = typeof update === "string" ? update : update.text;
+            const version = typeof update === "string" ? null : update.version;
+            const churchId = this.getCurrentChurchId();
+            await clearCachedCipher(churchId, this.music.id);
             if (this.resolvedMusic) {
                 this.resolvedMusic.cipher_text = newText;
+                this.resolvedMusic.cipher_version = version || this.resolvedMusic.cipher_version;
             } else {
-                this.resolvedMusic = { ...this.music, cipher_text: newText };
+                this.resolvedMusic = { ...this.music, cipher_text: newText, cipher_version: version || this.music.cipher_version };
             }
+            await cacheCipher(churchId, this.music.id, this.resolvedMusic.cipher_version, newText, this.resolvedMusic.cipher_title);
         }
     },
     components: {

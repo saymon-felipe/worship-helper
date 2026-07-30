@@ -2,10 +2,10 @@
     <Teleport to="body">
         <Transition name="modal-fade">
             <div class="modal-wrapper" v-if="show">
-                <div class="modal-overlay" @click="cancel"></div>
+                <div class="modal-overlay" @click="!loading && cancel()"></div>
                 <div class="modal-container delete-confirm-container">
                     <div class="modal-header">
-                        <span class="material-icons" @click="cancel">chevron_left</span>
+                        <span class="material-icons" :class="{ disabled: loading }" @click="!loading && cancel()">chevron_left</span>
                         <h4>{{ title }}</h4>
                     </div>
                     <div class="modal-body confirm-body-layout">
@@ -16,8 +16,16 @@
                         <p class="confirm-submessage" v-if="subMessage">{{ subMessage }}</p>
                     </div>
                     <div class="modal-footer">
-                        <button class="btn delete-confirm-btn" @click="confirm">{{ buttonTitle }}</button>
-                        <button class="btn primary delete-cancel-btn" @click="cancel">{{ button2Title }}</button>
+                        <button class="btn delete-confirm-btn" :disabled="loading" @click="confirm">
+                            <template v-if="loading">
+                                <span class="btn-spinner"></span>
+                                <span>Excluindo...</span>
+                            </template>
+                            <template v-else>
+                                {{ buttonTitle }}
+                            </template>
+                        </button>
+                        <button class="btn primary delete-cancel-btn" :disabled="loading" @click="cancel">{{ button2Title }}</button>
                     </div>
                 </div>
             </div>
@@ -32,6 +40,10 @@ export default {
         show: {
             type: Boolean,
             required: true
+        },
+        loading: {
+            type: Boolean,
+            default: false
         },
         title: {
             type: String,
@@ -79,6 +91,7 @@ export default {
     },
     methods: {
         handlePopState() {
+            if (this.loading) return;
             if (window.isPoppingForClose) {
                 window.isPoppingForClose = false;
                 return;
@@ -107,10 +120,11 @@ export default {
             }
         },
         confirm() {
-            this.cleanupHistory();
+            if (this.loading) return;
             this.$emit("confirm");
         },
         cancel() {
+            if (this.loading) return;
             this.cleanupHistory();
             this.$emit("cancel");
         }
@@ -233,9 +247,33 @@ export default {
     color: #fff !important;
 }
 
-.delete-cancel-btn:hover {
-    background: #4cc3ff !important;
-    box-shadow: var(--glow-shadow);
+.delete-confirm-btn:disabled, .delete-cancel-btn:disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    box-shadow: none !important;
+}
+
+.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.btn-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: btnSpinnerSpin 0.7s linear infinite;
+    display: inline-block;
+    flex-shrink: 0;
+    margin-right: 6px;
+}
+
+@keyframes btnSpinnerSpin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 /* Local Transition Override for confirm delete modal bottom-sheet */

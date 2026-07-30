@@ -634,11 +634,14 @@ export default {
 
             this.savingEditedCipher = true;
             try {
-                await api.post("/musicas/editar-cifra/" + this.musicId, {
+                const response = await api.post("/musicas/editar-cifra/" + this.musicId, {
                     id_igreja: churchId,
                     cipher_text: this.editableCipherText
                 });
-                this.$emit("update-cipher", this.editableCipherText);
+                this.$emit("update-cipher", {
+                    text: this.editableCipherText,
+                    version: response.data?.returnObj?.cipher_version
+                });
                 this.isEditing = false;
                 this.syncScrollToView(container, scrollPct);
             } catch (error) {

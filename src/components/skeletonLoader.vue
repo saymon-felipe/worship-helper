@@ -107,8 +107,9 @@
                 <div class="comment-avatar-skeleton skeleton-circle"></div>
                 <div class="comment-body-skeleton">
                     <div class="skeleton-text" style="width: 35%; height: 14px; margin-bottom: 6px;"></div>
-                    <div class="skeleton-text" style="width: 90%; height: 14px; margin-bottom: 4px;"></div>
-                    <div class="skeleton-text" style="width: 60%; height: 14px;"></div>
+                    <div class="skeleton-text" style="width: 90%; height: 14px; margin-bottom: 6px;"></div>
+                    <div class="skeleton-text" style="width: 60%; height: 14px; margin-bottom: 8px;"></div>
+                    <div v-if="i % 2 === 0" class="skeleton-text" style="width: 100%; height: 180px; border-radius: 12px; margin-top: 8px;"></div>
                 </div>
             </div>
         </template>

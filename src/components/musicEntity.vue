@@ -42,8 +42,11 @@
             :showToneBadge="event_id != 0 && music.tom != null"
             :toneName="music.tom"
             :canEdit="hasChurchPermission('music.cifra.edit')"
+            :churchId="getCurrentChurchId()"
+            :eventId="event_id"
             @close="closeCipherContainer()"
             @update-cipher="onUpdateCipher"
+            @select-suggestion="applyAssistantSuggestion"
         />
         
         <!-- Comments Section -->
@@ -183,6 +186,23 @@ export default {
                 this.music.cipher_version = version;
             }
         },
+        applyAssistantSuggestion(candidate) {
+            if (!candidate || !candidate.music_id) {
+                return;
+            }
+
+            if (Number(candidate.music_id) === Number(this.music.id)) {
+                this.music = {
+                    ...this.music,
+                    tom: candidate.tone || this.music.tom
+                };
+                return;
+            }
+
+            const eventQuery = this.hasEventContext ? `?event=${this.event_id}` : "";
+            this.$router.replace(`/home/musics/${candidate.music_id}${eventQuery}`)
+                .catch((error) => console.error(error));
+        },
         getParams: function () {
             let url = new URLSearchParams(window.location.search);
             let event = url.get("event");
@@ -219,6 +239,11 @@ export default {
         }).catch(() => {});
         this.getMusic();
         this.getCurrentEvent();
+    },
+    watch: {
+        "$route.params.id_musica"() {
+            this.getMusic();
+        }
     }
 }
 </script>

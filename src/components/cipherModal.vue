@@ -10,12 +10,12 @@
                     <cipherViewer
                         ref="cipherViewer"
                         v-else
-                        :musicId="music.id"
+                        :musicId="displayedMusic.id"
                         :canEdit="canEdit"
-                        :cipherText="music.cipher_text"
-                        :title="music.cipher_title || music.name"
-                        :artist="music.artist"
-                        :targetTone="toneName"
+                        :cipherText="displayedMusic.cipher_text"
+                        :title="displayedMusic.cipher_title || displayedMusic.name"
+                        :artist="displayedMusic.artist"
+                        :targetTone="displayedTone"
                         :showCloseButton="true"
                         :buttonTitle="buttonTitle"
                         :showToneHighlight="showToneBadge"
@@ -23,6 +23,40 @@
                         @submit="submit"
                         @update-cipher="onUpdateCipher"
                     />
+                    <liveWorshipAssistant
+                        v-if="show && churchId && eventId"
+                        :churchId="churchId"
+                        :eventId="eventId"
+                        :currentMusicId="music.id"
+                        @candidates="showCandidates"
+                        @error="handleAssistantError"
+                    />
+                    <Transition name="slide-up">
+                        <section v-if="candidates.length" class="assistant-suggestions" aria-live="polite">
+                            <div class="assistant-suggestions-header">
+                                <div>
+                                    <span class="material-icons">hearing</span>
+                                    <strong>Possivel mudanca de musica</strong>
+                                </div>
+                                <button type="button" title="Ignorar sugestao" @click="dismissCandidates">
+                                    <span class="material-icons">close</span>
+                                </button>
+                            </div>
+                            <button
+                                v-for="candidate in candidates"
+                                :key="`${candidate.music_id || candidate.name}-${candidate.tone}`"
+                                type="button"
+                                class="assistant-candidate"
+                                @click="selectCandidate(candidate)"
+                            >
+                                <span class="candidate-title">{{ candidate.name }}</span>
+                                <span class="candidate-meta">{{ candidate.artist || 'Artista nao identificado' }}<template v-if="candidate.tone"> · Tom {{ candidate.tone }}</template></span>
+                            </button>
+                        </section>
+                    </Transition>
+                    <button v-if="temporaryMusic" type="button" class="return-event-music" @click="temporaryMusic = null">
+                        Voltar a cifra do evento
+                    </button>
                 </div>
             </div>
         </Transition>
@@ -32,6 +66,7 @@
 <script>
 import { globalMethods } from "../js/globalMethods";
 import cipherViewer from "./cipherViewer.vue";
+import liveWorshipAssistant from "./liveWorshipAssistant.vue";
 
 export default {
     name: "cipherModal",
@@ -64,12 +99,30 @@ export default {
         canEdit: {
             type: Boolean,
             default: false
+        },
+        churchId: {
+            type: [Number, String],
+            default: null
+        },
+        eventId: {
+            type: [Number, String],
+            default: null
         }
     },
     data() {
         return {
-            hasPushState: false
+            hasPushState: false,
+            candidates: [],
+            temporaryMusic: null
         };
+    },
+    computed: {
+        displayedMusic() {
+            return this.temporaryMusic || this.music;
+        },
+        displayedTone() {
+            return this.temporaryMusic?.tone || this.toneName;
+        }
     },
     watch: {
         show: {
@@ -121,6 +174,34 @@ export default {
         onUpdateCipher(newCipherText) {
             this.$emit("update-cipher", newCipherText);
         },
+        showCandidates(candidates) {
+            this.candidates = candidates.filter((candidate) => candidate.confidence >= 0.65);
+        },
+        handleAssistantError(error) {
+            if (error) {
+                console.warn("[Assistente ao vivo]", error);
+            }
+        },
+        dismissCandidates() {
+            this.candidates = [];
+        },
+        selectCandidate(candidate) {
+            this.candidates = [];
+            if (candidate.temporary) {
+                this.temporaryMusic = {
+                    id: null,
+                    name: candidate.name,
+                    artist: candidate.artist,
+                    tone: candidate.tone,
+                    cipher_title: candidate.cipher_title,
+                    cipher_text: candidate.cipher_text
+                };
+                return;
+            }
+
+            this.temporaryMusic = null;
+            this.$emit("select-suggestion", candidate);
+        },
         cleanupPopState() {
             window.removeEventListener("popstate", this.handlePopState);
             if (window.activeModalStack) {
@@ -139,7 +220,8 @@ export default {
         this.cleanupPopState();
     },
     components: {
-        cipherViewer
+        cipherViewer,
+        liveWorshipAssistant
     }
 }
 </script>
@@ -186,6 +268,97 @@ export default {
     animation: rotate 1s linear infinite;
 }
 
+.assistant-suggestions {
+    position: fixed;
+    left: 12px;
+    right: 12px;
+    bottom: 66px;
+    z-index: 1002;
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 12px;
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-md);
+    background: var(--card-bg);
+    box-shadow: var(--card-shadow);
+}
+
+.assistant-suggestions-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+    color: var(--neutral-white);
+    font-size: 13px;
+}
+
+.assistant-suggestions-header > div {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.assistant-suggestions-header .material-icons {
+    color: var(--secondary-blue-soft);
+    font-size: 19px;
+}
+
+.assistant-suggestions-header button {
+    display: grid;
+    width: 30px;
+    height: 30px;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    color: var(--neutral-gray-high);
+    background: transparent;
+}
+
+.assistant-candidate {
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 3px;
+    margin-top: 6px;
+    padding: 10px;
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-sm);
+    color: var(--neutral-white);
+    background: transparent;
+    text-align: left;
+}
+
+.assistant-candidate:hover {
+    border-color: var(--secondary-blue-soft);
+}
+
+.candidate-title {
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.candidate-meta {
+    color: var(--neutral-gray-medium);
+    font-size: 12px;
+}
+
+.return-event-music {
+    position: fixed;
+    right: 16px;
+    bottom: 18px;
+    z-index: 1003;
+    min-height: 38px;
+    padding: 7px 11px;
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius-pill);
+    color: var(--neutral-gray-high);
+    background: var(--card-bg);
+    font-size: 12px;
+    font-weight: 700;
+}
+
 @keyframes rotate {
     from {
         transform: rotate(0deg);
@@ -193,5 +366,16 @@ export default {
     to {
         transform: rotate(360deg);
     }
+}
+
+.slide-up-enter-active,
+.slide-up-leave-active {
+    transition: opacity 180ms ease, transform 180ms ease;
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+    opacity: 0;
+    transform: translateY(16px);
 }
 </style>

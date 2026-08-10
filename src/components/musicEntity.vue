@@ -277,29 +277,6 @@ export default {
     margin-bottom: 2rem;
 }
 
-.music-action-buttons {
-    display: flex;
-    gap: 12px;
-    width: 100%;
-}
-
-.music-action-buttons button {
-    flex: 1;
-    margin: 0 !important;
-}
-
-.danger-btn {
-    background: transparent !important;
-    border: 1.5px solid rgba(241, 76, 76, 0.4) !important;
-    color: var(--others-red) !important;
-}
-
-.danger-btn:hover {
-    background: rgba(241, 76, 76, 0.12) !important;
-    border-color: var(--others-red) !important;
-    box-shadow: 0 0 12px rgba(241, 76, 76, 0.25);
-}
-
 /* Video Section Card */
 .video-section-card {
     background: var(--card-bg);

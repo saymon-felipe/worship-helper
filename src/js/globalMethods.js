@@ -14,6 +14,7 @@ const permissionParents = {
     "members.tags": "members.manage",
     "events.create": "events.manage",
     "events.edit": "events.manage",
+    "events.delete": "events.manage",
     "music.create": "music.manage",
     "music.delete": "music.manage",
     "music.cifra.edit": "music.manage",

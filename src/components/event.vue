@@ -13,13 +13,19 @@
             </div>
             <div class="hero-top">
                 <h2>{{ event.nome_evento }}</h2>
-                <button type="button" class="btn secondary edit-event-button" v-if="canEditEvent" @click="openEditEvent()">
-                    <span class="material-icons">edit</span>
-                    <span>Editar evento</span>
-                </button>
                 <div class="event-meta-info" v-if="event.criador_tag">
                     <span class="creator-tag">{{ event.criador_tag }}</span>
                 </div>
+            </div>
+            <div class="music-action-buttons" v-if="canEditEvent || canDeleteEvent">
+                <button type="button" class="btn primary btn-2" v-if="canEditEvent" @click="openEditEvent()">
+                    <span class="material-icons">edit</span>
+                    <span>Editar Evento</span>
+                </button>
+                <button type="button" class="btn secondary danger-btn btn-2" v-if="canDeleteEvent" @click="askDeleteEvent()">
+                    <span class="material-icons">delete</span>
+                    <span>Excluir Evento</span>
+                </button>
             </div>
             <div class="hero-details">
                 <div class="detail-item" v-if="event.data_inicio_evento">
@@ -202,6 +208,16 @@
             @confirm="confirmDeleteNote"
             @cancel="showConfirmDeleteNote = false"
         />
+
+        <confirmDeleteModal
+            :show="showConfirmDeleteEvent"
+            :loading="isDeletingEvent"
+            title="Excluir Evento"
+            message="Tem certeza que deseja excluir este evento?"
+            subMessage="Esta ação não poderá ser desfeita. A escala, os louvores e os comentários do evento também serão removidos."
+            @confirm="confirmDeleteEvent"
+            @cancel="showConfirmDeleteEvent = false"
+        />
     </section>
 </template>
 <script>
@@ -241,7 +257,9 @@ export default {
             editingNoteId: null,
             editingNoteText: "",
             showConfirmDeleteNote: false,
-            noteIdToDelete: null
+            noteIdToDelete: null,
+            showConfirmDeleteEvent: false,
+            isDeletingEvent: false
         }
     },
     computed: {
@@ -285,6 +303,9 @@ export default {
                 this.hasChurchPermission("events.edit") ||
                 (userId && this.event && this.event.id_criador == userId)
             );
+        },
+        canDeleteEvent: function () {
+            return this.hasChurchPermission("events.delete");
         }
     },
     methods: {
@@ -328,6 +349,29 @@ export default {
         handleEventUpdated: function (event) {
             if (event) this.event = event;
             this.closeModal();
+        },
+        askDeleteEvent: function () {
+            if (!this.canDeleteEvent) return;
+            this.showConfirmDeleteEvent = true;
+        },
+        confirmDeleteEvent: function () {
+            if (!this.canDeleteEvent || this.isDeletingEvent) return;
+
+            const churchId = this.getCurrentChurchId();
+            if (churchId == null || !this.event_id) return;
+
+            this.isDeletingEvent = true;
+            api.post("/igreja/deletar-evento/" + this.event_id, { id_igreja: churchId })
+                .then(() => {
+                    this.showConfirmDeleteEvent = false;
+                    this.$router.replace("/home/church/" + churchId);
+                })
+                .catch((error) => {
+                    console.log(error);
+                })
+                .finally(() => {
+                    this.isDeletingEvent = false;
+                });
         },
         formatEventDate: function (date) {
             moment.locale('pt-br');
@@ -541,26 +585,6 @@ export default {
     font-weight: 700;
     margin: 0;
     flex: 1 1 250px;
-}
-
-.edit-event-button {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    margin: 0;
-    white-space: nowrap;
-    border-radius: var(--radius-pill);
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--neutral-white);
-    transition: all var(--transition-fast);
-}
-
-.edit-event-button:hover {
-    background: var(--secondary-blue-soft);
-    border-color: var(--secondary-blue-soft);
-    color: var(--primary-bg);
-    box-shadow: 0 4px 12px rgba(56, 182, 255, 0.25);
 }
 
 .hero-details {

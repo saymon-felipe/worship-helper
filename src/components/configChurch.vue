@@ -204,6 +204,7 @@ export default {
                 { key: "events.manage", label: "Gerenciar eventos", parent: null },
                 { key: "events.create", label: "Criar eventos", parent: "events.manage" },
                 { key: "events.edit", label: "Editar eventos", parent: "events.manage" },
+                { key: "events.delete", label: "Remover eventos", parent: "events.manage" },
                 { key: "music.manage", label: "Gerenciar músicas", parent: null },
                 { key: "music.create", label: "Cadastrar músicas", parent: "music.manage" },
                 { key: "music.delete", label: "Remover músicas", parent: "music.manage" },

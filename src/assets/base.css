@@ -280,6 +280,29 @@ h6 { font-size: var(--font-size-h6); }
 .btn-4 { font-size: var(--font-size-button-4) !important; }
 .btn-5 { font-size: var(--font-size-button-5) !important; }
 
+.music-action-buttons {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.music-action-buttons button {
+  flex: 1;
+  margin: 0 !important;
+}
+
+.danger-btn {
+  background: transparent !important;
+  border: 1.5px solid rgba(241, 76, 76, 0.4) !important;
+  color: var(--others-red) !important;
+}
+
+.danger-btn:hover {
+  background: rgba(241, 76, 76, 0.12) !important;
+  border-color: var(--others-red) !important;
+  box-shadow: 0 0 12px rgba(241, 76, 76, 0.25);
+}
+
 /* Entradas de Formulário Premium */
 input:not([type="checkbox"]):not([type="radio"]), textarea, select {
   padding: 14px 16px;

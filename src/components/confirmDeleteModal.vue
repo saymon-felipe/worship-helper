@@ -121,6 +121,7 @@ export default {
         },
         confirm() {
             if (this.loading) return;
+            this.cleanupHistory();
             this.$emit("confirm");
         },
         cancel() {

@@ -222,12 +222,19 @@
                     </div>
                 </div>
 
+                <div v-if="submissionError" class="submission-feedback" role="alert" aria-live="assertive">
+                    <span class="material-icons">error_outline</span>
+                    <p>{{ submissionError }}</p>
+                </div>
+
                 <div class="wizard-nav-footer">
                     <button type="button" class="btn secondary" @click="changeStep(2)">
                         <span class="material-icons">arrow_back</span> Voltar
                     </button>
-                    <button type="button" class="btn primary success-btn" :disabled="!canFinishCipher || savingMusic" @click="createMusic()">
-                        <span class="material-icons">{{ savingMusic ? 'sync' : 'done_all' }}</span> {{ savingMusic ? 'Salvando...' : 'Finalizar' }}
+                    <button type="button" class="btn primary success-btn" :disabled="!canFinishCipher || savingMusic" :aria-busy="savingMusic" @click="createMusic()">
+                        <span v-if="savingMusic" class="spinner-loader button-spinner" aria-hidden="true"></span>
+                        <span v-else class="material-icons">done_all</span>
+                        {{ savingMusic ? 'Salvando...' : 'Finalizar' }}
                     </button>
                 </div>
             </div>
@@ -282,7 +289,8 @@ export default {
             pdfPreviewText: "",
             pdfFileName: "",
             musicTags: [],
-            musicTagsList: []
+            musicTagsList: [],
+            submissionError: ""
         }
     },
     components: {
@@ -318,9 +326,11 @@ export default {
         },
         selectCipher: function (cipher) {
             this.selectedCipher = cipher;
+            this.submissionError = "";
         },
         selectCipherMode: function (mode) {
             this.cipherMode = mode;
+            this.submissionError = "";
             if (mode === "cifra_club" && this.currentStep === 3 && this.cipherList.length === 0 && !this.loadingCipher) {
                 this.searchCipher();
             }
@@ -529,12 +539,12 @@ export default {
         },
         createMusic: async function () {
             if (this.musicTags.length == 0) {
-                this.showResponse("Tags faltando", ".response", "error");
+                this.submissionError = "Selecione pelo menos uma tag para cadastrar a música.";
                 return;
             }
 
             if (!this.selectedVideo || !this.canFinishCipher) {
-                this.showResponse("Vídeo ou cifra faltando", ".response", "error");
+                this.submissionError = "Selecione um vídeo e uma cifra antes de finalizar.";
                 return;
             }
 
@@ -554,13 +564,16 @@ export default {
                 music_tags: this.musicTags
             };
 
+            this.submissionError = "";
             this.savingMusic = true;
             try {
                 const response = await api.post("/musicas", data);
                 this.$emit("success", response.data.returnObj);
             } catch (error) {
-                const message = error.response && error.response.data ? error.response.data.message || error.response.data : "Não foi possível cadastrar a música";
-                this.showResponse(message, ".response", "error");
+                const responseData = error.response && error.response.data;
+                this.submissionError = typeof responseData === "string"
+                    ? responseData
+                    : (responseData && responseData.message) || "Não foi possível cadastrar a música. Tente novamente.";
             } finally {
                 this.savingMusic = false;
             }
@@ -1225,6 +1238,28 @@ export default {
     color: var(--neutral-gray-medium);
 }
 
+.submission-feedback {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 1rem;
+    padding: 12px;
+    background: rgba(234, 77, 77, 0.12);
+    border: 1px solid rgba(234, 77, 77, 0.35);
+    border-radius: var(--radius-md);
+    color: #ff9f9f;
+}
+
+.submission-feedback .material-icons {
+    font-size: 21px;
+}
+
+.submission-feedback p {
+    margin: 0;
+    line-height: 1.4;
+    font-size: var(--font-size-5);
+}
+
 /* --- ESTADOS GERAIS --- */
 .wizard-state-card {
     display: flex;
@@ -1254,6 +1289,13 @@ export default {
     border-top-color: var(--secondary-blue-soft);
     border-radius: var(--radius-pill);
     animation: spin 0.8s linear infinite;
+}
+
+.button-spinner {
+    width: 18px;
+    height: 18px;
+    border-width: 2px;
+    border-top-color: currentColor;
 }
 
 .state-icon {

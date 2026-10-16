@@ -319,12 +319,9 @@ export default {
 
 /* Cipher fullscreen layout */
 .music-cipher-overlay {
-    height: 100vh;
-    width: 100%;
     background: var(--primary-bg);
     position: fixed;
-    top: 0;
-    left: 0;
+    inset: 0;
     display: flex;
     flex-direction: column;
     z-index: 1000;

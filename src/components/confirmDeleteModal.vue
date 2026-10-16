@@ -143,9 +143,10 @@ export default {
 
 .delete-confirm-container {
     height: auto !important;
-    max-height: 90vh;
+    max-height: 90%;
     border-radius: 24px 24px 0 0;
     padding: 24px 20px;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
     box-sizing: border-box;
     background: linear-gradient(135deg, rgba(23, 20, 50, 0.98) 0%, rgba(15, 12, 35, 0.99) 100%) !important;
     border-top: 1px solid rgba(255, 255, 255, 0.1);

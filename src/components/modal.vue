@@ -103,12 +103,10 @@ export default {
 }
 </script>
 <style scoped>
+/* inset: 0 acompanha a area realmente visivel; 100vh inclui o espaco atras da barra do navegador/botoes de navegacao e cortava o rodape. */
 .modal-wrapper {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
+    inset: 0;
     z-index: 1000;
     display: flex;
     align-items: flex-end;
@@ -129,7 +127,7 @@ export default {
 .modal-container {
     position: relative;
     z-index: 2;
-    height: 80vh;
+    height: 80%;
     width: 100%;
     max-width: 900px;
     max-height: 1000px;
@@ -137,6 +135,7 @@ export default {
     border-radius: 20px 20px 0 0;
     color: var(--neutral-white);
     padding: 1rem;
+    padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
     display: flex;
     flex-direction: column;
 }

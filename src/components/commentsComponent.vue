@@ -1714,6 +1714,7 @@ export default {
   backdrop-filter: blur(16px);
   border-radius: 20px;
   padding: 20px;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   box-sizing: border-box;
   box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
 }

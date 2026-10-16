@@ -1059,6 +1059,7 @@ export default {
     backdrop-filter: blur(16px);
     border-top: 1px solid var(--card-border);
     padding: 16px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
     z-index: 1001;
     box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.3);
     display: flex;

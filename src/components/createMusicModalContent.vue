@@ -1341,10 +1341,7 @@ export default {
 /* --- LIGHTBOX MODAL DE PREVIEW --- */
 .youtube-preview-modal-wrapper {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
+    inset: 0;
     background: rgba(0, 0, 0, 0.85);
     backdrop-filter: blur(8px);
     display: flex;

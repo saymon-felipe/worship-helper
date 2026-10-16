@@ -445,13 +445,11 @@ export default {
 }
 
 .music-cipher {
-    height: 100vh;
     background: var(--primary-primary-blue-low);
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
+    inset: 0;
     padding-top: 15px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
     display: flex;
     flex-direction: column;
     align-items: center;

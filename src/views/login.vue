@@ -8,10 +8,7 @@
             <label for="email">E-mail</label>
             <input id="email" v-model.trim="email" type="email" autocomplete="username" required>
           </div>
-          <div class="input-group">
-            <label for="senha">Senha</label>
-            <input id="senha" v-model="password" type="password" autocomplete="current-password" required>
-          </div>
+          <passwordInput id="senha" ref="passwordField" label="Senha" v-model="password" autocomplete="current-password" />
 
           <label class="login-option">
             <input v-model="rememberUser" type="checkbox">
@@ -65,6 +62,7 @@ import authorizationTemplate from "../templates/authorizationTemplate.vue";
 import { globalMethods } from "../js/globalMethods";
 import api from "../config/api";
 import modal from "../components/modal.vue";
+import passwordInput from "../components/passwordInput.vue";
 
 const rememberedEmailKey = "wh_remembered_email";
 const biometricDeclinedKey = (email) => `wh_biometric_prompt_declined:${String(email || "").trim().toLowerCase()}`;
@@ -72,13 +70,16 @@ const biometricDeclinedKey = (email) => `wh_biometric_prompt_declined:${String(e
 export default {
   name: "loginPage",
   mixins: [globalMethods],
-  components: { authorizationTemplate, modal },
+  components: { authorizationTemplate, modal, passwordInput },
   data() {
     const rememberedEmail = localStorage.getItem(rememberedEmailKey) || "";
+    // Vem da tela de registro (router state): e-mail da conta recém-criada tem prioridade sobre o lembrado.
+    const registeredEmail = typeof window.history.state?.registeredEmail === "string" ? window.history.state.registeredEmail : "";
     return {
-      response: "",
-      responseType: "",
-      email: rememberedEmail,
+      registeredEmail,
+      response: registeredEmail ? "Conta criada com sucesso! Digite sua senha para entrar." : "",
+      responseType: registeredEmail ? "success" : "",
+      email: registeredEmail || rememberedEmail,
       password: "",
       rememberUser: Boolean(rememberedEmail),
       biometricSupported: false,
@@ -208,6 +209,11 @@ export default {
     }
   },
   async mounted() {
+    if (this.registeredEmail) {
+      this.$refs.passwordField?.focus();
+      // Consome o state para o e-mail/mensagem não reaparecerem ao recarregar ou voltar para esta tela.
+      window.history.replaceState({ ...window.history.state, registeredEmail: null }, "");
+    }
     await this.checkBiometricSupport();
   }
 };

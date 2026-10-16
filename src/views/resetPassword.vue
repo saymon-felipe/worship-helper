@@ -11,15 +11,16 @@
             <label for="reset-password-email">E-mail</label>
             <input id="reset-password-email" v-model.trim="email" type="email" autocomplete="email" required>
           </div>
-          <div class="input-group">
-            <label for="new-password">Nova senha</label>
-            <input id="new-password" v-model="password" type="password" minlength="6" autocomplete="new-password" required>
-          </div>
-          <div class="input-group">
-            <label for="confirm-password">Confirme a nova senha</label>
-            <input id="confirm-password" v-model="passwordConfirmation" type="password" minlength="6" autocomplete="new-password" required>
-          </div>
-          <button type="submit" class="btn btn-2 password-flow-button" :disabled="isSubmitting || !token">
+          <passwordInput id="new-password" label="Nova senha" v-model="password" :minlength="6" autocomplete="new-password" />
+          <passwordInput
+            id="confirm-password"
+            label="Confirme a nova senha"
+            v-model="passwordConfirmation"
+            :minlength="6"
+            autocomplete="new-password"
+            :error="passwordsMismatch ? 'As senhas não coincidem' : ''"
+          />
+          <button type="submit" class="btn btn-2 password-flow-button" :disabled="isSubmitting || !token || passwordsMismatch">
             {{ isSubmitting ? "Salvando..." : "Redefinir senha" }}
           </button>
         </form>
@@ -40,10 +41,11 @@
 import authorizationTemplate from "../templates/authorizationTemplate.vue";
 import { globalMethods } from "../js/globalMethods";
 import api from "../config/api";
+import passwordInput from "../components/passwordInput.vue";
 
 export default {
   name: "resetPasswordPage",
-  components: { authorizationTemplate },
+  components: { authorizationTemplate, passwordInput },
   mixins: [globalMethods],
   data() {
     return {
@@ -55,6 +57,12 @@ export default {
       completed: false,
       isSubmitting: false
     };
+  },
+  computed: {
+    // Só acusa divergência depois que a confirmação começou a ser digitada.
+    passwordsMismatch() {
+      return this.passwordConfirmation !== "" && this.password !== this.passwordConfirmation;
+    }
   },
   methods: {
     async resetPassword() {

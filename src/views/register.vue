@@ -3,28 +3,30 @@
     <div class="register">
       <div class="register-container">
         <h2>Registro</h2>
-        <form action="register" @submit.prevent="register()" id="register-form">
+        <form @submit.prevent="register" id="register-form">
           <div class="input-group">
             <label for="name">Nome</label>
-            <input type="text" name="nome_usuario" id="name" required>
+            <input type="text" id="name" v-model.trim="name" autocomplete="name" required>
           </div>
           <div class="input-group">
             <label for="email">Email</label>
-            <input type="email" name="email_usuario" id="email" v-model.trim="email" required>
+            <input type="email" id="email" v-model.trim="email" autocomplete="email" required>
           </div>
-          <div class="input-group">
-            <label for="senha">Senha</label>
-            <input type="password" name="senha_usuario" id="senha" required>
-          </div>
-          <div class="input-group">
-            <label for="repitir-senha">Repita a senha</label>
-            <input type="password" id="repitir-senha" required>
-          </div>
-          <button type="submit" class="btn btn-2" id="register-account-button">Cadastrar</button>
+          <passwordInput id="senha" label="Senha" v-model="password" autocomplete="new-password" />
+          <passwordInput
+            id="repitir-senha"
+            label="Repita a senha"
+            v-model="passwordConfirmation"
+            autocomplete="new-password"
+            :error="passwordsMismatch ? 'As senhas não coincidem' : ''"
+          />
+          <button type="submit" class="btn btn-2" id="register-account-button" :disabled="isSubmitting || passwordsMismatch">
+            {{ isSubmitting ? "Cadastrando..." : "Cadastrar" }}
+          </button>
            <div class="informations">
             <p class="font-size-4">Já tem uma conta? <router-link to="/login" class="link">Entrar</router-link></p>
           </div>
-          <p class="response">{{ response }}</p>
+          <p v-if="response" class="response" :class="responseType">{{ response }}</p>
         </form>
       </div>
       <div class="copyright">
@@ -37,7 +39,7 @@
 import authorizationTemplate from '../templates/authorizationTemplate.vue';
 import { globalMethods } from '../js/globalMethods';
 import api from '../config/api';
-import $ from 'jquery';
+import passwordInput from '../components/passwordInput.vue';
 
 export default {
   name: "registerPage",
@@ -45,59 +47,51 @@ export default {
   data() {
     return {
       response: "",
-      email: ""
+      responseType: "",
+      name: "",
+      email: "",
+      password: "",
+      passwordConfirmation: "",
+      isSubmitting: false
+    }
+  },
+  computed: {
+    // Só acusa divergência depois que a confirmação começou a ser digitada.
+    passwordsMismatch() {
+      return this.passwordConfirmation !== "" && this.password !== this.passwordConfirmation;
     }
   },
   methods: {
-    checkIfPasswordsAreSame: function () {
-      let passwordInput = $("#senha");
-      let repeatPasswordInput = $("#repitir-senha");
-      if (passwordInput.val() != repeatPasswordInput.val()) {
-        return false;
-      }
-      return true;
-    },
-    register: function () {
-      let self = this;
-      let responseElement = $(".response");
-      let form = $("#register-form");
-      let button = $("#register-account-button");
-
-      if (!self.checkIfPasswordsAreSame()) {
-        self.response = "As senhas não coincidem";
-        self.resetResponseClass(responseElement);
-        responseElement.css("opacity", 1).addClass("error");
+    async register() {
+      if (this.password !== this.passwordConfirmation) {
+        this.response = "As senhas não coincidem";
+        this.responseType = "error";
         return;
       }
-      
-      button.attr("disabled", "disabled");
 
-      let data = form.serializeArray().reduce(function (obj, item) { // Pega todos os dados do formulário e coloca em um objeto.
-          obj[item.name] = item.value;
-          return obj;
-      }, {});
-
-      api.post("/usuario/cadastro", data)
-      .then(function (response) {
-        self.response = response.data.message;
-        self.resetResponseClass(responseElement);
-        responseElement.css("opacity", 1).addClass("success");
-        self.removeJwtFromLocalStorage();
-        self.$router.push("/login");
-      })
-      .catch(function (error) {
-        console.log(error)
-        self.response = "Erro no cadastro";
-        self.resetResponseClass(responseElement);
-        responseElement.css("opacity", 1).addClass("error");
-      })
-      .then(function () {
-        button.attr("disabled", false);
-      })
+      this.isSubmitting = true;
+      this.response = "";
+      try {
+        await api.post("/usuario/cadastro", {
+          nome_usuario: this.name,
+          email_usuario: this.email,
+          senha_usuario: this.password
+        });
+        this.removeJwtFromLocalStorage();
+        // O e-mail vai no state do histórico (não na URL) para o login já abrir preenchido.
+        this.$router.push({ path: "/login", state: { registeredEmail: this.email } });
+      } catch (error) {
+        console.log(error);
+        this.response = "Erro no cadastro";
+        this.responseType = "error";
+      } finally {
+        this.isSubmitting = false;
+      }
     }
   },
   components: {
-    authorizationTemplate
+    authorizationTemplate,
+    passwordInput
   },
   mounted() {
     this.email = typeof this.$route.query.email === "string" ? this.$route.query.email : "";
@@ -123,6 +117,15 @@ export default {
   margin: 1rem 0;
   background: var(--primary-primary-blue-high-2);
   color: var(--neutral-white);
+}
+
+#register-account-button:disabled {
+  opacity: .6;
+  cursor: not-allowed;
+}
+
+.register .response {
+  opacity: 1;
 }
 
   #register-account-button:hover {

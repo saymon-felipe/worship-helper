@@ -24,6 +24,14 @@
                 <span class="pending-count">{{ pendingInvitesList.length }}</span>
             </div>
 
+            <div class="invite-email-warning" role="alert" v-if="inviteEmailWarning">
+                <span class="material-icons invite-email-warning-icon" aria-hidden="true">warning</span>
+                <p>{{ inviteEmailWarning }}</p>
+                <button type="button" class="invite-email-warning-close" title="Fechar aviso" aria-label="Fechar aviso" v-on:click="inviteEmailWarning = ''">
+                    <span class="material-icons" aria-hidden="true">close</span>
+                </button>
+            </div>
+
             <div class="pending-invites-list">
                 <article class="pending-invite-card" v-for="invite in pendingInvitesList" v-bind:key="invite.id">
                     <div class="pending-invite-avatar">
@@ -39,6 +47,10 @@
                         <div class="pending-invite-meta">
                             <span>{{ invite.cadastrado ? "Usuário cadastrado" : "Aguardando cadastro" }}</span>
                             <span v-if="invite.nome_funcao">Cargo: {{ invite.nome_funcao }}</span>
+                            <span v-if="invite.email_enviado === false" class="invite-email-failed" title="O e-mail com o convite não pôde ser enviado">
+                                <span class="material-icons" aria-hidden="true">mail_outline</span>
+                                E-mail não enviado
+                            </span>
                             <span v-if="invite.data_criacao">{{ relativeTime(invite.data_criacao) }}</span>
                         </div>
                     </div>
@@ -175,7 +187,8 @@ export default {
             loadingMembers: false,
             default_avatar: api.defaults.baseURL + "/public/user-default-image.png",
             showConfirmDeleteInvite: false,
-            selectedInviteToDelete: null
+            selectedInviteToDelete: null,
+            inviteEmailWarning: ""
         }
     },
     computed: {
@@ -409,7 +422,18 @@ export default {
         },
         handleInviteSuccess: function (invite) {
             this.closeModal();
-            if (invite) this.pendingInvites.unshift(invite);
+            if (!invite) return;
+
+            this.pendingInvites.unshift(invite);
+
+            // O convite foi salvo, mas o e-mail de aviso falhou: o modal ja fechou, entao o aviso fica na lista de pendentes.
+            if (invite.email_enviado === false) {
+                const target = invite.email_usuario || "a pessoa";
+                const nextStep = invite.id_usuario || invite.cadastrado
+                    ? "A pessoa verá o convite ao entrar no app."
+                    : "Peça para a pessoa se cadastrar com este e-mail para ver o convite.";
+                this.inviteEmailWarning = `O convite para ${target} foi criado, mas não foi possível enviar o e-mail. ${nextStep}`;
+            }
         },
         editInviteFunction: function (invite) {
             this.selectedInviteToEdit = invite;
@@ -639,6 +663,66 @@ h3 {
     margin-top: 4px;
     font-size: 11px;
     color: var(--neutral-gray-medium);
+}
+
+.invite-email-failed {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    color: var(--others-yellow);
+    font-weight: 600;
+}
+
+.invite-email-failed .material-icons {
+    font-size: 13px;
+}
+
+.invite-email-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    border: 1px solid rgba(255, 200, 44, 0.35);
+    border-radius: var(--radius-md);
+    background: rgba(255, 200, 44, 0.08);
+    color: var(--neutral-white);
+}
+
+.invite-email-warning p {
+    flex: 1;
+    margin: 0;
+    font-size: var(--font-size-4);
+    line-height: 1.4;
+}
+
+.invite-email-warning-icon {
+    color: var(--others-yellow);
+    font-size: 20px;
+    margin-top: 1px;
+}
+
+.invite-email-warning-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--neutral-gray-medium);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.invite-email-warning-close:hover {
+    color: var(--neutral-white);
+}
+
+.invite-email-warning-close .material-icons {
+    font-size: 18px;
 }
 
 .pending-invite-actions {

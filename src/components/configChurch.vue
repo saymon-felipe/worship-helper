@@ -84,10 +84,10 @@
                                         <p>{{ permissionSummary(currentFunction) }}</p>
                                     </div>
                                     <div class="function-actions">
-                                        <button v-if="canManageFunctions" type="button" class="btn-delete-chip" @click="editFunction(currentFunction)" title="Editar função">
+                                        <button v-if="canModifyFunction(currentFunction)" type="button" class="btn-delete-chip" @click="editFunction(currentFunction)" title="Editar função">
                                             <span class="material-icons">edit</span>
                                         </button>
-                                        <button v-if="canManageFunctions" type="button" class="btn-delete-chip" @click="deleteFunction(currentFunction.id_funcao)" title="Excluir função">
+                                        <button v-if="canModifyFunction(currentFunction)" type="button" class="btn-delete-chip" @click="deleteFunction(currentFunction.id_funcao)" title="Excluir função">
                                             <span class="material-icons">close</span>
                                         </button>
                                     </div>
@@ -135,6 +135,7 @@
                         :type="type"
                         :church-id="resolvedChurchId"
                         :permission-options="permissionOptions"
+                        :locked-permissions="lockedPermissionKeys"
                         :initial-function="editingFunction"
                         @success="handleEntitySaved"
                         @error="handleRegisterError"
@@ -247,9 +248,20 @@ export default {
         },
         canManageFunctions: function () {
             return this.hasChurchPermission("members.roles");
+        },
+        // Permissoes que a pessoa nao tem e, portanto, nao pode conceder ao criar ou editar uma funcao
+        lockedPermissionKeys: function () {
+            return this.permissionOptions
+                .filter((permission) => !this.hasChurchPermission(permission.key))
+                .map((permission) => permission.key);
         }
     },
     methods: {
+        // So da para editar ou excluir funcoes cujas permissoes estejam todas dentro do nivel de quem edita
+        canModifyFunction: function (currentFunction) {
+            const functionPermissions = Array.isArray(currentFunction.permissoes) ? currentFunction.permissoes : [];
+            return this.canManageFunctions && functionPermissions.every((permissionKey) => !this.lockedPermissionKeys.includes(permissionKey));
+        },
         toggleAddTagInput: function (type) {
             const permissionKey = type === "function" ? "members.roles" : "members.tags";
             if (!this.hasChurchPermission(permissionKey)) {
@@ -319,8 +331,15 @@ export default {
                 id_function: id_function,
                 id_igreja: churchId
             };
+            const previousFunctions = this.functions;
             this.functions = this.functions.filter(currentFunction => currentFunction.id_funcao !== id_function);
-            api.post("/igreja/deletar-funcao", data);
+            api.post("/igreja/deletar-funcao", data).catch((error) => {
+                this.functions = previousFunctions;
+                const message = error && error.response && typeof error.response.data === "string"
+                    ? error.response.data
+                    : "Não foi possível excluir a função.";
+                this.showResponse(message, ".response", "error");
+            });
             this.showConfirmDeleteFunction = false;
             this.functionIdToDelete = null;
         },

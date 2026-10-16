@@ -40,6 +40,10 @@
                             <span class="material-icons">people_outline</span>
                             <span>{{ returnMembersText(church.membros) }}</span>
                         </p>
+                        <p class="member-count" v-if="church.nome_funcao">
+                            <span class="material-icons">work_outline</span>
+                            <span>Cargo: {{ church.nome_funcao }}</span>
+                        </p>
                     </div>
                     <div class="invite-actions">
                         <button class="action-btn accept-btn" v-on:click="acceptInvite(church.id_igreja)" title="Aceitar convite">

@@ -12,6 +12,17 @@
                 <small class="invite-helper">Se a pessoa ainda não tiver conta, digite o e-mail para enviar o convite.</small>
             </div>
 
+            <div class="input-group" v-if="churchFunctions.length > 0">
+                <label for="invite-role-select">Cargo (opcional)</label>
+                <select id="invite-role-select" class="invite-role-select" v-model="selected_function_id" :disabled="sendingInvite">
+                    <option value="">Sem cargo (apenas membro)</option>
+                    <option v-for="churchFunction in churchFunctions" :key="churchFunction.id_funcao" :value="churchFunction.id_funcao" :disabled="!churchFunction.atribuivel">
+                        {{ churchFunction.nome_funcao }}{{ churchFunction.atribuivel ? "" : " (acima das suas permissões)" }}
+                    </option>
+                </select>
+                <small class="invite-helper">Ao aceitar o convite, a pessoa já entra na igreja com este cargo e as permissões dele. Você só pode escolher cargos que não deem mais permissões do que as suas.</small>
+            </div>
+
             <div class="invite-loading" v-if="sendingInvite">
                 <span class="material-icons rotating">sync</span>
                 <span>Enviando convite...</span>
@@ -41,11 +52,27 @@ export default {
                 imagem_usuario: "",
                 nome_usuario: ""
             },
+            churchFunctions: [],
+            selected_function_id: "",
             response: "",
             sendingInvite: false
         }
     },
     methods: {
+        loadChurchFunctions: function () {
+            const churchId = this.getCurrentChurchId();
+            if (!churchId) {
+                return;
+            }
+
+            api.post("/igreja/retorna-funcoes-atribuiveis", { id_igreja: churchId })
+            .then((response) => {
+                this.churchFunctions = response.data.returnObj || [];
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+        },
         clearSelectedMember: function () {
             if (this.sendingInvite) {
                 return;
@@ -114,6 +141,10 @@ export default {
                 data.email_usuario = typedValue;
             }
 
+            if (self.selected_function_id !== "") {
+                data.id_funcao = Number(self.selected_function_id);
+            }
+
             api.post("/igreja/envia-convite", data)
             .then(function (response) {
                 self.showResponse(response.data.message, ".response", "success");
@@ -123,6 +154,7 @@ export default {
                     email_usuario: self.selected_member.email_usuario || typedValue,
                     imagem_usuario: self.selected_member.imagem_usuario,
                     cadastrado: self.selected_member.id_usuario != null,
+                    pode_editar: true,
                     data_criacao: new Date().toISOString()
                 });
             })
@@ -141,6 +173,7 @@ export default {
         selectedMember
     },
     mounted: function () {
+        this.loadChurchFunctions();
         $("#invite-member-input").focus();
         setTimeout(() => {
             const input = $("#invite-member-input")[0];
@@ -163,6 +196,11 @@ export default {
     font-size: var(--font-size-5);
     line-height: 1.4;
     margin-top: 6px;
+}
+
+.invite-role-select option {
+    background: #181538;
+    color: var(--neutral-white);
 }
 
 .invite-loading {

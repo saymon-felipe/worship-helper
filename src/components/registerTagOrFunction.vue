@@ -15,6 +15,7 @@
                                 :checked="isGroupFullySelected(group)"
                                 :indeterminate="isGroupPartiallySelected(group)"
                                 :aria-checked="groupSelectionState(group)"
+                                :disabled="isGroupLocked(group)"
                                 @change="toggleParentPermission(group, $event.target.checked)"
                             >
                             <span class="custom-checkbox"></span>
@@ -23,12 +24,13 @@
                     </div>
                     <div class="permission-children-grid">
                         <label class="permission-option child-option" v-for="child in group.children" :key="child.key">
-                            <input type="checkbox" :checked="isPermissionSelected(child.key)" @change="toggleChildPermission(group.key, child.key, $event.target.checked)">
+                            <input type="checkbox" :checked="isPermissionSelected(child.key)" :disabled="isPermissionLocked(child.key)" @change="toggleChildPermission(group.key, child.key, $event.target.checked)">
                             <span class="custom-checkbox"></span>
                             <span class="option-text">{{ child.label }}</span>
                         </label>
                     </div>
                 </div>
+                <small class="locked-helper" v-if="hasLockedPermissions">Você só pode conceder permissões que você mesmo tem. As demais aparecem desabilitadas.</small>
             </div>
             <input type="submit" id="submit-informations-form" style="display: none;">
         </form>
@@ -40,7 +42,16 @@ import api from '../config/api';
 
 export default {
     name: "returnTagOrFunction",
-    props: ["type", "churchId", "permissionOptions", "initialFunction"],
+    props: {
+        type: String,
+        churchId: [Number, String],
+        permissionOptions: Array,
+        initialFunction: Object,
+        lockedPermissions: {
+            type: Array,
+            default: () => []
+        }
+    },
     mixins: [globalMethods],
     data() {
         return {
@@ -54,6 +65,9 @@ export default {
         },
         isEditing: function () {
             return Boolean(this.initialFunction && this.initialFunction.id_funcao);
+        },
+        hasLockedPermissions: function () {
+            return this.lockedPermissions.length > 0;
         },
         groupedPermissionOptions: function () {
             const options = Array.isArray(this.permissionOptions) ? this.permissionOptions : [];
@@ -100,12 +114,20 @@ export default {
                     entity: response.data.returnObj
                 });
             }).catch(function (error) {
-                const errorMessage = error?.response?.data?.error || error?.response?.data?.message || "Erro ao cadastrar.";
+                const responseData = error?.response?.data;
+                const errorMessage = (typeof responseData === "string" ? responseData : "") || responseData?.error || responseData?.message || "Erro ao cadastrar.";
                 self.$emit("error", errorMessage);
             });
         },
         isPermissionSelected: function (permissionKey) {
             return this.selectedPermissions.includes(permissionKey);
+        },
+        isPermissionLocked: function (permissionKey) {
+            return this.lockedPermissions.includes(permissionKey);
+        },
+        // O pai marca/desmarca todos os filhos de uma vez, entao so fica livre se nenhuma permissao do grupo estiver bloqueada
+        isGroupLocked: function (group) {
+            return this.isPermissionLocked(group.key) || group.children.some((child) => this.isPermissionLocked(child.key));
         },
         isGroupFullySelected: function (group) {
             if (group.children.length === 0) {
@@ -212,6 +234,12 @@ export default {
     flex-direction: column;
     gap: 12px;
     margin-top: 1.5rem;
+}
+
+.locked-helper {
+    color: var(--neutral-gray-medium);
+    font-size: var(--font-size-5);
+    line-height: 1.4;
 }
 
 .section-title {

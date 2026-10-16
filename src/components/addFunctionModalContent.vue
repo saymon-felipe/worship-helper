@@ -8,11 +8,13 @@
                 <div v-for="(occupation, index) in functions" v-bind:key="index">
                     <div class="input-group">
                         <div class="input-checkbox-container">
-                            <input type="checkbox" :name="'id_funcao_' + occupation.id_funcao" :value="occupation.id_funcao" :id="'occupation-' + occupation.id_funcao">
-                            <label :for="'occupation-' + occupation.id_funcao">{{ occupation.nome_funcao }}</label>
+                            <input type="checkbox" :name="'id_funcao_' + occupation.id_funcao" :value="occupation.id_funcao" :id="'occupation-' + occupation.id_funcao" :disabled="!occupation.atribuivel">
+                            <label :for="'occupation-' + occupation.id_funcao">{{ occupation.nome_funcao }}{{ occupation.atribuivel ? "" : " (acima das suas permissões)" }}</label>
                         </div>
                     </div>
                 </div>
+                <small class="locked-helper" v-if="hasLockedFunctions">Você só pode atribuir ou remover cargos que não deem mais permissões do que as suas.</small>
+                <p class="response">{{ response }}</p>
                 <input type="submit" id="submit-informations-form" style="display: none;">
             </form>
         </div>
@@ -29,7 +31,13 @@ export default {
     mixins: [globalMethods],
     data() {
         return {
-            functions: {}
+            functions: [],
+            response: ""
+        }
+    },
+    computed: {
+        hasLockedFunctions: function () {
+            return Array.isArray(this.functions) && this.functions.some((occupation) => !occupation.atribuivel);
         }
     },
     watch: {
@@ -66,12 +74,20 @@ export default {
             data.id_igreja = this.getCurrentChurchId();
             data.new_functions = checkedInputs;
 
+            $(".response").removeClass("error");
+            self.response = "";
+
             api.post("/usuario/altera-funcoes", data).then(function () {
                 self.$emit("success", {
                     type: "functions",
                     memberId: id_usuario,
                     functions: self.functions.filter((churchFunction) => checkedInputs.includes(String(churchFunction.id_funcao)))
                 });
+            }).catch(function (error) {
+                const message = error && error.response && typeof error.response.data === "string"
+                    ? error.response.data
+                    : "Não foi possível atualizar as funções";
+                self.showResponse(message, ".response", "error");
             })
         },
         returnOccupations: function () {
@@ -80,7 +96,7 @@ export default {
                 id_igreja: this.getCurrentChurchId()
             }
 
-            api.post("/igreja/retorna-funcoes", data)
+            api.post("/igreja/retorna-funcoes-atribuiveis", data)
                 .then(function (response) {
                     self.functions = response.data.returnObj;
                 })
@@ -97,6 +113,14 @@ export default {
 <style scoped>
 .add-function-container {
     padding: 1rem;
+}
+
+.locked-helper {
+    display: block;
+    margin-top: 12px;
+    color: var(--neutral-gray-medium);
+    font-size: var(--font-size-5);
+    line-height: 1.4;
 }
 
 .add-function-header {

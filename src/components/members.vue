@@ -38,13 +38,19 @@
                         </div>
                         <div class="pending-invite-meta">
                             <span>{{ invite.cadastrado ? "Usuário cadastrado" : "Aguardando cadastro" }}</span>
+                            <span v-if="invite.nome_funcao">Cargo: {{ invite.nome_funcao }}</span>
                             <span v-if="invite.data_criacao">{{ relativeTime(invite.data_criacao) }}</span>
                         </div>
                     </div>
 
-                    <button class="delete-invite-btn" type="button" v-on:click="deleteInvite(invite)" title="Cancelar convite">
-                        <span class="material-icons">delete</span>
-                    </button>
+                    <div class="pending-invite-actions">
+                        <button class="edit-invite-btn" type="button" v-if="invite.pode_editar" v-on:click="editInviteFunction(invite)" title="Editar cargo do convite">
+                            <span class="material-icons">edit</span>
+                        </button>
+                        <button class="delete-invite-btn" type="button" v-on:click="deleteInvite(invite)" title="Cancelar convite">
+                            <span class="material-icons">delete</span>
+                        </button>
+                    </div>
                 </article>
             </div>
         </section>
@@ -101,6 +107,7 @@
             <Transition name="modal-fade">
                 <modal v-if="showModal && canUseCurrentModal" :title="modalTitle" @closeModal="close_modal()" class="modal" @cancelEvent="cancelChanges()" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" :isDelete="modalTitle === 'Remover membro'" @submitEvent="submitForm()" :disabled="isLoading">
                     <inviteMemberModalContent v-if="inviteMember && canInviteMembers" @success="handleInviteSuccess" @loading="isLoading = $event" />
+                    <editInviteModalContent v-if="editInvite && canInviteMembers && selectedInviteToEdit" :invite="selectedInviteToEdit" @success="handleInviteEdited" @loading="isLoading = $event" />
                     <addTagModalContent v-if="addTag && canChangeMemberTags" :member="selected_member" @success="handleMembersChanged()" />
                     <addFunctionModalContent v-if="addOccupation && canChangeMemberRoles" :member="selected_member" @success="handleMembersChanged()" />
                     <removeMemberModalContent v-if="removeMember && canRemoveMembers" :member="selected_member" @success="handleMembersChanged()" />
@@ -126,6 +133,7 @@ import $ from 'jquery';
 import modal from "./modal.vue";
 import confirmDeleteModal from "./confirmDeleteModal.vue";
 import inviteMemberModalContent from "./inviteMemberModalContent.vue";
+import editInviteModalContent from "./editInviteModalContent.vue";
 import addTagModalContent from "./addTagModalContent.vue";
 import removeMemberModalContent from "./removeMemberModalContent.vue";
 import addFunctionModalContent from "./addFunctionModalContent.vue";
@@ -139,6 +147,7 @@ export default {
         modal,
         confirmDeleteModal,
         inviteMemberModalContent,
+        editInviteModalContent,
         addTagModalContent,
         removeMemberModalContent,
         addFunctionModalContent,
@@ -147,6 +156,8 @@ export default {
     data() {
         return {
             inviteMember: false,
+            editInvite: false,
+            selectedInviteToEdit: null,
             isLoading: false,
             addTag: false,
             addOccupation: false,
@@ -184,6 +195,7 @@ export default {
         },
         canUseCurrentModal: function () {
             if (this.inviteMember) return this.canInviteMembers;
+            if (this.editInvite) return this.canInviteMembers;
             if (this.addTag) return this.canChangeMemberTags;
             if (this.addOccupation) return this.canChangeMemberRoles;
             if (this.removeMember) return this.canRemoveMembers;
@@ -209,10 +221,14 @@ export default {
         },
         resetVariables: function (string) {
             this.inviteMember = false;
+            this.editInvite = false;
             this.addTag = false;
             this.removeMember = false;
             this.addOccupation = false;
             switch (string) {
+                case "editInvite":
+                    this.editInvite = true;
+                    break;
                 case "addTag":
                     this.addTag = true;
                     break;
@@ -394,6 +410,23 @@ export default {
         handleInviteSuccess: function (invite) {
             this.closeModal();
             if (invite) this.pendingInvites.unshift(invite);
+        },
+        editInviteFunction: function (invite) {
+            this.selectedInviteToEdit = invite;
+            this.showModal = true;
+            this.modalTitle = "Editar convite";
+            this.modalButtonTitle = "Salvar";
+            this.modalButton2Title = "Cancelar";
+            this.resetVariables("editInvite");
+        },
+        handleInviteEdited: function (updatedInvite) {
+            this.closeModal();
+            if (!updatedInvite) return;
+
+            this.pendingInvites = this.pendingInvites.map((invite) => {
+                if (Number(invite.id) !== Number(updatedInvite.id)) return invite;
+                return { ...invite, id_funcao: updatedInvite.id_funcao, nome_funcao: updatedInvite.nome_funcao };
+            });
         },
         handleMembersChanged: function (change) {
             this.closeModal();
@@ -600,11 +633,39 @@ h3 {
 
 .pending-invite-meta {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 8px;
+    gap: 4px 8px;
     margin-top: 4px;
     font-size: 11px;
     color: var(--neutral-gray-medium);
+}
+
+.pending-invite-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.edit-invite-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: var(--radius-sm);
+    background: rgba(56, 182, 255, 0.1);
+    color: var(--secondary-blue-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.edit-invite-btn:hover {
+    background: rgba(56, 182, 255, 0.18);
+    transform: scale(1.04);
 }
 
 .delete-invite-btn {

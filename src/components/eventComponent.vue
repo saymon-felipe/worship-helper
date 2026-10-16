@@ -13,6 +13,10 @@
                 <span class="material-icons time-icon">today</span>
                 <span>{{ formatEventDate(event.data_inicio_evento) }}</span>
             </div>
+            <div class="event-time event-place" v-if="event.local_evento" :title="event.local_evento">
+                <span class="material-icons time-icon">place</span>
+                <span>{{ event.local_evento }}</span>
+            </div>
         </div>
         <div class="event-card-footer">
             <div class="footer-left">
@@ -201,6 +205,17 @@ export default {
 .time-icon {
     font-size: 15px;
     color: var(--secondary-blue-soft);
+}
+
+.event-place {
+    min-width: 0;
+}
+
+.event-place span:last-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .event-card-footer {

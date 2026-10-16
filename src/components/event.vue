@@ -35,6 +35,14 @@
                         <p class="detail-value">{{ formatEventDate(event.data_inicio_evento) }}</p>
                     </div>
                 </div>
+                <div class="detail-item" v-if="event.local_evento">
+                    <span class="material-icons detail-icon">place</span>
+                    <div class="detail-text">
+                        <p class="detail-label">Local</p>
+                        <p class="detail-value detail-value-location">{{ event.local_evento }}</p>
+                        <p class="detail-cep" v-if="eventCepLabel">CEP {{ eventCepLabel }}</p>
+                    </div>
+                </div>
                 <div class="detail-item">
                     <span class="material-icons detail-icon">library_music</span>
                     <div class="detail-text">
@@ -43,6 +51,15 @@
                     </div>
                 </div>
             </div>
+            <div class="event-map-block" v-if="hasEventPin">
+                <div class="event-map-slot">
+                    <eventLocationMap :latitude="event.latitude_evento" :longitude="event.longitude_evento" height="100%" />
+                </div>
+            </div>
+            <a class="event-map-link" v-if="eventMapLink" :href="eventMapLink" target="_blank" rel="noopener noreferrer">
+                <span class="material-icons">open_in_new</span>
+                <span>Abrir no Google Maps</span>
+            </a>
         </div>
 
         <!-- Musics Section -->
@@ -221,6 +238,7 @@
     </section>
 </template>
 <script>
+import { defineAsyncComponent } from 'vue';
 import { globalMethods } from '../js/globalMethods';
 import api from '../config/api';
 import moment from 'moment';
@@ -231,7 +249,11 @@ import modal from "./modal.vue";
 import confirmDeleteModal from "./confirmDeleteModal.vue";
 import skeletonLoader from "./skeletonLoader.vue";
 import { appStore } from '../store/appStore';
+import { formatCep, googleMapsLink } from '../services/geocoding';
 moment.locale('pt-br');
+
+// O mapa (Leaflet) so e baixado quando o evento tem pino salvo.
+const eventLocationMap = defineAsyncComponent(() => import("./eventLocationMap.vue"));
 
 export default {
     name: "eventDetail",
@@ -241,7 +263,8 @@ export default {
         createEventModalContent,
         modal,
         confirmDeleteModal,
-        skeletonLoader
+        skeletonLoader,
+        eventLocationMap
     },
     data() {
         return {
@@ -266,6 +289,24 @@ export default {
         isPastEvent: function () {
             if (!this.event || !this.event.data_inicio_evento) return false;
             return moment.parseZone(this.event.data_inicio_evento).isBefore(moment());
+        },
+        eventCepLabel: function () {
+            return formatCep(this.event && this.event.cep_evento);
+        },
+        hasEventPin: function () {
+            return Boolean(this.event) && Number.isFinite(this.event.latitude_evento) && Number.isFinite(this.event.longitude_evento);
+        },
+        eventMapLink: function () {
+            if (!this.event || !this.event.local_evento) {
+                return "";
+            }
+
+            return googleMapsLink({
+                latitude: this.event.latitude_evento,
+                longitude: this.event.longitude_evento,
+                address: this.event.local_evento,
+                cep: this.event.cep_evento
+            });
         },
         isAppAdmin: function () {
             return Boolean(
@@ -626,6 +667,44 @@ export default {
 .detail-value {
     font-size: var(--font-size-4);
     font-weight: 500;
+}
+
+.detail-value-location {
+    overflow-wrap: anywhere;
+}
+
+.detail-cep {
+    font-size: var(--font-size-5);
+    color: var(--neutral-gray-medium);
+}
+
+.event-map-block {
+    margin-top: 20px;
+}
+
+.event-map-slot {
+    height: 220px;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.event-map-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 12px;
+    font-size: var(--font-size-5);
+    font-weight: 700;
+    color: var(--secondary-blue-soft);
+    text-decoration: none;
+}
+
+.event-map-link:hover {
+    text-decoration: underline;
+}
+
+.event-map-link span.material-icons {
+    font-size: 16px;
 }
 
 /* Sections styling */

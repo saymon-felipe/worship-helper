@@ -19,6 +19,49 @@
                 </div>
             </div>
 
+            <!-- Linha 2: Local (opcional; o endereço só é pedido, e obrigatório, com o switch marcado) -->
+            <div class="event-location">
+                <label class="location-toggle">
+                    <input type="checkbox" :checked="eventForm.has_location" @change="setHasLocation($event.target.checked)">
+                    <span class="location-toggle-track" aria-hidden="true"><span></span></span>
+                    <span class="location-toggle-text">
+                        <span class="material-icons">place</span>
+                        <span>{{ eventForm.has_location ? "Evento com local definido" : "Informar o local do evento" }}</span>
+                    </span>
+                </label>
+                <div class="location-fields" v-if="eventForm.has_location">
+                    <div class="input-group location-field">
+                        <label class="section-label" for="event-cep">
+                            <span class="material-icons">pin_drop</span>
+                            <span>CEP (opcional)</span>
+                        </label>
+                        <input type="text" id="event-cep" ref="cepInput" inputmode="numeric" autocomplete="postal-code" maxlength="9" placeholder="00000-000" :value="eventForm.cep_evento" :class="{ 'invalid-field': cepError }" :aria-invalid="cepError ? 'true' : 'false'" @input="onCepInput($event)">
+                        <span class="field-hint" role="status" v-if="cepStatus">{{ cepStatus }}</span>
+                        <span class="field-error" role="alert" v-if="cepError">{{ cepError }}</span>
+                    </div>
+                    <div class="input-group location-field">
+                        <label class="section-label" for="event-location">
+                            <span class="material-icons">map</span>
+                            <span>Endereço / Local</span>
+                        </label>
+                        <input type="text" id="event-location" ref="locationInput" v-model="eventForm.local_evento" placeholder="Ex. Rua das Flores, 123 - Centro" maxlength="255" :class="{ 'invalid-field': locationError }" :aria-invalid="locationError ? 'true' : 'false'" @input="locationError = ''" @blur="onAddressBlur($event)">
+                        <span class="field-error" role="alert" v-if="locationError">{{ locationError }}</span>
+                    </div>
+                    <div class="location-map-block">
+                        <div class="map-slot">
+                            <eventLocationMap :latitude="eventForm.latitude_evento" :longitude="eventForm.longitude_evento" editable height="100%" @change="onPinChange($event)" />
+                        </div>
+                        <div class="map-toolbar">
+                            <span class="map-status" :class="mapStatus.type" role="status">{{ mapStatus.text || "Toque no mapa ou arraste o pino para marcar a posição." }}</span>
+                            <button type="button" class="btn-locate" :disabled="locating || (!eventForm.local_evento.trim() && !cepInfo)" @click="locateOnMap(true)" title="Localizar o endereço no mapa">
+                                <span class="material-icons">my_location</span>
+                                <span>Localizar</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Seção: Músicas (Repertório) -->
             <div class="event-musics">
                 <div class="section-header-inline">
@@ -162,6 +205,7 @@
 </template>
 
 <script>
+import { defineAsyncComponent } from 'vue';
 import { globalMethods } from '../js/globalMethods';
 import searchMusic from "./searchMusic.vue";
 import musicDetails from "./musicDetails.vue";
@@ -169,6 +213,21 @@ import api from '../config/api';
 import moment from 'moment';
 import { appStore } from '../store/appStore';
 import feedbackModal from "./feedbackModal.vue";
+import { buildAddressFromCep, fetchAddressByCep, formatCep, locateAddress, onlyDigits } from '../services/geocoding';
+
+const LOCATION_MAX_LENGTH = 255;
+
+// O mapa (Leaflet) so e baixado quando o modal abre com o switch de local marcado.
+const eventLocationMap = defineAsyncComponent(() => import("./eventLocationMap.vue"));
+
+const MAP_MESSAGES = {
+    address: { text: "Pino posicionado pelo endereço. Arraste-o ou toque no mapa para ajustar.", type: "ok" },
+    street: { text: "Encontramos a rua, mas não o número. Arraste o pino até o local exato.", type: "warn" },
+    city: { text: "Encontramos só a cidade. Arraste o pino até o local exato.", type: "warn" },
+    notFound: { text: "Não encontramos esse endereço no mapa. Toque no mapa ou arraste o pino para marcar a posição.", type: "warn" },
+    unavailable: { text: "Não foi possível consultar o mapa agora. Toque no mapa para marcar a posição do pino.", type: "warn" },
+    manual: { text: "Posição do pino ajustada.", type: "ok" }
+};
 
 export default {
     name: "createEventModalContent",
@@ -178,8 +237,19 @@ export default {
         return {
             eventForm: {
                 event_name: "",
-                event_date: ""
+                event_date: "",
+                has_location: false,
+                local_evento: "",
+                cep_evento: "",
+                latitude_evento: null,
+                longitude_evento: null
             },
+            locationError: "",
+            cepError: "",
+            cepStatus: "",
+            cepInfo: null,
+            mapStatus: { text: "", type: "" },
+            locating: false,
             event_selected_members: [],
             event_selected_musics: [],
             showSearchMusic: false,
@@ -232,6 +302,21 @@ export default {
                 return;
             }
 
+            const location = this.eventForm.local_evento.trim();
+            const cepDigits = onlyDigits(this.eventForm.cep_evento);
+
+            if (this.eventForm.has_location && cepDigits != "" && cepDigits.length != 8) {
+                this.cepError = "CEP incompleto. Use o formato 00000-000";
+                this.focusField("cepInput");
+                return;
+            }
+
+            if (this.eventForm.has_location && location == "") {
+                this.locationError = "Informe o endereço do evento ou desmarque a opção de local";
+                this.focusField("locationInput");
+                return;
+            }
+
             if (this.event_selected_members.length == 0) {
                 this.showResponse("Nenhum membro selecionado", ".response", "error");
                 return;
@@ -252,6 +337,16 @@ export default {
             data["event_members"] = this.event_selected_members;
             data["event_musics"] = this.event_selected_musics;
             data["id_igreja"] = this.getCurrentChurchId();
+            data["tem_local"] = this.eventForm.has_location;
+
+            if (this.eventForm.has_location) {
+                const hasPin = this.hasPin();
+
+                data["local_evento"] = location;
+                data["cep_evento"] = cepDigits || null;
+                data["latitude_evento"] = hasPin ? this.eventForm.latitude_evento : null;
+                data["longitude_evento"] = hasPin ? this.eventForm.longitude_evento : null;
+            }
 
             const path = this.isEditingEvent()
                 ? "/igreja/atualizar-evento/" + this.eventToEdit.id_evento
@@ -263,7 +358,157 @@ export default {
             })
             .catch(function (error) {
                 console.log(error);
+                self.showResponse(error.response && error.response.data, ".response", "error");
             })
+        },
+        focusField: function (refName) {
+            this.$nextTick(() => {
+                if (this.$refs[refName]) {
+                    this.$refs[refName].focus();
+                }
+            });
+        },
+        hasPin: function () {
+            return Number.isFinite(this.eventForm.latitude_evento) && Number.isFinite(this.eventForm.longitude_evento);
+        },
+        resetLocation: function () {
+            // Invalida buscas de CEP/mapa em andamento: o resultado delas nao deve cair num local que ja foi limpo.
+            this.cepToken++;
+            this.locateToken++;
+            this.eventForm.local_evento = "";
+            this.eventForm.cep_evento = "";
+            this.eventForm.latitude_evento = null;
+            this.eventForm.longitude_evento = null;
+            this.locationError = "";
+            this.cepError = "";
+            this.cepStatus = "";
+            this.cepInfo = null;
+            this.mapStatus = { text: "", type: "" };
+            this.locating = false;
+            this.lastAutofilledAddress = "";
+            this.lastLocatedAddress = "";
+        },
+        setHasLocation: function (enabled) {
+            this.eventForm.has_location = enabled;
+
+            if (!enabled) {
+                this.resetLocation();
+                return;
+            }
+
+            this.locationError = "";
+            this.focusField("cepInput");
+        },
+        onCepInput: function (event) {
+            const formatted = formatCep(event.target.value);
+            const digits = onlyDigits(formatted);
+
+            // Letras e excesso digitados saem na hora, o campo fica sempre no formato 00000-000.
+            event.target.value = formatted;
+            this.eventForm.cep_evento = formatted;
+            this.cepError = "";
+            this.cepStatus = "";
+            this.cepInfo = null;
+            this.cepToken++;
+
+            if (digits.length == 8) {
+                this.lookupCep(digits);
+            }
+        },
+        lookupCep: async function (digits) {
+            const token = ++this.cepToken;
+            this.cepStatus = "Buscando CEP...";
+
+            try {
+                const info = await fetchAddressByCep(digits);
+                if (token !== this.cepToken) {
+                    return;
+                }
+
+                this.cepStatus = "";
+
+                if (!info) {
+                    this.cepError = "CEP não encontrado. Confira o número ou preencha o endereço manualmente.";
+                    return;
+                }
+
+                this.cepInfo = info;
+
+                // So preenche o endereco quando esta vazio ou ainda e o texto que o proprio CEP preencheu; nunca sobrescreve o que a pessoa digitou.
+                const current = this.eventForm.local_evento.trim();
+                if (current == "" || current == this.lastAutofilledAddress) {
+                    const address = buildAddressFromCep(info).slice(0, LOCATION_MAX_LENGTH);
+                    this.eventForm.local_evento = address;
+                    this.lastAutofilledAddress = address;
+                    this.locationError = "";
+                }
+
+                this.locateOnMap(true);
+            } catch (error) {
+                if (token !== this.cepToken) {
+                    return;
+                }
+
+                console.log(error);
+                this.cepStatus = "";
+                this.cepError = "Não foi possível buscar o CEP agora. Preencha o endereço manualmente.";
+            }
+        },
+        onAddressBlur: function (event) {
+            const address = this.eventForm.local_evento.trim();
+            const clickedLocate = event && event.relatedTarget && event.relatedTarget.classList.contains("btn-locate");
+
+            if (address != "" && address != this.lastLocatedAddress && !clickedLocate) {
+                this.locateOnMap(true);
+            }
+        },
+        locateOnMap: async function (force = false) {
+            const address = this.eventForm.local_evento.trim();
+
+            if ((address == "" && !this.cepInfo) || (!force && address == this.lastLocatedAddress)) {
+                return;
+            }
+
+            const token = ++this.locateToken;
+            this.lastLocatedAddress = address;
+            this.locating = true;
+            this.mapStatus = { text: "Localizando no mapa...", type: "info" };
+
+            try {
+                const result = await locateAddress({ address: address, cepInfo: this.cepInfo });
+                if (token !== this.locateToken) {
+                    return;
+                }
+
+                if (!result) {
+                    this.mapStatus = MAP_MESSAGES.notFound;
+                    return;
+                }
+
+                this.eventForm.latitude_evento = result.latitude;
+                this.eventForm.longitude_evento = result.longitude;
+                this.mapStatus = MAP_MESSAGES[result.precision];
+            } catch (error) {
+                if (token !== this.locateToken) {
+                    return;
+                }
+
+                console.log(error);
+                this.lastLocatedAddress = "";
+                this.mapStatus = MAP_MESSAGES.unavailable;
+            } finally {
+                if (token === this.locateToken) {
+                    this.locating = false;
+                }
+            }
+        },
+        onPinChange: function (position) {
+            // Ajuste manual vale mais que a busca automatica: cancela uma busca em andamento para ela nao mover o pino de volta.
+            this.locateToken++;
+            this.locating = false;
+            this.eventForm.latitude_evento = position.latitude;
+            this.eventForm.longitude_evento = position.longitude;
+            this.mapStatus = MAP_MESSAGES.manual;
         },
         removeMember: function (member_id) {
             this.event_selected_members = this.event_selected_members.filter(member => member.id_usuario != member_id);
@@ -402,6 +647,28 @@ export default {
                 ? moment(this.eventToEdit.data_inicio_evento).format("YYYY-MM-DDTHH:mm")
                 : "";
 
+            const location = String(this.eventToEdit.local_evento || "").trim();
+            this.eventForm.has_location = location != "";
+            this.eventForm.local_evento = location;
+            this.eventForm.cep_evento = formatCep(this.eventToEdit.cep_evento);
+
+            const hasPin = Number.isFinite(this.eventToEdit.latitude_evento) && Number.isFinite(this.eventToEdit.longitude_evento);
+            this.eventForm.latitude_evento = hasPin ? this.eventToEdit.latitude_evento : null;
+            this.eventForm.longitude_evento = hasPin ? this.eventToEdit.longitude_evento : null;
+
+            // Com pino salvo, sair do campo sem mexer no endereco nao deve buscar de novo e mover o pino.
+            this.lastLocatedAddress = hasPin ? location : "";
+
+            // Reaproveita a cidade/UF do CEP salvo para melhorar uma nova busca no mapa (se falhar, a busca segue sem isso).
+            if (this.eventForm.has_location && onlyDigits(this.eventForm.cep_evento).length == 8) {
+                const token = this.cepToken;
+                fetchAddressByCep(this.eventForm.cep_evento).then((info) => {
+                    if (info && token === this.cepToken) {
+                        this.cepInfo = info;
+                    }
+                }).catch((error) => console.log(error));
+            }
+
             const members = Array.isArray(this.eventToEdit.membros_evento) ? this.eventToEdit.membros_evento : [];
             this.event_selected_members = members.map((member) => ({
                 id_usuario: member.id_usuario,
@@ -427,7 +694,20 @@ export default {
     components: {
         searchMusic,
         musicDetails,
-        feedbackModal
+        feedbackModal,
+        eventLocationMap
+    },
+    created: function () {
+        // Controle de buscas em andamento (a resposta de uma busca antiga e descartada) e dos textos que ja foram resolvidos.
+        // Nao ficam no data() de proposito: nao precisam ser reativos.
+        this.cepToken = 0;
+        this.locateToken = 0;
+        this.lastAutofilledAddress = "";
+        this.lastLocatedAddress = "";
+    },
+    beforeUnmount: function () {
+        this.cepToken++;
+        this.locateToken++;
     },
     mounted: function () {
         this.syncChurchMembersFromStore();
@@ -469,6 +749,164 @@ export default {
 .section-label span.material-icons {
     font-size: 18px;
     color: var(--secondary-blue-soft);
+}
+
+/* --- LOCAL DO EVENTO (SWITCH + ENDEREÇO) --- */
+.event-location {
+    display: flex;
+    flex-direction: column;
+    margin-top: 6px;
+}
+
+.location-toggle {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    cursor: pointer;
+    color: var(--neutral-gray-high);
+    font-size: var(--font-size-4);
+}
+
+.location-toggle input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.location-toggle-track {
+    width: 46px;
+    height: 26px;
+    border-radius: var(--radius-pill);
+    padding: 3px;
+    display: flex;
+    align-items: center;
+    background: var(--neutral-gray-low);
+    transition: background var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.location-toggle-track span {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: var(--neutral-white);
+    transition: transform var(--transition-fast);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.location-toggle input:checked + .location-toggle-track {
+    background: var(--primary-primary-blue-high-2);
+}
+
+.location-toggle input:checked + .location-toggle-track span {
+    transform: translateX(20px);
+}
+
+.location-toggle input:focus-visible + .location-toggle-track {
+    box-shadow: var(--glow-shadow);
+}
+
+.location-toggle-text {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+}
+
+.location-toggle-text span.material-icons {
+    font-size: 18px;
+    color: var(--secondary-blue-soft);
+}
+
+.location-field {
+    margin-top: 12px;
+}
+
+.location-field input.invalid-field,
+.location-field input.invalid-field:focus {
+    border-color: var(--others-red);
+}
+
+.field-error {
+    color: var(--others-red);
+    font-size: var(--font-size-5);
+    margin-left: 4px;
+}
+
+.field-hint {
+    color: var(--neutral-gray-medium);
+    font-size: var(--font-size-5);
+    margin-left: 4px;
+}
+
+.location-fields {
+    display: flex;
+    flex-direction: column;
+}
+
+.location-map-block {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.map-slot {
+    height: 240px;
+    border-radius: var(--radius-md);
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.map-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.map-status {
+    font-size: var(--font-size-5);
+    color: var(--neutral-gray-medium);
+    line-height: 1.4;
+}
+
+.map-status.ok {
+    color: var(--others-green);
+}
+
+.map-status.warn {
+    color: var(--others-yellow);
+}
+
+.btn-locate {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: var(--radius-pill);
+    border: 1px solid rgba(56, 182, 255, 0.25);
+    background: rgba(56, 182, 255, 0.1);
+    color: var(--secondary-blue-soft);
+    font-size: var(--font-size-5);
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.btn-locate span.material-icons {
+    font-size: 16px;
+}
+
+.btn-locate:hover:not(:disabled) {
+    background: var(--secondary-blue-soft);
+    color: var(--neutral-white);
+}
+
+.btn-locate:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 /* --- CABEÇALHOS INTERNOS --- */

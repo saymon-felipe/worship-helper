@@ -25,14 +25,15 @@
             <modal
                 v-if="showPushNotificationsModal"
                 title="Ative as notificações"
-                buttonTitle="Ativar notificações"
-                button2Title="Agora não"
+                :buttonTitle="pushButtonTitle"
+                :button2Title="pushButton2Title"
                 :disabled="isActivatingNotifications"
+                :fitContent="true"
                 @closeModal="closePushNotificationsModal"
                 @cancelEvent="closePushNotificationsModal"
-                @submitEvent="activatePushNotifications"
+                @submitEvent="submitPushNotificationsModal"
             >
-                <pushNotificationsModalContent :message="pushNotificationsError" />
+                <pushNotificationsModalContent :reason="pushPromptReason" :platform="pushPlatform" :message="pushNotificationsError" />
             </modal>
         </Transition>
     </Teleport>
@@ -44,7 +45,15 @@ import installAppModalContent from "../components/installAppModalContent.vue";
 import pushNotificationsModalContent from "../components/pushNotificationsModalContent.vue";
 import { globalMethods } from '../js/globalMethods';
 import { getPwaInstallUnavailableMessage, isIOSDevice, isPwaInstalled, requestPwaInstall } from '../services/pwaInstall';
-import { getPushPermission, requestPushPermission } from '../services/pushNotifications';
+import {
+    confirmGrantedPushPermission,
+    dismissPushPrompt,
+    getPushPermission,
+    getPushPromptReason,
+    isPushPromptDismissed,
+    preparePushSubscription,
+    requestPushPermission
+} from '../services/pushNotifications';
 
 /* eslint-disable vue/multi-word-component-names, vue/no-reserved-component-names */
 export default {
@@ -65,13 +74,26 @@ export default {
             installError: "",
             showPushNotificationsModal: false,
             isActivatingNotifications: false,
-            pushNotificationsError: ""
+            pushNotificationsError: "",
+            pushPromptReason: "default"
         };
     },
     computed: {
         installButtonTitle() {
             if (this.showIOSInstructions) return "Entendi";
             return this.isIOS ? "Como instalar" : "Instalar app";
+        },
+        pushPlatform() {
+            if (this.isIOS) return "ios";
+            return /Android/i.test(window.navigator.userAgent) ? "android" : "other";
+        },
+        pushButtonTitle() {
+            if (this.pushPromptReason === "denied") return "Já liberei";
+            if (this.pushPromptReason === "unsupported") return "Entendi";
+            return "Ativar notificações";
+        },
+        pushButton2Title() {
+            return this.pushPromptReason === "unsupported" ? "" : "Agora não";
         }
     },
     methods: {
@@ -92,16 +114,54 @@ export default {
             this.installError = "";
         },
         openPushNotificationsModal() {
-            const dismissed = sessionStorage.getItem("push-notifications-dismissed");
+            const reason = getPushPromptReason();
 
-            if (!this.showInstallModal && !dismissed && getPushPermission() === "default") {
-                this.showPushNotificationsModal = true;
+            if (!reason || this.showInstallModal || isPushPromptDismissed()) {
+                return;
             }
+
+            this.pushPromptReason = reason;
+            this.pushNotificationsError = "";
+            if (reason === "default") {
+                preparePushSubscription();
+            }
+            this.showPushNotificationsModal = true;
+            document.addEventListener("visibilitychange", this.handlePushVisibilityChange);
         },
-        closePushNotificationsModal() {
-            sessionStorage.setItem("push-notifications-dismissed", "true");
+        hidePushNotificationsModal() {
             this.showPushNotificationsModal = false;
             this.pushNotificationsError = "";
+            document.removeEventListener("visibilitychange", this.handlePushVisibilityChange);
+        },
+        closePushNotificationsModal() {
+            // "Agora nao" vale so para esta abertura do app: na proxima (ou no proximo login) o aviso volta.
+            dismissPushPrompt();
+            this.hidePushNotificationsModal();
+        },
+        submitPushNotificationsModal() {
+            if (this.pushPromptReason === "denied") {
+                this.recheckPushPermission();
+                return;
+            }
+
+            if (this.pushPromptReason === "unsupported") {
+                this.closePushNotificationsModal();
+                return;
+            }
+
+            // Precisa ser chamado direto daqui (sem await antes): o iOS so pede permissao dentro do toque.
+            this.activatePushNotifications();
+        },
+        getPushErrorMessage(error) {
+            if (error && error.response && error.response.data && error.response.data.error) {
+                return error.response.data.error;
+            }
+            // So as mensagens do proprio app (Error comum); as do navegador (DOMException) vem em ingles.
+            if (error && error.name === "Error" && error.message && !error.response) {
+                return error.message;
+            }
+            console.error("[Push] Nao foi possivel ativar as notificacoes:", error);
+            return "Nao foi possivel ativar as notificacoes agora. Tente novamente mais tarde.";
         },
         async activatePushNotifications() {
             this.isActivatingNotifications = true;
@@ -111,19 +171,54 @@ export default {
                 const permission = await requestPushPermission();
 
                 if (permission === "granted") {
-                    this.closePushNotificationsModal();
-                    return;
+                    this.hidePushNotificationsModal();
+                } else if (permission === "denied") {
+                    this.pushPromptReason = "denied";
+                } else if (permission === "unsupported") {
+                    this.pushNotificationsError = "Este navegador nao oferece suporte a notificacoes.";
+                } else {
+                    this.pushNotificationsError = "O pedido foi fechado sem resposta. Toque em Ativar notificações para tentar de novo.";
                 }
-
-                this.pushNotificationsError = permission === "unsupported"
-                    ? "Este navegador nao oferece suporte a notificacoes."
-                    : "As notificacoes foram bloqueadas. Voce pode libera-las nas configuracoes do navegador.";
             } catch (error) {
-                this.pushNotificationsError = error.response && error.response.data && error.response.data.error
-                    ? error.response.data.error
-                    : "Nao foi possivel ativar as notificacoes agora. Tente novamente mais tarde.";
+                this.pushNotificationsError = this.getPushErrorMessage(error);
             } finally {
                 this.isActivatingNotifications = false;
+            }
+        },
+        async recheckPushPermission() {
+            const permission = getPushPermission();
+
+            if (permission === "default") {
+                this.pushPromptReason = "default";
+                this.pushNotificationsError = "";
+                preparePushSubscription();
+                return;
+            }
+
+            if (permission !== "granted") {
+                this.pushNotificationsError = "As notificações continuam bloqueadas. Siga os passos acima e toque em Já liberei.";
+                return;
+            }
+
+            this.isActivatingNotifications = true;
+            this.pushNotificationsError = "";
+            try {
+                await confirmGrantedPushPermission();
+                this.hidePushNotificationsModal();
+            } catch (error) {
+                this.pushNotificationsError = this.getPushErrorMessage(error);
+            } finally {
+                this.isActivatingNotifications = false;
+            }
+        },
+        handlePushVisibilityChange() {
+            // Quem foi aos Ajustes liberar volta para o app: confere sozinho, sem precisar tocar em "Ja liberei".
+            if (document.visibilityState !== "visible" || !this.showPushNotificationsModal || this.isActivatingNotifications) {
+                return;
+            }
+
+            if (this.pushPromptReason === "denied" && getPushPermission() !== "denied") {
+                this.recheckPushPermission();
             }
         },
         async installApp() {
@@ -155,11 +250,23 @@ export default {
     },
     mounted() {
         this.isIOS = isIOSDevice();
+
+        if (isPwaInstalled()) {
+            // App instalado: o aviso de notificacoes aparece a cada abertura (e logo apos o login) ate ser ativado.
+            this.requireUser()
+                .then(() => window.setTimeout(() => this.openPushNotificationsModal(), 800))
+                .catch(() => {});
+            return;
+        }
+
         window.setTimeout(() => {
             if (this.isMobileBrowser()) {
                 this.openInstallModal();
             }
         }, 800);
+    },
+    beforeUnmount() {
+        document.removeEventListener("visibilitychange", this.handlePushVisibilityChange);
     }
 }
 </script>

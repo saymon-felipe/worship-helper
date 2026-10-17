@@ -1,6 +1,7 @@
 import $ from 'jquery';
 import api from '../config/api';
 import { appStore } from '../store/appStore';
+import { resetPushPromptDismissal } from '../services/pushNotifications';
 import moment from 'moment';
 import 'moment/locale/pt-br';
 moment.locale('pt-br');
@@ -72,6 +73,8 @@ export const globalMethods = {
         setJwtInLocalStorage: function (jwt) {
             appStore.setToken(jwt);
             this.checkAndSetJwt();
+            // Login novo: o aviso de notificacoes do app instalado volta a aparecer mesmo se dispensado antes.
+            resetPushPromptDismissal();
         },
         checkAndSetJwt: function () {
             let jwt = this.getJwtFromLocalStorage();

@@ -5,6 +5,7 @@ import api from './config/api';
 import { moment, momentTimezone } from './config/moment';
 import { appStore } from './store/appStore';
 import './services/pwaInstall';
+import { setupNotificationNavigation } from './services/pushNotifications';
 
 const app = createApp(App);
 
@@ -174,4 +175,5 @@ app.use(router);
 
 router.isReady().then(() => {
     app.mount('#app');
+    setupNotificationNavigation(router);
 });

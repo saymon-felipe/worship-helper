@@ -70,7 +70,7 @@
         <div class="members-list-grid">
             <skeletonLoader v-if="loadingMembers" type="member-card" :count="6" />
             <template v-else>
-                <div class="member-card" :id="'member-' + member.id_usuario" v-for="(member, index) in membersList" v-bind:key="member.id_usuario || index">
+                <div class="member-card" :id="'member-' + member.id_usuario" v-for="(member, index) in membersList" v-bind:key="member.id_usuario || index" tabindex="0" v-on:click="openMemberProfile(member)" v-on:keydown.enter.self="openMemberProfile(member)" :title="'Ver perfil de ' + (member.nome_usuario || 'membro')">
                     <img :src="member.imagem_usuario || default_avatar" class="member-avatar" :alt="member.nome_usuario || 'Membro'">
                     <div class="member-info-content">
                         <div class="member-details">
@@ -87,7 +87,7 @@
                         </button>
                     </div>
 
-                    <div class="member-more-actions" v-if="canOpenMemberActions">
+                    <div class="member-more-actions" v-if="canOpenMemberActions" v-on:click.stop>
                         <ul>
                             <li v-on:click="addTagFunction(member)" v-if="canChangeMemberTags">
                                 <span class="material-icons action-icon">local_offer</span>
@@ -117,7 +117,17 @@
 
         <Teleport to="body">
             <Transition name="modal-fade">
-                <modal v-if="showModal && canUseCurrentModal" :title="modalTitle" @closeModal="close_modal()" class="modal" @cancelEvent="cancelChanges()" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" :isDelete="modalTitle === 'Remover membro'" @submitEvent="submitForm()" :disabled="isLoading">
+                <modal v-if="showModal && canUseCurrentModal" :title="modalTitle" @closeModal="close_modal()" class="modal" @cancelEvent="cancelChanges()" :button2Title="modalButton2Title" :buttonTitle="modalButtonTitle" :isDelete="modalTitle === 'Remover membro'" @submitEvent="submitForm()" :disabled="isLoading" :fitContent="viewProfile">
+                    <memberProfileModalContent
+                        v-if="viewProfile"
+                        :member="selected_member"
+                        :defaultAvatar="default_avatar"
+                        :church="igreja || getCurrentChurchInLocalStorage()"
+                        :canManageTags="canChangeMemberTags"
+                        :canManageRoles="canChangeMemberRoles"
+                        @manageTags="addTagFunction(selected_member)"
+                        @manageRoles="addOccupationFunction(selected_member)"
+                    />
                     <inviteMemberModalContent v-if="inviteMember && canInviteMembers" @success="handleInviteSuccess" @loading="isLoading = $event" />
                     <editInviteModalContent v-if="editInvite && canInviteMembers && selectedInviteToEdit" :invite="selectedInviteToEdit" @success="handleInviteEdited" @loading="isLoading = $event" />
                     <addTagModalContent v-if="addTag && canChangeMemberTags" :member="selected_member" @success="handleMembersChanged()" />
@@ -145,6 +155,7 @@ import $ from 'jquery';
 import modal from "./modal.vue";
 import confirmDeleteModal from "./confirmDeleteModal.vue";
 import inviteMemberModalContent from "./inviteMemberModalContent.vue";
+import memberProfileModalContent from "./memberProfileModalContent.vue";
 import editInviteModalContent from "./editInviteModalContent.vue";
 import addTagModalContent from "./addTagModalContent.vue";
 import removeMemberModalContent from "./removeMemberModalContent.vue";
@@ -159,6 +170,7 @@ export default {
         modal,
         confirmDeleteModal,
         inviteMemberModalContent,
+        memberProfileModalContent,
         editInviteModalContent,
         addTagModalContent,
         removeMemberModalContent,
@@ -168,6 +180,7 @@ export default {
     data() {
         return {
             inviteMember: false,
+            viewProfile: false,
             editInvite: false,
             selectedInviteToEdit: null,
             isLoading: false,
@@ -207,6 +220,7 @@ export default {
             return this.canRemoveMembers || this.canChangeMemberRoles || this.canChangeMemberTags;
         },
         canUseCurrentModal: function () {
+            if (this.viewProfile) return true;
             if (this.inviteMember) return this.canInviteMembers;
             if (this.editInvite) return this.canInviteMembers;
             if (this.addTag) return this.canChangeMemberTags;
@@ -234,11 +248,15 @@ export default {
         },
         resetVariables: function (string) {
             this.inviteMember = false;
+            this.viewProfile = false;
             this.editInvite = false;
             this.addTag = false;
             this.removeMember = false;
             this.addOccupation = false;
             switch (string) {
+                case "viewProfile":
+                    this.viewProfile = true;
+                    break;
                 case "editInvite":
                     this.editInvite = true;
                     break;
@@ -264,6 +282,15 @@ export default {
             this.showModal = false;
             this.modalTitle = "";
             this.isLoading = false;
+        },
+        openMemberProfile: function (member) {
+            this.closeMemberMoreActions();
+            this.selected_member = member;
+            this.showModal = true;
+            this.modalTitle = "Perfil";
+            this.modalButtonTitle = "";
+            this.modalButton2Title = "";
+            this.resetVariables("viewProfile");
         },
         removeMemberFunction: function (member) {
             this.closeMemberMoreActions();
@@ -788,7 +815,14 @@ h3 {
     gap: 14px;
     position: relative;
     box-shadow: var(--card-shadow);
+    cursor: pointer;
     transition: transform var(--transition-fast), border-color var(--transition-fast);
+}
+
+.member-card:hover,
+.member-card:focus-visible {
+    border-color: var(--secondary-blue-soft);
+    outline: none;
 }
 
 .member-avatar {

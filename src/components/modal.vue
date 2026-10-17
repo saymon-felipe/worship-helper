@@ -1,6 +1,7 @@
 <template>
     <div class="modal-wrapper">
-        <div class="modal-container">
+        <div :class="['modal-container', { 'fit-content': fitContent }]">
+            <div class="modal-handle-bar"></div>
             <div class="modal-header">
                 <span class="material-icons" v-on:click="!disabled && closeModal()">chevron_left</span>
                 <h4>{{ title }}</h4>
@@ -33,7 +34,7 @@
 /* eslint-disable vue/multi-word-component-names */
 export default {
     name: "modal",
-    props: ['title', 'buttonTitle', 'button2Title', 'disabled', 'isDelete'],
+    props: ['title', 'buttonTitle', 'button2Title', 'disabled', 'isDelete', 'fitContent'],
     data() {
         return {
             hasPushState: false
@@ -124,6 +125,15 @@ export default {
     z-index: 1;
 }
 
+.modal-handle-bar {
+    width: 36px;
+    height: 4px;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.22);
+    margin: -4px auto 10px;
+    flex-shrink: 0;
+}
+
 .modal-container {
     position: relative;
     z-index: 2;
@@ -138,6 +148,11 @@ export default {
     padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
     display: flex;
     flex-direction: column;
+}
+
+.modal-container.fit-content {
+    height: auto;
+    max-height: 88vh;
 }
 
 .modal-header {
